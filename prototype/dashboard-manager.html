@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-LMS — Manager Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="lms-wrapper">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <!-- Main -->
+  <div class="main-content">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-title">Dashboard <small>Good morning, Priya 👋</small></div>
+      <div class="topbar-actions">
+        <div class="role-switcher" id="role-switcher"></div>
+        <div style="position:relative">
+          <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+            <i class="bi bi-bell"></i>
+            <span class="notif-badge">5</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown-header">
+              <span>Notifications</span>
+              <a href="#">Mark all read</a>
+            </div>
+            <div class="notif-item unread">
+              <div class="notif-item-icon" style="background:#fef3c7;color:#92400e"><i class="bi bi-hourglass-split"></i></div>
+              <div class="notif-item-text">
+                <div class="notif-item-title">Approval request pending from Arjun Nair — React Advanced Patterns</div>
+                <div class="notif-item-time">1 hour ago</div>
+              </div>
+            </div>
+            <div class="notif-item unread">
+              <div class="notif-item-icon" style="background:#fee2e2;color:#991b1b"><i class="bi bi-exclamation-circle"></i></div>
+              <div class="notif-item-text">
+                <div class="notif-item-title">Karan Shah is 7 days overdue — Data Privacy Training</div>
+                <div class="notif-item-time">3 hours ago</div>
+              </div>
+            </div>
+            <div class="notif-item unread">
+              <div class="notif-item-icon" style="background:#fee2e2;color:#991b1b"><i class="bi bi-exclamation-circle"></i></div>
+              <div class="notif-item-text">
+                <div class="notif-item-title">Meera Joshi is 3 days overdue — Safety Compliance 2026</div>
+                <div class="notif-item-time">Yesterday</div>
+              </div>
+            </div>
+            <div class="notif-item unread">
+              <div class="notif-item-icon" style="background:#fef3c7;color:#92400e"><i class="bi bi-hourglass-split"></i></div>
+              <div class="notif-item-text">
+                <div class="notif-item-title">Approval request pending from Divya Pillai — Leadership Essentials</div>
+                <div class="notif-item-time">Yesterday</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page Body -->
+    <div class="page-body">
+
+      <!-- Overdue Alert -->
+      <div class="alert-lms warning mb-3">
+        <i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;margin-top:1px"></i>
+        <div>
+          <strong>2 team members have overdue training.</strong> Karan Shah and Meera Joshi require immediate attention.
+          <a href="#team-table" style="color:inherit;font-weight:600;margin-left:6px">View team →</a>
+        </div>
+      </div>
+
+      <!-- Stat Row -->
+      <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-people"></i></div>
+            <div class="stat-info">
+              <div class="stat-value">8</div>
+              <div class="stat-label">Direct Reports</div>
+              <div class="stat-change neutral">All active</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-info">
+              <div class="stat-value">72%</div>
+              <div class="stat-label">Team Compliance</div>
+              <div class="stat-change up"><i class="bi bi-arrow-up"></i> 5% this month</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon red"><i class="bi bi-clock-history"></i></div>
+            <div class="stat-info">
+              <div class="stat-value">2</div>
+              <div class="stat-label">Overdue (Team)</div>
+              <div class="stat-change down">Needs attention</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <a href="approvals.html" style="text-decoration:none">
+            <div class="stat-card">
+              <div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div>
+              <div class="stat-info">
+                <div class="stat-value">4</div>
+                <div class="stat-label">Pending Approvals</div>
+                <div class="stat-change neutral" style="color:var(--primary);font-weight:500">Review now →</div>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <div class="row g-3">
+
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-bar-chart me-2" style="color:var(--primary)"></i>Team Training Progress (Chart View)</h6>
+              <span style="font-size:12px;color:var(--text-muted)">Direct reports only</span>
+            </div>
+            <div class="card-body-lms" style="padding:14px 16px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <div style="width:120px;font-size:12px;color:var(--text-muted)">Arjun Kumar</div>
+                <div class="progress-lms" style="flex:1"><div class="bar green" style="width:100%"></div></div>
+                <div style="width:38px;text-align:right;font-size:12px">100%</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <div style="width:120px;font-size:12px;color:var(--text-muted)">Divya Pillai</div>
+                <div class="progress-lms" style="flex:1"><div class="bar" style="width:75%"></div></div>
+                <div style="width:38px;text-align:right;font-size:12px">75%</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <div style="width:120px;font-size:12px;color:var(--text-muted)">Karan Shah</div>
+                <div class="progress-lms" style="flex:1"><div class="bar red" style="width:50%"></div></div>
+                <div style="width:38px;text-align:right;font-size:12px;color:var(--danger)">50%</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <div style="width:120px;font-size:12px;color:var(--text-muted)">Meera Joshi</div>
+                <div class="progress-lms" style="flex:1"><div class="bar red" style="width:40%"></div></div>
+                <div style="width:38px;text-align:right;font-size:12px;color:var(--danger)">40%</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <div style="width:120px;font-size:12px;color:var(--text-muted)">Rohan Verma</div>
+                <div class="progress-lms" style="flex:1"><div class="bar green" style="width:100%"></div></div>
+                <div style="width:38px;text-align:right;font-size:12px">100%</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:120px;font-size:12px;color:var(--text-muted)">Arjun Nair</div>
+                <div class="progress-lms" style="flex:1"><div class="bar amber" style="width:60%"></div></div>
+                <div style="width:38px;text-align:right;font-size:12px">60%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Team Training Status -->
+        <div class="col-lg-8">
+          <div class="card" id="team-table">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-people me-2" style="color:var(--primary)"></i>Team Training Status</h6>
+              <a href="#" class="btn-outline-lms" style="font-size:12px;padding:5px 10px">
+                <i class="bi bi-download"></i> Export
+              </a>
+            </div>
+            <table class="lms-table">
+              <thead>
+                <tr>
+                  <th>Team Member</th>
+                  <th>Assigned</th>
+                  <th>Completed</th>
+                  <th>Overdue</th>
+                  <th>Compliance</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="width:30px;height:30px;border-radius:50%;background:#dbeafe;color:#1e40af;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">AK</div>
+                      <div>
+                        <div style="font-weight:600;font-size:13px">Arjun Kumar</div>
+                        <div style="font-size:11px;color:var(--text-muted)">Frontend Dev</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>5</td><td>5</td><td>0</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <div class="progress-lms" style="width:80px"><div class="bar green" style="width:100%"></div></div>
+                      <span style="font-size:12px">100%</span>
+                    </div>
+                  </td>
+                  <td><span class="badge-lms badge-completed">Compliant</span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="width:30px;height:30px;border-radius:50%;background:#d1fae5;color:#065f46;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">DP</div>
+                      <div>
+                        <div style="font-weight:600;font-size:13px">Divya Pillai</div>
+                        <div style="font-size:11px;color:var(--text-muted)">Backend Dev</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>4</td><td>3</td><td>0</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <div class="progress-lms" style="width:80px"><div class="bar" style="width:75%"></div></div>
+                      <span style="font-size:12px">75%</span>
+                    </div>
+                  </td>
+                  <td><span class="badge-lms badge-inprogress">In Progress</span></td>
+                </tr>
+                <tr style="background:#fff8f0">
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="width:30px;height:30px;border-radius:50%;background:#fee2e2;color:#991b1b;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">KS</div>
+                      <div>
+                        <div style="font-weight:600;font-size:13px">Karan Shah</div>
+                        <div style="font-size:11px;color:var(--text-muted)">QA Engineer</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>6</td><td>3</td><td><span style="color:var(--danger);font-weight:600">2</span></td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <div class="progress-lms" style="width:80px"><div class="bar red" style="width:50%"></div></div>
+                      <span style="font-size:12px;color:var(--danger)">50%</span>
+                    </div>
+                  </td>
+                  <td><span class="badge-lms badge-overdue">Overdue</span></td>
+                </tr>
+                <tr style="background:#fff8f0">
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="width:30px;height:30px;border-radius:50%;background:#fee2e2;color:#991b1b;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">MJ</div>
+                      <div>
+                        <div style="font-weight:600;font-size:13px">Meera Joshi</div>
+                        <div style="font-size:11px;color:var(--text-muted)">DevOps</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>5</td><td>2</td><td><span style="color:var(--danger);font-weight:600">1</span></td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <div class="progress-lms" style="width:80px"><div class="bar red" style="width:40%"></div></div>
+                      <span style="font-size:12px;color:var(--danger)">40%</span>
+                    </div>
+                  </td>
+                  <td><span class="badge-lms badge-overdue">Overdue</span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="width:30px;height:30px;border-radius:50%;background:#ede9fe;color:#5b21b6;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">RV</div>
+                      <div>
+                        <div style="font-weight:600;font-size:13px">Rohan Verma</div>
+                        <div style="font-size:11px;color:var(--text-muted)">UI Designer</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>3</td><td>3</td><td>0</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <div class="progress-lms" style="width:80px"><div class="bar green" style="width:100%"></div></div>
+                      <span style="font-size:12px">100%</span>
+                    </div>
+                  </td>
+                  <td><span class="badge-lms badge-completed">Compliant</span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="width:30px;height:30px;border-radius:50%;background:#fef3c7;color:#92400e;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">AN</div>
+                      <div>
+                        <div style="font-weight:600;font-size:13px">Arjun Nair</div>
+                        <div style="font-size:11px;color:var(--text-muted)">Backend Dev</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>4</td><td>2</td><td>0</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <div class="progress-lms" style="width:80px"><div class="bar amber" style="width:60%"></div></div>
+                      <span style="font-size:12px">60%</span>
+                    </div>
+                  </td>
+                  <td><span class="badge-lms badge-pending">At Risk</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-4">
+
+          <!-- Pending Approvals -->
+          <div class="card mb-3">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-hourglass-split me-2" style="color:var(--warning)"></i>Pending Approvals</h6>
+              <a href="approvals.html" style="font-size:12px;color:var(--primary);text-decoration:none">View All (4)</a>
+            </div>
+            <div style="padding:0">
+              <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+                  <div>
+                    <div style="font-weight:600;font-size:13px">React Advanced Patterns</div>
+                    <div style="font-size:11.5px;color:var(--text-muted)">Arjun Nair · 1 hour ago</div>
+                  </div>
+                  <span class="badge-lms badge-optional">Optional</span>
+                </div>
+                <div style="display:flex;gap:6px">
+                  <button class="btn-primary-lms" style="font-size:11px;padding:4px 10px;background:var(--success)"
+                    onclick="this.closest('div').parentElement.innerHTML='<div style=\'padding:10px 16px;font-size:12px;color:var(--success)\'>✓ Approved</div>'">
+                    <i class="bi bi-check"></i> Approve
+                  </button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:4px 10px;color:var(--danger);border-color:var(--danger)"
+                    onclick="this.closest('div').parentElement.innerHTML='<div style=\'padding:10px 16px;font-size:12px;color:var(--danger)\'>✗ Rejected</div>'">
+                    <i class="bi bi-x"></i> Reject
+                  </button>
+                </div>
+              </div>
+              <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+                  <div>
+                    <div style="font-weight:600;font-size:13px">Leadership Essentials</div>
+                    <div style="font-size:11.5px;color:var(--text-muted)">Divya Pillai · Yesterday</div>
+                  </div>
+                  <span class="badge-lms badge-optional">Optional</span>
+                </div>
+                <div style="display:flex;gap:6px">
+                  <button class="btn-primary-lms" style="font-size:11px;padding:4px 10px;background:var(--success)"
+                    onclick="this.closest('div').parentElement.innerHTML='<div style=\'padding:10px 16px;font-size:12px;color:var(--success)\'>✓ Approved</div>'">
+                    <i class="bi bi-check"></i> Approve
+                  </button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:4px 10px;color:var(--danger);border-color:var(--danger)"
+                    onclick="this.closest('div').parentElement.innerHTML='<div style=\'padding:10px 16px;font-size:12px;color:var(--danger)\'>✗ Rejected</div>'">
+                    <i class="bi bi-x"></i> Reject
+                  </button>
+                </div>
+              </div>
+              <div style="padding:10px 16px;text-align:center">
+                <a href="approvals.html" style="font-size:12px;color:var(--primary);text-decoration:none">
+                  + 2 more pending approvals
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Upcoming Team Sessions -->
+          <div class="card">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-camera-video me-2" style="color:var(--primary)"></i>Upcoming Sessions</h6>
+              <a href="sessions.html" style="font-size:12px;color:var(--primary);text-decoration:none">View All</a>
+            </div>
+            <div style="padding:0">
+
+              <!-- Session 1 — Nomination window OPEN -->
+              <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+                  <div style="font-weight:600;font-size:13px">Safety Compliance Workshop</div>
+                  <span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:10px;padding:2px 7px;font-weight:600;white-space:nowrap;margin-left:6px">
+                    <i class="bi bi-calendar-range me-1"></i>Nominations Open
+                  </span>
+                </div>
+                <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">
+                  <i class="bi bi-calendar3 me-1"></i>Apr 25, 2026 · 10:00 AM &nbsp;·&nbsp; Conference Hall B
+                </div>
+                <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">
+                  <i class="bi bi-clock me-1"></i>Nomination window closes <strong style="color:#92400e">Apr 22, 2026</strong>
+                </div>
+                <div style="margin-top:8px;display:flex;gap:6px;align-items:center">
+                  <button class="btn-primary-lms" style="font-size:11px;padding:4px 12px" onclick="openNominateModal('Safety Compliance Workshop','SES-001')">
+                    <i class="bi bi-person-raised-hand me-1"></i>Nominate Team Member
+                  </button>
+                  <span style="font-size:11px;color:var(--text-muted)">2 nominated by you</span>
+                </div>
+              </div>
+
+              <!-- Session 2 — Nomination window CLOSED, no nominate button -->
+              <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+                <div style="font-weight:600;font-size:13px;margin-bottom:4px">React Advanced Patterns</div>
+                <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">
+                  <i class="bi bi-calendar3 me-1"></i>Apr 28, 2026 · 10:00 AM &nbsp;·&nbsp; Training Room A
+                </div>
+                <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">
+                  <i class="bi bi-people me-1"></i>6 / 8 participants enrolled
+                </div>
+              </div>
+
+              <!-- Session 3 — My nomination pending admin review -->
+              <div style="padding:12px 16px">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+                  <div style="font-weight:600;font-size:13px">Leadership Development – Cohort 3</div>
+                  <span style="font-size:10px;background:#ede9fe;color:#5b21b6;border-radius:10px;padding:2px 7px;font-weight:600;white-space:nowrap;margin-left:6px">
+                    <i class="bi bi-hourglass-split me-1"></i>Pending Review
+                  </span>
+                </div>
+                <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">
+                  <i class="bi bi-calendar3 me-1"></i>May 5, 2026 · 9:00 AM &nbsp;·&nbsp; Board Room
+                </div>
+                <div style="margin-top:8px">
+                  <div style="font-size:11.5px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:6px;padding:6px 10px;color:#5b21b6">
+                    <i class="bi bi-person-raised-hand me-1"></i>You nominated <strong>Arjun Nair</strong> — awaiting Admin confirmation
+                    <button class="btn-ghost-lms" style="font-size:10px;padding:2px 8px;margin-left:8px;color:var(--danger);border-color:var(--danger)" onclick="cancelNomination(this,'Arjun Nair')">Cancel</button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div><!-- /page-body -->
+  </div><!-- /main-content -->
+</div>
+
+<!-- ===== Nominate Team Member Modal ===== -->
+<div class="modal-overlay" id="nominate-modal" onclick="closeNominateModal(event)" style="display:none;position:fixed;inset:0;z-index:1050;background:rgba(15,23,42,0.55);align-items:center;justify-content:center">
+  <div class="modal-box" style="max-width:520px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="nominate-modal-title"><i class="bi bi-person-raised-hand me-2" style="color:var(--primary)"></i>Nominate Team Member</div>
+      <button class="modal-close" onclick="closeNominateModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Session context -->
+      <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12.5px">
+        <div style="font-weight:600;margin-bottom:2px" id="nominate-session-name">Safety Compliance Workshop</div>
+        <div style="color:var(--text-muted)"><i class="bi bi-calendar3 me-1"></i>Apr 25, 2026 · 10:00 AM &nbsp;·&nbsp; <i class="bi bi-clock me-1"></i>Window closes Apr 22</div>
+      </div>
+
+      <!-- Info -->
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">
+        <i class="bi bi-info-circle me-1"></i> You can nominate only your direct reports. Nominations require Admin confirmation before the seat is reserved.
+      </div>
+
+      <!-- Direct reports list -->
+      <div style="font-size:12.5px;font-weight:600;margin-bottom:8px;color:var(--text-secondary)">Select Direct Reports to Nominate</div>
+      <div id="direct-reports-list" style="display:flex;flex-direction:column;gap:6px">
+
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+          <input type="checkbox" style="width:16px;height:16px;flex-shrink:0" id="nom-arjun-kumar">
+          <div style="display:flex;align-items:center;gap:8px;flex:1">
+            <div style="width:30px;height:30px;border-radius:50%;background:#dbeafe;color:#1e40af;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">AK</div>
+            <div>
+              <div style="font-weight:600;font-size:13px">Arjun Kumar</div>
+              <div style="font-size:11px;color:var(--text-muted)">Frontend Dev</div>
+            </div>
+          </div>
+          <span class="badge-lms badge-completed" style="font-size:10px">Compliant</span>
+        </label>
+
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+          <input type="checkbox" style="width:16px;height:16px;flex-shrink:0" id="nom-divya">
+          <div style="display:flex;align-items:center;gap:8px;flex:1">
+            <div style="width:30px;height:30px;border-radius:50%;background:#d1fae5;color:#065f46;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">DP</div>
+            <div>
+              <div style="font-weight:600;font-size:13px">Divya Pillai</div>
+              <div style="font-size:11px;color:var(--text-muted)">Backend Dev</div>
+            </div>
+          </div>
+          <span class="badge-lms badge-inprogress" style="font-size:10px">In Progress</span>
+        </label>
+
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;opacity:0.6" title="Already nominated for this session">
+          <input type="checkbox" style="width:16px;height:16px;flex-shrink:0" disabled checked>
+          <div style="display:flex;align-items:center;gap:8px;flex:1">
+            <div style="width:30px;height:30px;border-radius:50%;background:#fef3c7;color:#92400e;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">AN</div>
+            <div>
+              <div style="font-weight:600;font-size:13px">Arjun Nair</div>
+              <div style="font-size:11px;color:var(--text-muted)">Backend Dev</div>
+            </div>
+          </div>
+          <span style="font-size:10px;background:#ede9fe;color:#5b21b6;border-radius:10px;padding:2px 7px;font-weight:600">Already Nominated</span>
+        </label>
+
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+          <input type="checkbox" style="width:16px;height:16px;flex-shrink:0" id="nom-karan">
+          <div style="display:flex;align-items:center;gap:8px;flex:1">
+            <div style="width:30px;height:30px;border-radius:50%;background:#fee2e2;color:#991b1b;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">KS</div>
+            <div>
+              <div style="font-weight:600;font-size:13px">Karan Shah</div>
+              <div style="font-size:11px;color:var(--text-muted)">QA Engineer</div>
+            </div>
+          </div>
+          <span class="badge-lms badge-overdue" style="font-size:10px">Overdue</span>
+        </label>
+
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+          <input type="checkbox" style="width:16px;height:16px;flex-shrink:0" id="nom-rohan">
+          <div style="display:flex;align-items:center;gap:8px;flex:1">
+            <div style="width:30px;height:30px;border-radius:50%;background:#ede9fe;color:#5b21b6;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">RV</div>
+            <div>
+              <div style="font-weight:600;font-size:13px">Rohan Verma</div>
+              <div style="font-size:11px;color:var(--text-muted)">UI Designer</div>
+            </div>
+          </div>
+          <span class="badge-lms badge-completed" style="font-size:10px">Compliant</span>
+        </label>
+
+      </div>
+
+      <!-- Capacity note -->
+      <div style="margin-top:12px;font-size:12px;color:var(--text-muted);background:#f8fafc;border-radius:6px;padding:8px 12px">
+        <i class="bi bi-people me-1"></i> Session capacity: <strong>18 / 30</strong> enrolled &nbsp;·&nbsp; 12 seats remaining
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline-lms" onclick="closeNominateModal()">Cancel</button>
+      <button class="btn-primary-lms" onclick="submitNominations()"><i class="bi bi-person-raised-hand me-1"></i>Submit Nominations</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div id="toast-container" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  function openNominateModal(sessionName, sessionCode) {
+    document.getElementById('nominate-modal-title').innerHTML = '<i class="bi bi-person-raised-hand me-2" style="color:var(--primary)"></i>Nominate — ' + sessionName;
+    document.getElementById('nominate-session-name').textContent = sessionName;
+    document.getElementById('nominate-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+  function closeNominateModal(e) {
+    if (!e || e.target === document.getElementById('nominate-modal')) {
+      document.getElementById('nominate-modal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+  function submitNominations() {
+    const checked = document.querySelectorAll('#direct-reports-list input[type=checkbox]:not([disabled]):checked');
+    if (!checked.length) { showToast('Please select at least one team member to nominate'); return; }
+    const names = [...checked].map(cb => cb.closest('label').querySelector('.font-weight-600, [style*="font-weight:600"]')?.textContent || '').filter(Boolean);
+    closeNominateModal();
+    showToast('Nomination submitted for ' + checked.length + ' team member(s) — pending Admin review');
+  }
+  function cancelNomination(btn, name) {
+    if (!confirm('Cancel your nomination for ' + name + '?')) return;
+    const card = btn.closest('div[style*="background:#f5f3ff"]');
+    card.innerHTML = '<i class="bi bi-check-circle me-1" style="color:var(--success)"></i><span style="font-size:11.5px;color:var(--text-muted)">Nomination for <strong>' + name + '</strong> cancelled.</span>';
+    showToast('Nomination cancelled for ' + name);
+  }
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast-lms show';
+    t.innerHTML = '<i class="bi bi-check-circle-fill" style="color:var(--success)"></i> ' + msg;
+    document.getElementById('toast-container').appendChild(t);
+    setTimeout(() => t.remove(), 3200);
+  }
+</script>
+</body>
+</html>

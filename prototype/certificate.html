@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-LMS — Certificates</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .cert-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: box-shadow 0.15s;
+    }
+    .cert-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
+    .cert-banner {
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      position: relative;
+    }
+    .cert-banner-ribbon {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(255,255,255,0.85);
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .cert-body {
+      padding: 14px 16px 16px;
+    }
+    .cert-meta {
+      display: flex;
+      gap: 14px;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 8px 0 12px;
+      flex-wrap: wrap;
+    }
+    .cert-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* Certificate Preview Modal */
+    .cert-preview {
+      background: linear-gradient(135deg, #fefefe 0%, #f8faff 100%);
+      border: 2px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 40px 50px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .cert-preview::before {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 12px;
+      pointer-events: none;
+    }
+    .cert-preview-logo {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+    .cert-preview-heading {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .cert-preview-name {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1e2a3b;
+      margin-bottom: 8px;
+    }
+    .cert-preview-subtext {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .cert-preview-course {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 10px 0 16px;
+    }
+    .cert-preview-date {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    .cert-preview-seal {
+      font-size: 48px;
+      margin: 10px 0;
+    }
+    .cert-preview-footer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .cert-id {
+      font-family: monospace;
+      font-size: 10px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+<div class="lms-wrapper">
+
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title">My Certificates</div>
+      <div class="topbar-actions">
+        <div class="role-switcher" id="role-switcher"></div>
+        <button class="btn-outline-lms" style="font-size:12px;padding:6px 12px" onclick="showToast('Downloading all certificates as ZIP...')">
+          <i class="bi bi-download"></i> Download All
+        </button>
+        <div style="position:relative">
+          <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+            <i class="bi bi-bell"></i><span class="notif-badge">3</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown-header"><span>Notifications</span><a href="#">Mark all read</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- Summary Bar -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-award"></i></div>
+            <div class="stat-info"><div class="stat-value">6</div><div class="stat-label">Total Certificates</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-patch-check"></i></div>
+            <div class="stat-info"><div class="stat-value">4</div><div class="stat-label">Active</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-info"><div class="stat-value">1</div><div class="stat-label">Pending Approval</div>
+              <div class="stat-change neutral" style="color:var(--warning)">Awaiting admin review</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon red"><i class="bi bi-x-circle"></i></div>
+            <div class="stat-info"><div class="stat-value">1</div><div class="stat-label">Rejected</div>
+              <div class="stat-change down" style="color:var(--danger)">Re-attempt required</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+        <div class="search-bar" style="width:240px">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Search certificates..." oninput="filterCerts(this.value)">
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="filter-pill active" onclick="filterByStatus('all',this)">All <span style="font-size:11px;opacity:0.7">(6)</span></button>
+          <button class="filter-pill" onclick="filterByStatus('active',this)">Active</button>
+          <button class="filter-pill" onclick="filterByStatus('pending',this)">Pending Approval</button>
+          <button class="filter-pill" onclick="filterByStatus('rejected',this)">Rejected</button>
+        </div>
+      </div>
+
+      <!-- Certificate Grid -->
+      <div class="row g-3" id="cert-grid">
+
+        <!-- Certificate 1 -->
+        <div class="col-md-6 col-lg-4 cert-item" data-status="active" data-title="leadership essentials">
+          <div class="cert-card">
+            <div class="cert-banner" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe)">
+              🏆
+              <span class="cert-banner-ribbon" style="color:var(--success)"><i class="bi bi-patch-check-fill"></i> Active</span>
+            </div>
+            <div class="cert-body">
+              <div style="font-size:14px;font-weight:700;color:#1e2a3b">Leadership Essentials</div>
+              <div class="cert-meta">
+                <span><i class="bi bi-calendar3 me-1"></i>Issued: Mar 20, 2026</span>
+                <span><i class="bi bi-arrow-clockwise me-1"></i>No expiry</span>
+              </div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">
+                <i class="bi bi-hash me-1"></i>CERT-2026-00128 &nbsp;·&nbsp;
+                <i class="bi bi-person me-1"></i>Alex Johnson
+              </div>
+              <div class="cert-actions">
+                <button class="btn-primary-lms" style="font-size:11px;padding:5px 12px" onclick="openPreview('Leadership Essentials','Mar 20, 2026','No Expiry','CERT-2026-00128')">
+                  <i class="bi bi-eye"></i> View
+                </button>
+                <button class="btn-outline-lms" style="font-size:11px;padding:5px 10px" onclick="showToast('Downloading Leadership Essentials certificate...')">
+                  <i class="bi bi-download"></i>
+                </button>
+                <button class="btn-ghost-lms" style="font-size:11px;padding:5px 10px" onclick="showToast('Share link copied to clipboard!')">
+                  <i class="bi bi-share"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Certificate 2 -->
+        <div class="col-md-6 col-lg-4 cert-item" data-status="active" data-title="code of conduct">
+          <div class="cert-card">
+            <div class="cert-banner" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0)">
+              📜
+              <span class="cert-banner-ribbon" style="color:var(--success)"><i class="bi bi-patch-check-fill"></i> Active</span>
+            </div>
+            <div class="cert-body">
+              <div style="font-size:14px;font-weight:700;color:#1e2a3b">Code of Conduct</div>
+              <div class="cert-meta">
+                <span><i class="bi bi-calendar3 me-1"></i>Issued: Feb 28, 2026</span>
+                <span><i class="bi bi-arrow-clockwise me-1"></i>Expires: Feb 28, 2027</span>
+              </div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">
+                <i class="bi bi-hash me-1"></i>CERT-2026-00091 &nbsp;·&nbsp;
+                <i class="bi bi-person me-1"></i>Alex Johnson
+              </div>
+              <div class="cert-actions">
+                <button class="btn-primary-lms" style="font-size:11px;padding:5px 12px" onclick="openPreview('Code of Conduct','Feb 28, 2026','Feb 28, 2027','CERT-2026-00091')">
+                  <i class="bi bi-eye"></i> View
+                </button>
+                <button class="btn-outline-lms" style="font-size:11px;padding:5px 10px" onclick="showToast('Downloading Code of Conduct certificate...')">
+                  <i class="bi bi-download"></i>
+                </button>
+                <button class="btn-ghost-lms" style="font-size:11px;padding:5px 10px" onclick="showToast('Share link copied to clipboard!')">
+                  <i class="bi bi-share"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Certificate 3 -->
+        <div class="col-md-6 col-lg-4 cert-item" data-status="active" data-title="workplace safety fundamentals">
+          <div class="cert-card">
+            <div class="cert-banner" style="background:linear-gradient(135deg,#fef3c7,#fde68a)">
+              🦺
+              <span class="cert-banner-ribbon" style="color:var(--success)"><i class="bi bi-patch-check-fill"></i> Active</span>
+            </div>
+            <div class="cert-body">
+              <div style="font-size:14px;font-weight:700;color:#1e2a3b">Workplace Safety Fundamentals</div>
+              <div class="cert-meta">
+                <span><i class="bi bi-calendar3 me-1"></i>Issued: Jan 10, 2026</span>
+                <span><i class="bi bi-arrow-clockwise me-1"></i>Expires: Jan 10, 2027</span>
+              </div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">
+                <i class="bi bi-hash me-1"></i>CERT-2026-00044 &nbsp;·&nbsp;
+                <i class="bi bi-person me-1"></i>Alex Johnson
+              </div>
+              <div class="cert-actions">
+                <button class="btn-primary-lms" style="font-size:11px;padding:5px 12px" onclick="openPreview('Workplace Safety Fundamentals','Jan 10, 2026','Jan 10, 2027','CERT-2026-00044')">
+                  <i class="bi bi-eye"></i> View
+                </button>
+                <button class="btn-outline-lms" style="font-size:11px;padding:5px 10px" onclick="showToast('Downloading certificate...')">
+                  <i class="bi bi-download"></i>
+                </button>
+                <button class="btn-ghost-lms" style="font-size:11px;padding:5px 10px" onclick="showToast('Share link copied to clipboard!')">
+                  <i class="bi bi-share"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Certificate 4 -->
+        <div class="col-md-6 col-lg-4 cert-item" data-status="active" data-title="onboarding essentials">
+          <div class="cert-card">
+            <div class="cert-banner" style="background:linear-gradient(135deg,#ede9fe,#ddd6fe)">
+              🎯
+              <span class="cert-banner-ribbon" style="color:var(--success)"><i class="bi bi-patch-check-fill"></i> Active</span>
+            </div>
+            <div class="cert-body">
+              <div style="font-size:14px;font-weight:700;color:#1e2a3b">Onboarding Essentials</div>
+              <div class="cert-meta">
+                <span><i class="bi bi-calendar3 me-1"></i>Issued: Dec 5, 2025</span>
+                <span><i class="bi bi-arrow-clockwise me-1"></i>No expiry</span>
+              </div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">
+                <i class="bi bi-hash me-1"></i>CERT-2025-00873 &nbsp;·&nbsp;
+                <i class="bi bi-person me-1"></i>Alex Johnson
+              </div>
+              <div class="cert-actions">
+                <button class="btn-primary-lms" style="font-size:11px;padding:5px 12px" onclick="openPreview('Onboarding Essentials','Dec 5, 2025','No Expiry','CERT-2025-00873')">
+                  <i class="bi bi-eye"></i> View
+                </button>
+                <button class="btn-outline-lms" style="font-size:11px;padding:5px 10px" onclick="showToast('Downloading certificate...')">
+                  <i class="bi bi-download"></i>
+                </button>
+                <button class="btn-ghost-lms" style="font-size:11px;padding:5px 10px" onclick="showToast('Share link copied to clipboard!')">
+                  <i class="bi bi-share"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Certificate 5 — Pending Approval -->
+        <div class="col-md-6 col-lg-4 cert-item" data-status="pending" data-title="safety compliance 2026">
+          <div class="cert-card" style="border:1px solid #fde68a">
+            <div class="cert-banner" style="background:linear-gradient(135deg,#fffbeb,#fef3c7)">
+              🏅
+              <span class="cert-banner-ribbon" style="color:#d97706"><i class="bi bi-hourglass-split"></i> Pending Approval</span>
+            </div>
+            <div class="cert-body">
+              <div style="font-size:14px;font-weight:700;color:#1e2a3b">Safety Compliance 2026</div>
+              <div class="cert-meta">
+                <span><i class="bi bi-calendar3 me-1"></i>Completed: Apr 7, 2026</span>
+                <span style="color:#d97706"><i class="bi bi-hourglass-split me-1"></i>Awaiting admin approval</span>
+              </div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+                <i class="bi bi-hash me-1"></i>CERT-2026-00312
+              </div>
+              <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;font-size:12px;color:#92400e;margin-bottom:10px">
+                <i class="bi bi-info-circle me-1"></i>Your certificate has been generated. Download will be available once an admin approves it.
+              </div>
+              <div class="cert-actions">
+                <button class="btn-outline-lms" style="font-size:11px;padding:5px 12px;color:#d97706;border-color:#fde68a;cursor:default" disabled>
+                  <i class="bi bi-lock"></i> Download Locked
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Certificate 6 — Rejected -->
+        <div class="col-md-6 col-lg-4 cert-item" data-status="rejected" data-title="data privacy training">
+          <div class="cert-card" style="border:1px solid #fecaca;opacity:0.9">
+            <div class="cert-banner" style="background:linear-gradient(135deg,#fff1f2,#fecaca)">
+              ❌
+              <span class="cert-banner-ribbon" style="color:var(--danger)"><i class="bi bi-x-circle-fill"></i> Rejected</span>
+            </div>
+            <div class="cert-body">
+              <div style="font-size:14px;font-weight:700;color:#1e2a3b">Data Privacy Training</div>
+              <div class="cert-meta">
+                <span><i class="bi bi-calendar3 me-1"></i>Completed: Apr 2, 2026</span>
+                <span style="color:var(--danger)"><i class="bi bi-x-circle me-1"></i>Rejected Apr 3, 2026</span>
+              </div>
+              <div style="background:#fff1f2;border:1px solid #fecaca;border-radius:8px;padding:8px 10px;font-size:12px;color:#991b1b;margin-bottom:10px">
+                <i class="bi bi-chat-text me-1"></i><strong>Reason:</strong> Score did not meet the minimum threshold. Please re-attempt the training.
+              </div>
+              <div class="cert-actions">
+                <a href="my-training.html" class="btn-primary-lms" style="font-size:11px;padding:5px 12px;background:var(--danger);border-color:var(--danger)">
+                  <i class="bi bi-arrow-repeat"></i> Re-attempt
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Certificate Preview Modal -->
+<div class="modal-overlay" id="cert-modal" style="display:none" onclick="closeCertModal(event)">
+  <div style="background:#fff;border-radius:16px;max-width:600px;width:94%;padding:0;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2)" onclick="event.stopPropagation()">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <h6 style="margin:0;font-size:15px;font-weight:700">Certificate Preview</h6>
+      <button onclick="closeCertModal()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-muted)"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div style="padding:24px">
+      <div class="cert-preview">
+        <div class="cert-preview-logo">AZ-LMS</div>
+        <div class="cert-preview-heading">Certificate of Completion</div>
+        <div class="cert-preview-subtext">This is to certify that</div>
+        <div class="cert-preview-name">Alex Johnson</div>
+        <div class="cert-preview-subtext">has successfully completed</div>
+        <div class="cert-preview-course" id="modal-course-name">Leadership Essentials</div>
+        <div class="cert-preview-seal">🏆</div>
+        <div class="cert-preview-date" id="modal-cert-dates">Issued: Mar 20, 2026 &nbsp;·&nbsp; Valid: No Expiry</div>
+        <div class="cert-id" id="modal-cert-id">Certificate ID: CERT-2026-00128</div>
+        <div class="cert-preview-footer">
+          <div>
+            <div style="font-weight:600;color:#374151;font-size:12px">Azilen Technologies</div>
+            <div>Authorized Signatory</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:600;color:#374151;font-size:12px">Verified</div>
+            <div>AZ-LMS Platform</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:14px 24px 20px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--border)">
+      <button class="btn-ghost-lms" onclick="showToast('Share link copied to clipboard!')">
+        <i class="bi bi-share"></i> Share
+      </button>
+      <button class="btn-primary-lms" onclick="showToast('Downloading certificate PDF...');closeCertModal()">
+        <i class="bi bi-download"></i> Download PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:24px;right:24px;background:#1e2a3b;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:none;z-index:9999;align-items:center;gap:8px">
+  <i class="bi bi-check-circle-fill" style="color:var(--success)"></i>
+  <span id="toast-msg"></span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  function filterCerts(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('.cert-item').forEach(item => {
+      item.style.display = item.dataset.title.includes(q) ? '' : 'none';
+    });
+  }
+
+  function filterByStatus(status, btn) {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.cert-item').forEach(item => {
+      item.style.display = (status === 'all' || item.dataset.status === status) ? '' : 'none';
+    });
+  }
+
+  function openPreview(courseName, issuedDate, expiry, certId) {
+    document.getElementById('modal-course-name').textContent = courseName;
+    document.getElementById('modal-cert-dates').textContent = 'Issued: ' + issuedDate + '  ·  Valid: ' + expiry;
+    document.getElementById('modal-cert-id').textContent = 'Certificate ID: ' + certId;
+    document.getElementById('cert-modal').style.display = 'flex';
+    document.getElementById('cert-modal').style.alignItems = 'center';
+    document.getElementById('cert-modal').style.justifyContent = 'center';
+  }
+
+  function closeCertModal(e) {
+    if (!e || e.target === document.getElementById('cert-modal')) {
+      document.getElementById('cert-modal').style.display = 'none';
+    }
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.style.display = 'flex';
+    setTimeout(() => t.style.display = 'none', 3000);
+  }
+</script>
+</body>
+</html>

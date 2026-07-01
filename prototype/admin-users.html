@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-LMS — User Management</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="lms-wrapper">
+
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title">User Management</div>
+      <div class="topbar-actions">
+        <div class="role-switcher" id="role-switcher"></div>
+        <button class="btn-outline-lms" style="font-size:12px;padding:6px 12px" onclick="showToast('Exporting user list...')">
+          <i class="bi bi-download"></i> Export
+        </button>
+        <button class="btn-primary-lms" style="font-size:12px;padding:6px 12px" onclick="openUserModal()">
+          <i class="bi bi-person-plus"></i> Add User
+        </button>
+        <div style="position:relative">
+          <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+            <i class="bi bi-bell"></i><span class="notif-badge">1</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown-header"><span>Notifications</span><a href="#">Mark all read</a></div>
+            <div class="notif-item unread">
+              <div class="notif-item-icon" style="background:#dbeafe;color:#1e40af"><i class="bi bi-arrow-repeat"></i></div>
+              <div class="notif-item-text">
+                <div class="notif-item-title">Zoho HR sync completed — 3 new users added</div>
+                <div class="notif-item-time">Today, 6:00 AM</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- Stat Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-people"></i></div>
+            <div class="stat-info"><div class="stat-value">247</div><div class="stat-label">Total Users</div>
+            <div class="stat-change up"><i class="bi bi-arrow-up"></i> 3 this week</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-person-check"></i></div>
+            <div class="stat-info"><div class="stat-value">241</div><div class="stat-label">Active</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon amber"><i class="bi bi-person-dash"></i></div>
+            <div class="stat-info"><div class="stat-value">6</div><div class="stat-label">Inactive</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-arrow-repeat"></i></div>
+            <div class="stat-info"><div class="stat-value">3</div><div class="stat-label">Synced Today</div>
+            <div class="stat-change neutral" style="color:var(--primary)">via Zoho HR</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters + Search -->
+      <div class="card">
+        <div class="card-header-lms">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div class="search-bar" style="width:240px">
+              <i class="bi bi-search"></i>
+              <input type="text" placeholder="Search by name, email, ID..." oninput="filterUsers(this.value)" id="user-search">
+            </div>
+            <select class="form-select" style="width:150px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:8px" onchange="filterByDept(this.value)">
+              <option value="">All Departments</option>
+              <option>Engineering</option>
+              <option>Sales</option>
+              <option>Operations</option>
+              <option>Finance</option>
+              <option>HR</option>
+              <option>Design</option>
+            </select>
+            <select class="form-select" style="width:130px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:8px" onchange="filterByRole(this.value)">
+              <option value="">All Roles</option>
+              <option>Employee</option>
+              <option>HR</option>
+              <option>Admin</option>
+            </select>
+            <select class="form-select" style="width:130px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:8px" onchange="filterByStatus(this.value)">
+              <option value="">All Status</option>
+              <option>Active</option>
+              <option>Inactive</option>
+            </select>
+            <select class="form-select" style="width:160px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:8px" onchange="filterByBU(this.value)">
+              <option value="">All BU Heads</option>
+              <option>Ravi Patel</option>
+              <option>Suresh Kumar</option>
+              <option>Meena Shah</option>
+            </select>
+          </div>
+          <div style="font-size:12.5px;color:var(--text-muted)" id="user-count">Showing 8 of 247 users</div>
+        </div>
+
+        <!-- Bulk Actions Bar -->
+        <div id="user-bulk-bar" style="display:none;padding:10px 16px;background:#eef2ff;border-bottom:1px solid #c7d2fe;align-items:center;justify-content:space-between;gap:8px">
+          <span style="font-size:13px;font-weight:600;color:#3730a3"><span id="user-bulk-count">0</span> selected</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn-ghost-lms" style="font-size:12px" onclick="openAssignTrainingModal()"><i class="bi bi-mortarboard me-1"></i>Assign Training</button>
+            <button class="btn-ghost-lms" style="font-size:12px" onclick="showToast('Exporting selected users...')"><i class="bi bi-download me-1"></i>Export</button>
+            <button class="btn-ghost-lms" style="font-size:12px;color:var(--danger);border-color:var(--danger)" onclick="bulkDeactivate()"><i class="bi bi-person-dash me-1"></i>Deactivate</button>
+          </div>
+        </div>
+
+        <!-- Users Table -->
+        <table class="lms-table" id="users-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="select-all" onchange="toggleAll(this)"></th>
+              <th>User</th>
+              <th>Department</th>
+              <th>Role</th>
+              <th>Manager</th>
+              <th>Compliance</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody">
+
+            <tr data-dept="Engineering" data-role="Employee" data-status="Active" data-bu="Ravi Patel">
+              <td><input type="checkbox" class="row-check" onchange="updateBulkBar()"></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:50%;background:#6366f1;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">AJ</div>
+                  <div>
+                    <div style="font-weight:600;font-size:13px">Alex Johnson</div>
+                    <div style="font-size:11px;color:var(--text-muted)">alex.johnson@azilen.com · EMP-0042</div>
+                  </div>
+                </div>
+              </td>
+              <td style="font-size:13px">Engineering</td>
+              <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">Employee</span></td>
+              <td style="font-size:13px">Priya Mehta</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <div class="progress-lms" style="width:64px"><div class="bar amber" style="width:70%"></div></div>
+                  <span style="font-size:12px;color:var(--warning)">70%</span>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-healthy">Active</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditModal('Alex Johnson','active')"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="location.href='user-detail.html'" title="View Training History"><i class="bi bi-journal-bookmark"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-dept="Engineering" data-role="Manager" data-status="Active" data-bu="Ravi Patel">
+              <td><input type="checkbox" class="row-check" onchange="updateBulkBar()"></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:50%;background:#10b981;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">PM</div>
+                  <div>
+                    <div style="font-weight:600;font-size:13px">Priya Mehta</div>
+                    <div style="font-size:11px;color:var(--text-muted)">priya.mehta@azilen.com · EMP-0018</div>
+                  </div>
+                </div>
+              </td>
+              <td style="font-size:13px">Engineering</td>
+              <td><span class="badge-lms badge-draft" style="background:#dbeafe;color:#1e40af">Manager</span></td>
+              <td style="font-size:13px;color:var(--text-muted)">—</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <div class="progress-lms" style="width:64px"><div class="bar green" style="width:100%"></div></div>
+                  <span style="font-size:12px;color:var(--success)">100%</span>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-healthy">Active</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditModal('Priya Mehta','active')"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="location.href='user-detail.html'" title="View Training History"><i class="bi bi-journal-bookmark"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-dept="Sales" data-role="Employee" data-status="Active" data-bu="Suresh Kumar">
+              <td><input type="checkbox" class="row-check" onchange="updateBulkBar()"></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:50%;background:#f59e0b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">RS</div>
+                  <div>
+                    <div style="font-weight:600;font-size:13px">Rahul Sharma</div>
+                    <div style="font-size:11px;color:var(--text-muted)">rahul.sharma@azilen.com · EMP-0055</div>
+                  </div>
+                </div>
+              </td>
+              <td style="font-size:13px">Sales</td>
+              <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">Employee</span></td>
+              <td style="font-size:13px">Vikram Nair</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <div class="progress-lms" style="width:64px"><div class="bar red" style="width:45%"></div></div>
+                  <span style="font-size:12px;color:var(--danger)">45%</span>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-healthy">Active</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditModal('Rahul Sharma','active')"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="location.href='user-detail.html'" title="View Training History"><i class="bi bi-journal-bookmark"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-dept="HR" data-role="HR" data-status="Active" data-bu="Meena Shah">
+              <td><input type="checkbox" class="row-check" onchange="updateBulkBar()"></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:50%;background:#ec4899;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">SP</div>
+                  <div>
+                    <div style="font-weight:600;font-size:13px">Sneha Patel</div>
+                    <div style="font-size:11px;color:var(--text-muted)">sneha.patel@azilen.com · EMP-0009</div>
+                  </div>
+                </div>
+              </td>
+              <td style="font-size:13px">HR</td>
+              <td><span class="badge-lms badge-draft" style="background:#fce7f3;color:#9d174d">HR</span></td>
+              <td style="font-size:13px;color:var(--text-muted)">—</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <div class="progress-lms" style="width:64px"><div class="bar green" style="width:94%"></div></div>
+                  <span style="font-size:12px;color:var(--success)">94%</span>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-healthy">Active</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditModal('Sneha Patel','active')"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="location.href='user-detail.html'" title="View Training History"><i class="bi bi-journal-bookmark"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-dept="Engineering" data-role="Admin" data-status="Active" data-bu="Ravi Patel">
+              <td><input type="checkbox" class="row-check" onchange="updateBulkBar()"></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:50%;background:#1a56db;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">JS</div>
+                  <div>
+                    <div style="font-weight:600;font-size:13px">Jayesh Sanavada</div>
+                    <div style="font-size:11px;color:var(--text-muted)">jayesh.sanavada@azilen.com · EMP-0001</div>
+                  </div>
+                </div>
+              </td>
+              <td style="font-size:13px">Engineering</td>
+              <td><span class="badge-lms badge-draft" style="background:#fef3c7;color:#92400e">Admin</span></td>
+              <td style="font-size:13px;color:var(--text-muted)">—</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <div class="progress-lms" style="width:64px"><div class="bar green" style="width:100%"></div></div>
+                  <span style="font-size:12px;color:var(--success)">100%</span>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-healthy">Active</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditModal('Jayesh Sanavada','active','last-admin')"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="location.href='user-detail.html'" title="View Training History"><i class="bi bi-journal-bookmark"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-dept="Finance" data-role="Employee" data-status="Active" data-bu="Meena Shah">
+              <td><input type="checkbox" class="row-check" onchange="updateBulkBar()"></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:50%;background:#8b5cf6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">AK</div>
+                  <div>
+                    <div style="font-weight:600;font-size:13px">Anita Kapoor</div>
+                    <div style="font-size:11px;color:var(--text-muted)">anita.kapoor@azilen.com · EMP-0077</div>
+                  </div>
+                </div>
+              </td>
+              <td style="font-size:13px">Finance</td>
+              <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">Employee</span></td>
+              <td style="font-size:13px">Deepa Rao</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <div class="progress-lms" style="width:64px"><div class="bar red" style="width:55%"></div></div>
+                  <span style="font-size:12px;color:var(--danger)">55%</span>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-healthy">Active</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditModal('Anita Kapoor','active')"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="location.href='user-detail.html'" title="View Training History"><i class="bi bi-journal-bookmark"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-dept="Operations" data-role="Manager" data-status="Active" data-bu="Suresh Kumar">
+              <td><input type="checkbox" class="row-check" onchange="updateBulkBar()"></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:50%;background:#3b82f6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">VN</div>
+                  <div>
+                    <div style="font-weight:600;font-size:13px">Vikram Nair</div>
+                    <div style="font-size:11px;color:var(--text-muted)">vikram.nair@azilen.com · EMP-0022</div>
+                  </div>
+                </div>
+              </td>
+              <td style="font-size:13px">Operations</td>
+              <td><span class="badge-lms badge-draft" style="background:#dbeafe;color:#1e40af">Manager</span></td>
+              <td style="font-size:13px;color:var(--text-muted)">—</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <div class="progress-lms" style="width:64px"><div class="bar green" style="width:88%"></div></div>
+                  <span style="font-size:12px">88%</span>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-healthy">Active</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditModal('Vikram Nair','active')"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="location.href='user-detail.html'" title="View Training History"><i class="bi bi-journal-bookmark"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-dept="Design" data-role="Employee" data-status="Inactive" data-bu="Ravi Patel">
+              <td><input type="checkbox" class="row-check" onchange="updateBulkBar()"></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:50%;background:#9ca3af;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">NK</div>
+                  <div>
+                    <div style="font-weight:600;font-size:13px;color:var(--text-muted)">Neha Kulkarni</div>
+                    <div style="font-size:11px;color:var(--text-muted)">neha.kulkarni@azilen.com · EMP-0103</div>
+                  </div>
+                </div>
+              </td>
+              <td style="font-size:13px;color:var(--text-muted)">Design</td>
+              <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#9ca3af">Employee</span></td>
+              <td style="font-size:13px;color:var(--text-muted)">—</td>
+              <td style="font-size:12px;color:var(--text-muted)">N/A</td>
+              <td><span class="badge-lms badge-degraded">Inactive</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditModal('Neha Kulkarni','inactive')"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="location.href='user-detail.html'" title="View Training History"><i class="bi bi-journal-bookmark"></i></button>
+                </div>
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);font-size:13px;color:var(--text-muted)">
+          <span>Showing 8 of 247 users</span>
+          <div style="display:flex;gap:4px">
+            <button class="btn-ghost-lms" style="padding:4px 10px;font-size:12px" disabled>
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <button class="btn-ghost-lms" style="padding:4px 10px;font-size:12px;background:var(--primary);color:#fff;border-color:var(--primary)">1</button>
+            <button class="btn-ghost-lms" style="padding:4px 10px;font-size:12px">2</button>
+            <button class="btn-ghost-lms" style="padding:4px 10px;font-size:12px">3</button>
+            <button class="btn-ghost-lms" style="padding:4px 10px;font-size:12px">…</button>
+            <button class="btn-ghost-lms" style="padding:4px 10px;font-size:12px">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit User Modal -->
+<div class="modal-overlay" id="user-modal" style="display:none;position:fixed;inset:0;z-index:1050;background:rgba(15,23,42,0.55)" onclick="closeUserModal(event)">
+  <div style="background:#fff;border-radius:14px;max-width:520px;width:94%;box-shadow:0 20px 60px rgba(0,0,0,0.18);max-height:90vh;overflow-y:auto" onclick="event.stopPropagation()">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1">
+      <h6 style="margin:0;font-weight:700" id="modal-title">Add New User</h6>
+      <button onclick="closeUserModal()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-muted)"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+      <div class="row g-3">
+        <div class="col-6">
+          <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">First Name <span style="color:var(--danger)">*</span></label>
+          <input type="text" class="form-control" style="font-size:13px" placeholder="First name" id="f-first">
+        </div>
+        <div class="col-6">
+          <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Last Name <span style="color:var(--danger)">*</span></label>
+          <input type="text" class="form-control" style="font-size:13px" placeholder="Last name" id="f-last">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Work Email <span style="color:var(--danger)">*</span></label>
+        <input type="email" class="form-control" style="font-size:13px" placeholder="name@azilen.com" id="f-email">
+      </div>
+      <div class="row g-3">
+        <div class="col-6">
+          <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Department <span style="color:var(--danger)">*</span></label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <select class="form-select" style="font-size:13px;flex:1" id="f-dept">
+              <option value="">Select department...</option>
+            </select>
+            <button type="button" title="Manage Departments" onclick="openMasterModal('dept')"
+              style="flex-shrink:0;width:34px;height:34px;border:1px solid var(--border);border-radius:8px;background:#f8fafc;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-muted)">
+              <i class="bi bi-gear" style="font-size:14px"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-6">
+          <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Role <span style="color:var(--danger)">*</span></label>
+          <select class="form-select" style="font-size:13px" id="f-role">
+            <option value="">Select...</option>
+            <option>Employee</option>
+            <option>HR</option>
+            <option>Admin</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Designation</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <select class="form-select" style="font-size:13px;flex:1" id="f-designation">
+            <option value="">Select designation...</option>
+          </select>
+          <button type="button" title="Manage Designations" onclick="openMasterModal('desig')"
+            style="flex-shrink:0;width:34px;height:34px;border:1px solid var(--border);border-radius:8px;background:#f8fafc;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-muted)">
+            <i class="bi bi-gear" style="font-size:14px"></i>
+          </button>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Manager</label>
+        <select class="form-select" style="font-size:13px" id="f-manager">
+          <option value="">No manager (top-level)</option>
+          <option>Priya Mehta</option>
+          <option>Vikram Nair</option>
+          <option>Deepa Rao</option>
+        </select>
+        <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px">Sets the reporting hierarchy. Can also be synced from Zoho HR.</div>
+      </div>
+      <div>
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">BU Head <span style="font-weight:400;color:var(--text-muted)">(Business Unit Head)</span></label>
+        <select class="form-select" style="font-size:13px" id="f-bu-head">
+          <option value="">Select BU Head...</option>
+          <option value="ravi-patel">Ravi Patel — Digital Products</option>
+          <option value="suresh-kumar">Suresh Kumar — Enterprise Solutions</option>
+          <option value="meena-shah">Meena Shah — Platform Services</option>
+        </select>
+        <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px">
+          Used for BU-wise reporting, compliance tracking, and training statistics. Synced from Zoho HR when available.
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Employee ID</label>
+        <input type="text" class="form-control" style="font-size:13px" placeholder="e.g. EMP-0248 (auto-generated if blank)" id="f-empid">
+      </div>
+
+      <!-- Employment Phase -->
+      <div>
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Employment Phase</label>
+        <select class="form-select" style="font-size:13px" id="f-phase" onchange="onPhaseChange(this.value)">
+          <option value="CONFIRMED">Confirmed (default)</option>
+          <option value="PROBATION">Probation — New Joiner</option>
+          <option value="INTERN">Intern</option>
+        </select>
+        <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px">
+          Synced automatically from Zoho HR. Set manually only for users not in Zoho.
+        </div>
+      </div>
+
+      <!-- Capabilities -->
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <label style="font-size:12.5px;font-weight:600">Capabilities</label>
+          <button type="button" class="btn-ghost-lms" style="font-size:11.5px;padding:3px 10px" onclick="syncCapabilitiesFromZoho()">
+            <i class="bi bi-arrow-repeat me-1"></i>Sync from Zoho
+          </button>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;min-height:44px" id="capabilities-panel">
+          <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center" id="capability-pills">
+            <span style="font-size:12px;color:var(--text-muted)">No capabilities synced yet — click Sync from Zoho</span>
+          </div>
+        </div>
+        <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px">
+          Capabilities are used for targeted training assignment rules (e.g. assign only to Java Backend engineers) and capability-wise completion reports.
+        </div>
+      </div>
+
+      <!-- Joining Date — shown only when Probation selected -->
+      <div id="joining-date-row" style="display:none">
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">
+          Joining Date <span style="color:var(--danger)">*</span>
+        </label>
+        <input type="date" class="form-control" style="font-size:13px" id="f-joining">
+        <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px">
+          Used to calculate probation end date (Joining Date + 90 days). Gate trainings will be auto-assigned based on the user's designation and capability.
+        </div>
+      </div>
+
+      <!-- Probation info banner — shown when Probation selected -->
+      <div id="probation-note" style="display:none;background:#ede9fe;border:1px solid #c4b5fd;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#4c1d95">
+        <i class="bi bi-hourglass-split me-2"></i>
+        <strong>Probation gate activated.</strong> On save, the system will evaluate all active probation training rules for this user's designation and capability, and auto-assign required trainings. HR will be notified.
+      </div>
+
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#166534" id="activation-note">
+        <i class="bi bi-info-circle me-2"></i>An account activation email will be sent to the user's work email. They will log in via Keycloak SSO.
+      </div>
+
+      <!-- Account Status — shown only in Edit mode -->
+      <div id="status-section" style="display:none;border:1px solid var(--border);border-radius:10px;overflow:hidden">
+        <div style="padding:10px 14px;background:#f9fafb;font-size:12.5px;font-weight:600;border-bottom:1px solid var(--border)">
+          Account Status
+        </div>
+        <div style="padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div id="status-active-view">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span class="badge-lms badge-healthy">Active</span>
+              <span style="font-size:12.5px;color:var(--text-muted)">User can log in and access trainings</span>
+            </div>
+            <button class="btn-ghost-lms" style="font-size:12px;padding:5px 12px;color:var(--danger);border-color:var(--danger);margin-top:6px"
+              onclick="toggleStatusInModal('deactivate')">
+              <i class="bi bi-person-dash me-1"></i>Deactivate User
+            </button>
+          </div>
+          <div id="status-inactive-view" style="display:none">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span class="badge-lms badge-degraded">Inactive</span>
+              <span style="font-size:12.5px;color:var(--text-muted)">User cannot log in or access trainings</span>
+            </div>
+            <button class="btn-ghost-lms" style="font-size:12px;padding:5px 12px;color:var(--success);border-color:var(--success);margin-top:6px"
+              onclick="toggleStatusInModal('reactivate')">
+              <i class="bi bi-person-check me-1"></i>Reactivate User
+            </button>
+          </div>
+          <div id="status-lastadmin-view" style="display:none">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="badge-lms badge-healthy">Active</span>
+              <span style="font-size:12.5px;color:var(--text-muted)">Last admin — cannot be deactivated</span>
+            </div>
+            <div style="font-size:11.5px;color:var(--text-muted);margin-top:6px;display:flex;align-items:center;gap:5px">
+              <i class="bi bi-shield-lock"></i> Assign another admin first to change this user's status.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:12px 20px 18px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--border)">
+      <button class="btn-ghost-lms" onclick="closeUserModal()">Cancel</button>
+      <button class="btn-primary-lms" onclick="saveUser()">
+        <i class="bi bi-check-lg"></i> Save User
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Training Modal -->
+<div class="modal-overlay" id="assign-training-modal" style="display:none;position:fixed;inset:0;z-index:1050;background:rgba(15,23,42,0.55);align-items:center;justify-content:center" onclick="closeAssignTrainingModal(event)">
+  <div style="background:#fff;border-radius:14px;max-width:500px;width:94%;box-shadow:0 20px 60px rgba(0,0,0,0.18);max-height:90vh;overflow-y:auto" onclick="event.stopPropagation()">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1">
+      <h6 style="margin:0;font-weight:700">Assign Training</h6>
+      <button onclick="closeAssignTrainingModal()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-muted)"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#1e40af">
+        <i class="bi bi-info-circle me-1"></i>
+        Assigning training to <strong id="assign-selected-count">0</strong> selected user(s).
+      </div>
+      <div>
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Select Training <span style="color:var(--danger)">*</span></label>
+        <select class="form-select" style="font-size:13px" id="assign-training-select">
+          <option value="">-- Select training --</option>
+          <option>Safety Compliance 2026</option>
+          <option>Data Privacy Training</option>
+          <option>Anti-Harassment Policy</option>
+          <option>Code of Conduct</option>
+          <option>Leadership Essentials</option>
+          <option>React Advanced Patterns</option>
+          <option>Agile &amp; Scrum Master Certification</option>
+          <option>Java Backend Fundamentals</option>
+          <option>AWS Cloud Practitioner</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Due Date</label>
+        <input type="date" class="form-control" style="font-size:13px" id="assign-due-date">
+        <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px">Leave blank to use the training's default due date.</div>
+      </div>
+      <div>
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Note (optional)</label>
+        <textarea class="form-control" style="font-size:13px" rows="2" placeholder="e.g. Mandatory for Q2 compliance cycle..." id="assign-note"></textarea>
+      </div>
+    </div>
+    <div style="padding:12px 20px 18px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--border)">
+      <button class="btn-ghost-lms" onclick="closeAssignTrainingModal()">Cancel</button>
+      <button class="btn-primary-lms" onclick="confirmAssignTraining()"><i class="bi bi-check-lg"></i> Assign</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manage Departments / Designations Modal -->
+<div class="modal-overlay" id="master-modal" style="display:none;position:fixed;inset:0;z-index:1060;background:rgba(15,23,42,0.55);align-items:center;justify-content:center" onclick="closeMasterModal(event)">
+  <div style="background:#fff;border-radius:14px;max-width:440px;width:94%;box-shadow:0 20px 60px rgba(0,0,0,0.18);max-height:90vh;overflow-y:auto" onclick="event.stopPropagation()">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1">
+      <div style="font-size:14px;font-weight:700" id="master-modal-title">Manage Departments</div>
+      <button onclick="closeMasterModal()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-muted);line-height:1">&times;</button>
+    </div>
+    <div style="padding:16px 20px">
+      <!-- List of existing items -->
+      <div id="master-list" style="margin-bottom:14px"></div>
+      <!-- Add new row -->
+      <div id="master-add-row" style="display:flex;gap:6px;align-items:center">
+        <input type="text" id="master-new-input" class="form-control" style="font-size:13px;flex:1" placeholder="New name...">
+        <button class="btn-primary-lms" style="font-size:12px;padding:6px 14px;white-space:nowrap" onclick="confirmAddMasterItem()"><i class="bi bi-plus"></i> Add</button>
+      </div>
+    </div>
+    <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end">
+      <button class="btn-primary-lms" style="font-size:13px;padding:7px 20px" onclick="closeMasterModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:24px;right:24px;background:#1e2a3b;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:none;z-index:9999;align-items:center;gap:8px">
+  <i class="bi bi-check-circle-fill" style="color:var(--success)"></i>
+  <span id="toast-msg"></span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const _r = localStorage.getItem('lms_role');
+  if (!_r || _r === 'employee' || _r === 'manager') {
+    localStorage.setItem('lms_role', 'admin');
+  }
+</script>
+<script src="js/nav.js"></script>
+<script>
+  function filterUsers(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('#users-tbody tr').forEach(row => {
+      const text = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+      row.style.display = text.includes(q) ? '' : 'none';
+    });
+  }
+
+  function filterByDept(dept) {
+    document.querySelectorAll('#users-tbody tr').forEach(row => {
+      row.style.display = (!dept || row.dataset.dept === dept) ? '' : 'none';
+    });
+  }
+
+  function filterByRole(role) {
+    document.querySelectorAll('#users-tbody tr').forEach(row => {
+      row.style.display = (!role || row.dataset.role === role) ? '' : 'none';
+    });
+  }
+
+  function filterByStatus(status) {
+    document.querySelectorAll('#users-tbody tr').forEach(row => {
+      row.style.display = (!status || row.dataset.status === status) ? '' : 'none';
+    });
+  }
+
+  function toggleAll(cb) {
+    document.querySelectorAll('.row-check').forEach(c => c.checked = cb.checked);
+    updateBulkBar();
+  }
+
+  function updateBulkBar() {
+    const checked = document.querySelectorAll('.row-check:checked').length;
+    const bar = document.getElementById('user-bulk-bar');
+    document.getElementById('user-bulk-count').textContent = checked;
+    bar.style.display = checked > 0 ? 'flex' : 'none';
+  }
+
+  function bulkDeactivate() {
+    const checked = document.querySelectorAll('.row-check:checked');
+    checked.forEach(cb => {
+      const row = cb.closest('tr');
+      if (row) {
+        const badge = row.querySelector('.badge-lms:last-of-type');
+        if (badge && badge.textContent.trim() === 'Active') {
+          badge.className = 'badge-lms badge-degraded';
+          badge.textContent = 'Inactive';
+          row.dataset.status = 'Inactive';
+        }
+      }
+    });
+    showToast(checked.length + ' user(s) deactivated.');
+    updateBulkBar();
+  }
+
+  function filterByBU(bu) {
+    document.querySelectorAll('#users-tbody tr').forEach(row => {
+      row.style.display = (!bu || row.dataset.bu === bu) ? '' : 'none';
+    });
+  }
+
+  function openUserModal() {
+    document.getElementById('modal-title').textContent = 'Add New User';
+    document.getElementById('status-section').style.display = 'none';
+    document.getElementById('activation-note').style.display = 'block';
+    const modal = document.getElementById('user-modal');
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function openEditModal(name, status, flag) {
+    document.getElementById('modal-title').textContent = 'Edit User — ' + name;
+    document.getElementById('activation-note').style.display = 'none';
+    document.getElementById('status-section').style.display = 'block';
+
+    // Show the right status view
+    document.getElementById('status-active-view').style.display   = 'none';
+    document.getElementById('status-inactive-view').style.display = 'none';
+    document.getElementById('status-lastadmin-view').style.display = 'none';
+
+    if (flag === 'last-admin') {
+      document.getElementById('status-lastadmin-view').style.display = 'block';
+    } else if (status === 'inactive') {
+      document.getElementById('status-inactive-view').style.display = 'block';
+    } else {
+      document.getElementById('status-active-view').style.display = 'block';
+    }
+
+    const modal = document.getElementById('user-modal');
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function toggleStatusInModal(action) {
+    if (action === 'deactivate') {
+      document.getElementById('status-active-view').style.display   = 'none';
+      document.getElementById('status-inactive-view').style.display = 'block';
+      showToast('User deactivated. They can no longer log in.');
+    } else {
+      document.getElementById('status-inactive-view').style.display = 'none';
+      document.getElementById('status-active-view').style.display   = 'block';
+      showToast('User reactivated. They can now log in.');
+    }
+  }
+
+  function onPhaseChange(val) {
+    const joiningRow  = document.getElementById('joining-date-row');
+    const probNote    = document.getElementById('probation-note');
+    const isProbation = val === 'PROBATION';
+    joiningRow.style.display = isProbation ? 'block' : 'none';
+    probNote.style.display   = isProbation ? 'block' : 'none';
+    if (isProbation && !document.getElementById('f-joining').value) {
+      document.getElementById('f-joining').value = new Date().toISOString().split('T')[0];
+    }
+  }
+
+  function closeUserModal(e) {
+    if (!e || e.target === document.getElementById('user-modal')) {
+      document.getElementById('user-modal').style.display = 'none';
+      document.body.style.overflow = '';
+      // reset phase on close
+      const ph = document.getElementById('f-phase');
+      if (ph) { ph.value = 'CONFIRMED'; onPhaseChange('CONFIRMED'); }
+    }
+  }
+
+  function saveUser() {
+    closeUserModal();
+    showToast('User saved successfully.');
+  }
+
+  // Capabilities
+  const CAP_COLORS = ['#dbeafe|#1e40af','#dcfce7|#166534','#fef9c3|#854d0e','#fce7f3|#9d174d','#ede9fe|#5b21b6','#ffedd5|#9a3412'];
+  let capColorIdx = 0;
+
+  function addCapabilityPill(name) {
+    const pills = document.getElementById('capability-pills');
+    const col = CAP_COLORS[capColorIdx % CAP_COLORS.length].split('|');
+    capColorIdx++;
+    const pill = document.createElement('span');
+    pill.style.cssText = `display:inline-flex;align-items:center;gap:4px;background:${col[0]};color:${col[1]};font-size:12px;padding:3px 9px;border-radius:20px;font-weight:500`;
+    pill.innerHTML = name + ` <button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:${col[1]};padding:0;font-size:11px;margin-left:2px">×</button>`;
+    pills.appendChild(pill);
+  }
+
+  function addCapability() {
+    const sel = document.getElementById('cap-select');
+    if (!sel.value) return;
+    addCapabilityPill(sel.value);
+    sel.value = '';
+  }
+
+  function syncCapabilitiesFromZoho() {
+    // Simulated Zoho sync
+    const zohoData = ['Java Backend', 'Spring Boot', 'AWS'];
+    const pills = document.getElementById('capability-pills');
+    pills.innerHTML = '';
+    capColorIdx = 0;
+    zohoData.forEach(cap => addCapabilityPill(cap));
+    showToast('Capabilities synced from Zoho HR.');
+  }
+
+  function openAssignTrainingModal() {
+    const count = document.querySelectorAll('.row-check:checked').length;
+    document.getElementById('assign-selected-count').textContent = count;
+    document.getElementById('assign-training-select').value = '';
+    document.getElementById('assign-due-date').value = '';
+    document.getElementById('assign-note').value = '';
+    const m = document.getElementById('assign-training-modal');
+    m.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeAssignTrainingModal(e) {
+    if (!e || e.target === document.getElementById('assign-training-modal')) {
+      document.getElementById('assign-training-modal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+
+  function confirmAssignTraining() {
+    const training = document.getElementById('assign-training-select').value;
+    if (!training) { showToast('Please select a training.'); return; }
+    const count = document.querySelectorAll('.row-check:checked').length;
+    closeAssignTrainingModal();
+    showToast(training + ' assigned to ' + count + ' user(s).');
+  }
+
+  /* ---- Master Data: Departments & Designations ---- */
+
+  const MASTER_DATA = {
+    dept: ['Engineering','Sales','Operations','Finance','HR','Design','Legal','Marketing'],
+    desig: ['Software Engineer','Senior Software Engineer','Tech Lead','QA Engineer','Business Analyst','Project Manager','Designer','HR Executive','Finance Analyst','Operations Analyst']
+  };
+
+  let activeMasterKey = 'dept';   // 'dept' or 'desig'
+  let editingMasterIdx = -1;      // index being renamed, -1 = none
+
+  // Populate a <select> from MASTER_DATA
+  function renderMasterSelect(key) {
+    const sel = document.getElementById(key === 'dept' ? 'f-dept' : 'f-designation');
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Select ' + (key === 'dept' ? 'department' : 'designation') + '...</option>';
+    MASTER_DATA[key].forEach(function(name) {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      if (name === current) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  // Render the list inside the manage modal
+  function renderMasterList() {
+    const list = document.getElementById('master-list');
+    const items = MASTER_DATA[activeMasterKey];
+    if (!items.length) { list.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:6px 0">No items yet.</div>'; return; }
+    list.innerHTML = items.map(function(name, idx) {
+      if (idx === editingMasterIdx) {
+        return '<div style="display:flex;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">' +
+          '<input type="text" id="rename-input-' + idx + '" class="form-control" style="font-size:13px;flex:1" value="' + escHtml(name) + '" onkeydown="if(event.key===\'Enter\')saveRenameMaster(' + idx + ')">' +
+          '<button onclick="saveRenameMaster(' + idx + ')" style="background:var(--success);color:#fff;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;white-space:nowrap"><i class="bi bi-check"></i> Save</button>' +
+          '<button onclick="cancelRenameMaster()" style="background:#f1f5f9;color:var(--text-muted);border:none;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:12px">✕</button>' +
+          '</div>';
+      }
+      return '<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:6px">' +
+        '<span style="flex:1;font-size:13px">' + escHtml(name) + '</span>' +
+        '<button title="Rename" onclick="startRenameMaster(' + idx + ')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--primary);font-size:12px"><i class="bi bi-pencil"></i></button>' +
+        '<button title="Delete" onclick="deleteMasterItem(' + idx + ')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--danger);font-size:12px"><i class="bi bi-trash3"></i></button>' +
+        '</div>';
+    }).join('');
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function openMasterModal(key) {
+    activeMasterKey = key;
+    editingMasterIdx = -1;
+    document.getElementById('master-modal-title').textContent = key === 'dept' ? 'Manage Departments' : 'Manage Designations';
+    document.getElementById('master-new-input').value = '';
+    document.getElementById('master-new-input').placeholder = key === 'dept' ? 'New department name...' : 'New designation name...';
+    renderMasterList();
+    const m = document.getElementById('master-modal');
+    m.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMasterModal(e) {
+    if (!e || e.target === document.getElementById('master-modal')) {
+      document.getElementById('master-modal').style.display = 'none';
+      document.body.style.overflow = '';
+      editingMasterIdx = -1;
+    }
+  }
+
+  function startRenameMaster(idx) {
+    editingMasterIdx = idx;
+    renderMasterList();
+    const inp = document.getElementById('rename-input-' + idx);
+    if (inp) { inp.focus(); inp.select(); }
+  }
+
+  function cancelRenameMaster() {
+    editingMasterIdx = -1;
+    renderMasterList();
+  }
+
+  function saveRenameMaster(idx) {
+    const inp = document.getElementById('rename-input-' + idx);
+    const newName = inp ? inp.value.trim() : '';
+    if (!newName) { showToast('Name cannot be empty.'); return; }
+    if (MASTER_DATA[activeMasterKey].some(function(n,i){ return i!==idx && n.toLowerCase()===newName.toLowerCase(); })) {
+      showToast('Already exists.'); return;
+    }
+    // Preserve current selection in the user form
+    const sel = document.getElementById(activeMasterKey === 'dept' ? 'f-dept' : 'f-designation');
+    const wasSelected = sel && sel.value === MASTER_DATA[activeMasterKey][idx];
+    MASTER_DATA[activeMasterKey][idx] = newName;
+    editingMasterIdx = -1;
+    renderMasterList();
+    renderMasterSelect(activeMasterKey);
+    if (wasSelected && sel) sel.value = newName;
+    showToast('Renamed to "' + newName + '".');
+  }
+
+  function deleteMasterItem(idx) {
+    const name = MASTER_DATA[activeMasterKey][idx];
+    MASTER_DATA[activeMasterKey].splice(idx, 1);
+    editingMasterIdx = -1;
+    renderMasterList();
+    renderMasterSelect(activeMasterKey);
+    showToast('"' + name + '" removed.');
+  }
+
+  function confirmAddMasterItem() {
+    const inp = document.getElementById('master-new-input');
+    const name = inp.value.trim();
+    if (!name) { inp.focus(); return; }
+    if (MASTER_DATA[activeMasterKey].some(function(n){ return n.toLowerCase()===name.toLowerCase(); })) {
+      showToast('Already exists.'); return;
+    }
+    MASTER_DATA[activeMasterKey].push(name);
+    inp.value = '';
+    renderMasterList();
+    renderMasterSelect(activeMasterKey);
+    // Auto-select the new item in the user form
+    const sel = document.getElementById(activeMasterKey === 'dept' ? 'f-dept' : 'f-designation');
+    if (sel) sel.value = name;
+    showToast('"' + name + '" added.');
+  }
+
+  // Init selects on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    renderMasterSelect('dept');
+    renderMasterSelect('desig');
+  });
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.style.display = 'flex';
+    setTimeout(() => t.style.display = 'none', 3000);
+  }
+</script>
+</body>
+</html>

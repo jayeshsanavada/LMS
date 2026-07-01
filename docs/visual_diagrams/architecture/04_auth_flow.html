@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Authentication &amp; Authorization Flow — AZ-LMS</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{--bg:#0d1117;--card:#161b22;--border:#30363d;--accent:#58a6ff;--text:#c9d1d9;--muted:#8b949e}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif}
+  header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between}
+  .hl .label{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase}
+  .hl .title{font-size:18px;font-weight:600;margin-top:3px}
+  .hl .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  nav{background:var(--card);border-bottom:1px solid var(--border);padding:8px 28px;display:flex;gap:6px;flex-wrap:wrap}
+  nav a{font-size:11px;padding:4px 10px;border-radius:5px;color:var(--muted);text-decoration:none;border:1px solid var(--border);white-space:nowrap;transition:all .15s}
+  nav a:hover{color:var(--text);border-color:var(--muted)}
+  nav a.active{background:var(--accent);color:#0d1117;border-color:var(--accent);font-weight:600}
+  .wrap{padding:24px 28px 20px;overflow:auto}
+  .dcard{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:28px 32px;display:inline-block;min-width:100%}
+  .mermaid svg{display:block;max-width:none !important;height:auto}
+  .info{max-width:1100px;margin:0 auto 0;padding:0 28px}
+  .info h3{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:24px 0 10px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:var(--card);color:var(--muted);font-weight:600;padding:8px 12px;text-align:left;border:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  td{padding:8px 12px;border:1px solid var(--border);color:var(--text);vertical-align:top}
+  tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+  code{background:rgba(88,166,255,.1);color:var(--accent);padding:1px 6px;border-radius:3px;font-size:12px;font-family:monospace}
+  .desc{max-width:1100px;margin:24px auto 40px;padding:12px 20px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;color:var(--muted)}
+  .desc strong{color:var(--text)}
+  .controls{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:100}
+  .cb{background:var(--card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:7px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .cb:hover{background:var(--accent);border-color:var(--accent);color:#0d1117}
+  #zoom-label{background:var(--card);border:1px solid var(--border);border-radius:7px;font-size:11px;color:var(--muted);text-align:center;padding:4px 0;min-width:36px}
+</style>
+</head>
+<body>
+<header>
+  <div class="hl">
+    <div class="label">AZ-LMS · Architecture Diagrams</div>
+    <div class="title">Diagram 04 — Authentication &amp; Authorization Flow</div>
+    <div class="sub">4 sequences: PKCE Login · API Request · Token Refresh · PES M2M</div>
+  </div>
+  <div style="font-size:11px;color:var(--muted)">Last updated: 2026-04-14</div>
+</header>
+<nav>
+  <a href="index.html">Index</a>
+  <a href="01_system_architecture.html">1. System</a>
+  <a href="02_module_dependency.html">2. Modules</a>
+  <a href="03_database_er_diagram.html">3. ER Diagram</a>
+  <a href="04_auth_flow.html" class="active">4. Auth Flow</a>
+  <a href="05_integration_data_flow.html">5. Integrations</a>
+  <a href="06_background_jobs.html">6. Background Jobs</a>
+  <a href="07_apisix_route_map.html">7. APISIX Routes</a>
+  <a href="08_deployment_architecture.html">8. Deployment</a>
+  <a href="09_assignment_state_machine.html">9. Assignment</a>
+  <a href="10_compliance_state_machine.html">10. Compliance</a>
+  <a href="11_session_state_machine.html">11. Session</a>
+</nav>
+<div class="wrap">
+  <div class="dcard">
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Browser
+    participant APISIX
+    participant FastAPI
+    participant Keycloak
+    participant AzureAD
+    participant DB as PostgreSQL
+    participant PES
+
+    Note over Browser,DB: SEQUENCE 1 — PKCE Login Flow
+    Browser->>Keycloak: PKCE authorization request (code_challenge, state)
+    Keycloak->>AzureAD: Redirect to Azure AD login
+    AzureAD->>AzureAD: User authenticates (password / MFA)
+    AzureAD-->>Keycloak: Authorization code returned
+    Keycloak->>Keycloak: Exchange code, issue JWT (sub, email, realm_access.roles)
+    Keycloak-->>Browser: JWT token returned
+    Note over Browser: JWT stored in MEMORY ONLY — never localStorage, cookie, or DB
+
+    Note over Browser,DB: SEQUENCE 2 — API Request Flow
+    Browser->>APISIX: API request — Authorization: Bearer JWT
+    Note over APISIX: Validates JWT: signature, expiry, aud claim. Injects X-Correlation-ID if absent
+    APISIX->>FastAPI: Forwarded request (JWT validated, X-Correlation-ID set)
+    Note over FastAPI: Re-validates JWT signature and expiry. Extracts realm_access.roles to ADMIN / HR / EMPLOYEE
+    FastAPI->>DB: SELECT user WHERE keycloak_user_id = sub
+    DB-->>FastAPI: User record
+    FastAPI->>DB: SELECT user_hierarchy WHERE user_id = ? AND is_current = true
+    DB-->>FastAPI: Direct reports (depth = 1 only)
+    Note over FastAPI: Manager = NOT a Keycloak role. Derived from user_hierarchy table (depth = 1)
+    FastAPI->>FastAPI: Route guard — role check + hierarchy scope check
+    FastAPI-->>APISIX: Response (X-Correlation-ID echoed)
+    APISIX-->>Browser: Response
+
+    Note over Browser,DB: SEQUENCE 3 — Token Expiry and Silent Refresh
+    Browser->>Browser: Keycloak JS adapter detects token nearing expiry
+    Browser->>Keycloak: Silent token refresh (hidden iframe / PKCE)
+    Keycloak-->>Browser: New JWT issued
+    Note over Browser: New JWT stored in memory — old token discarded
+    Browser->>APISIX: Next API request with refreshed JWT
+
+    Note over Browser,PES: SEQUENCE 4 — PES M2M (Client Credentials)
+    PES->>Keycloak: client_credentials grant (client_id + client_secret)
+    Keycloak-->>PES: M2M JWT — scoped to INTEGRATION service account only
+    PES->>APISIX: GET /api/v1/integrations/pes/compliance/{employee_id}
+    Note over APISIX: PES route group — M2M JWT validated. Rate limit: 100 req/min — IP allowlist optional
+    APISIX->>FastAPI: Forwarded (PES dedicated route)
+    FastAPI->>FastAPI: Validates client_id from JWT, checks INTEGRATION scope
+    FastAPI->>DB: SELECT compliance_status WHERE user_id = employee_id
+    DB-->>FastAPI: Compliance data
+    FastAPI->>DB: INSERT audit_logs async — event: PES_API_ACCESSED
+    Note over FastAPI: Every PES call audited — cannot be disabled
+    FastAPI-->>PES: Compliance data returned
+    </div>
+  </div>
+</div>
+
+<div class="info">
+  <h3>Security Rules</h3>
+  <table>
+    <tr><th>Rule</th><th>Enforcement Point</th></tr>
+    <tr><td>JWT stored in <strong>memory only</strong> — never persisted</td><td>Browser (Keycloak JS Adapter)</td></tr>
+    <tr><td>JWT validated at <strong>two points</strong> — signature + expiry + <code>aud</code></td><td>APISIX (first), FastAPI middleware (second)</td></tr>
+    <tr><td><code>aud</code> claim must match LMS Keycloak client ID — wrong audience = 401</td><td>APISIX</td></tr>
+    <tr><td><strong>Manager is NOT a Keycloak role</strong> — derived from <code>user_hierarchy.manager_user_id</code></td><td>FastAPI middleware</td></tr>
+    <tr><td><strong>Hierarchy depth = 1</strong> — direct reports only, no transitive scope</td><td>FastAPI service layer</td></tr>
+    <tr><td>PES M2M uses separate APISIX route group — 100 req/min rate limit</td><td>APISIX (PES route group)</td></tr>
+    <tr><td><strong>Every PES call</strong> logged as <code>PES_API_ACCESSED</code> audit event</td><td>FastAPI — Audit module (async)</td></tr>
+    <tr><td><strong>No passwords stored</strong> in LMS — Keycloak is sole auth provider</td><td>Architecture constraint</td></tr>
+  </table>
+
+  <h3>Sequence Flow Summary</h3>
+  <table>
+    <tr><th>Sequence</th><th>Who Initiates</th><th>Key Steps</th><th>Notes</th></tr>
+    <tr>
+      <td>1 — PKCE Login</td><td>Browser (user clicks login)</td>
+      <td>Browser → Keycloak → Azure AD → Keycloak → JWT to Browser</td>
+      <td>JWT never touches localStorage or DB. Stored in Keycloak JS Adapter memory only.</td>
+    </tr>
+    <tr>
+      <td>2 — API Request</td><td>Browser (any LMS action)</td>
+      <td>Bearer JWT → APISIX validates → FastAPI re-validates + DB lookup → Response</td>
+      <td>Double JWT validation. Manager scope derived from user_hierarchy, not Keycloak roles.</td>
+    </tr>
+    <tr>
+      <td>3 — Token Refresh</td><td>Keycloak JS Adapter (automatic)</td>
+      <td>Silent iframe refresh → new JWT → old discarded</td>
+      <td>Transparent to user. Happens before token expiry. No session interruption.</td>
+    </tr>
+    <tr>
+      <td>4 — PES M2M</td><td>PES system (external on-prem)</td>
+      <td>Client credentials → M2M JWT → APISIX PES route group → FastAPI → compliance read</td>
+      <td>Every call rate-limited (100/min) and audited. INTEGRATION scope only — cannot access other APIs.</td>
+    </tr>
+  </table>
+
+  <h3>Role vs. Scope Distinction</h3>
+  <table>
+    <tr><th>Identity Concept</th><th>Where Defined</th><th>How Used</th></tr>
+    <tr><td>ADMIN / HR / EMPLOYEE roles</td><td>Keycloak realm_access.roles</td><td>Controls which endpoints are accessible. Assigned via Keycloak Admin API.</td></tr>
+    <tr><td>Manager scope</td><td>user_hierarchy DB table (from Employee DB sync)</td><td>Controls which users' data a manager can see. Depth = 1 only (direct reports).</td></tr>
+    <tr><td>INTEGRATION scope (PES)</td><td>Keycloak Client Credentials service account</td><td>Grants access only to PES compliance read endpoints. Cannot impersonate users.</td></tr>
+  </table>
+</div>
+
+<div class="desc" style="margin-left:28px;margin-right:28px">
+  <strong>Source:</strong> docs/requirements/02_features/01_authentication.md + 01_architecture.md Section 10 &nbsp;|&nbsp;
+  <strong>Type:</strong> Sequence Diagram — 4 flows &nbsp;|&nbsp;
+  JWT is <strong>never stored</strong> in localStorage, cookies, or DB — memory only. JWT validated at <strong>two points</strong>: APISIX (signature + expiry + aud) and FastAPI (signature + expiry + user lookup). Manager scope is <strong>NOT</strong> a Keycloak role — derived from <code>user_hierarchy</code>.
+</div>
+
+<div class="controls">
+  <button class="cb" onclick="zi()" title="Zoom in">+</button>
+  <div id="zoom-label">100%</div>
+  <button class="cb" onclick="zo()" title="Zoom out">−</button>
+  <button class="cb" onclick="zr()" title="Reset (fit to screen)" style="font-size:13px">↺</button>
+</div>
+<script>
+  mermaid.initialize({startOnLoad:true,theme:'dark',securityLevel:'loose',
+    sequence:{useMaxWidth:false,actorMargin:60}});
+
+  let scale=1,origW=null,origH=null;
+  function getSvg(){return document.querySelector('.mermaid svg');}
+
+  function captureOriginal(){
+    const svg=getSvg();if(!svg)return false;
+    const vb=svg.viewBox&&svg.viewBox.baseVal;
+    if(vb&&vb.width>0){origW=vb.width;origH=vb.height;}
+    else{origW=svg.getBoundingClientRect().width||900;origH=svg.getBoundingClientRect().height||700;}
+    svg.setAttribute('width',origW);svg.setAttribute('height',origH);
+    svg.style.maxWidth='none';return true;
+  }
+
+  function fitToScreen(){
+    const svg=getSvg();if(!svg||!origW)return;
+    const headerH=(document.querySelector('header')||{}).offsetHeight||60;
+    const navH=(document.querySelector('nav')||{}).offsetHeight||40;
+    const availW=document.querySelector('.wrap').clientWidth-80;
+    const availH=window.innerHeight-headerH-navH-80;
+    scale=Math.min(availW/origW,availH/origH);
+    scale=Math.max(scale,0.1);
+    svg.setAttribute('width',origW*scale);svg.setAttribute('height',origH*scale);
+    document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%';
+  }
+
+  function applyScale(){
+    const svg=getSvg();if(!svg)return;
+    if(!origW&&!captureOriginal())return;
+    svg.setAttribute('width',origW*scale);svg.setAttribute('height',origH*scale);
+    document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%';
+  }
+
+  function zi(){scale=Math.min(scale*1.25,8);applyScale();}
+  function zo(){scale=Math.max(scale*0.8,0.1);applyScale();}
+  function zr(){fitToScreen();}
+
+  window.addEventListener('load',()=>{
+    setTimeout(()=>{if(captureOriginal())fitToScreen();},500);
+  });
+</script>
+</body>
+</html>

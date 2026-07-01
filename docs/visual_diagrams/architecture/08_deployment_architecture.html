@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deployment Architecture — AZ-LMS</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{--bg:#0d1117;--card:#161b22;--border:#30363d;--accent:#58a6ff;--text:#c9d1d9;--muted:#8b949e}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif}
+  header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between}
+  .hl .label{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase}
+  .hl .title{font-size:18px;font-weight:600;margin-top:3px}
+  .hl .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  nav{background:var(--card);border-bottom:1px solid var(--border);padding:8px 28px;display:flex;gap:6px;flex-wrap:wrap}
+  nav a{font-size:11px;padding:4px 10px;border-radius:5px;color:var(--muted);text-decoration:none;border:1px solid var(--border);white-space:nowrap;transition:all .15s}
+  nav a:hover{color:var(--text);border-color:var(--muted)}
+  nav a.active{background:var(--accent);color:#0d1117;border-color:var(--accent);font-weight:600}
+  .wrap{padding:24px 28px 20px;overflow:auto}
+  .dcard{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:28px 32px;display:inline-block;min-width:100%}
+  .mermaid svg{display:block;max-width:none !important;height:auto}
+  #diagram .edgeLabel rect{fill:#1e2530 !important;opacity:1 !important}
+  #diagram .edgeLabel text,#diagram .edgeLabel tspan{fill:#c9d1d9 !important}
+  .info{max-width:1100px;margin:0 auto 0;padding:0 28px}
+  .info h3{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:24px 0 10px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:var(--card);color:var(--muted);font-weight:600;padding:8px 12px;text-align:left;border:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  td{padding:8px 12px;border:1px solid var(--border);color:var(--text);vertical-align:top}
+  tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+  .desc{max-width:1100px;margin:24px auto 40px;padding:12px 20px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;color:var(--muted)}
+  .desc strong{color:var(--text)}
+  .controls{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:100}
+  .cb{background:var(--card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:7px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .cb:hover{background:var(--accent);border-color:var(--accent);color:#0d1117}
+  #zoom-label{background:var(--card);border:1px solid var(--border);border-radius:7px;font-size:11px;color:var(--muted);text-align:center;padding:4px 0;min-width:36px}
+</style>
+</head>
+<body>
+<header>
+  <div class="hl">
+    <div class="label">AZ-LMS · Architecture Diagrams</div>
+    <div class="title">Diagram 08 — Deployment &amp; Physical Architecture</div>
+    <div class="sub">On-premise topology with NFR targets and external system connections</div>
+  </div>
+  <div style="font-size:11px;color:var(--muted)">Last updated: 2026-04-14</div>
+</header>
+<nav>
+  <a href="index.html">Index</a>
+  <a href="01_system_architecture.html">1. System</a>
+  <a href="02_module_dependency.html">2. Modules</a>
+  <a href="03_database_er_diagram.html">3. ER Diagram</a>
+  <a href="04_auth_flow.html">4. Auth Flow</a>
+  <a href="05_integration_data_flow.html">5. Integrations</a>
+  <a href="06_background_jobs.html">6. Background Jobs</a>
+  <a href="07_apisix_route_map.html">7. APISIX Routes</a>
+  <a href="08_deployment_architecture.html" class="active">8. Deployment</a>
+  <a href="09_assignment_state_machine.html">9. Assignment</a>
+  <a href="10_compliance_state_machine.html">10. Compliance</a>
+  <a href="11_session_state_machine.html">11. Session</a>
+</nav>
+<div class="wrap">
+  <div class="dcard">
+    <div class="mermaid" id="diagram">
+flowchart TD
+    classDef client fill:#1565c0,color:#fff,stroke:#0d47a1
+    classDef gateway fill:#e65100,color:#fff,stroke:#bf360c
+    classDef server fill:#1b5e20,color:#fff,stroke:#003300
+    classDef worker fill:#4a148c,color:#fff,stroke:#2a004a
+    classDef db fill:#b71c1c,color:#fff,stroke:#7f0000
+    classDef cloud fill:#5d4037,color:#fff,stroke:#3e2723
+    classDef onprem_ext fill:#37474f,color:#fff,stroke:#1c313a
+    classDef nfr fill:#0d3349,color:#c9d1d9,stroke:#1565c0
+    classDef sec fill:#1a0000,color:#f48fb1,stroke:#b71c1c
+
+    subgraph CLIENT["CLIENT SIDE"]
+        BROWSER["Browser\nReactJS SPA\nKeycloak JS Adapter"]:::client
+    end
+
+    subgraph ONPREM["ON-PREMISE SERVER  (single deployment unit)"]
+        APISIX_P["APISIX\nPort 443 — TLS termination\nJWT validation\nX-Correlation-ID\nRate limit"]:::gateway
+        FASTAPI_P["FastAPI\nPort 8000 — internal only\nBusiness logic\nRole + hierarchy auth"]:::server
+        WORKER_P["Worker Service\nSeparate OS process\nAPScheduler + Background Tasks"]:::worker
+        PG_DB[("PostgreSQL\nPort 5432 — internal only\nSingle DB · Single schema")]:::db
+    end
+
+    subgraph CLOUD["EXTERNAL CLOUD SERVICES"]
+        KC_EXT["Keycloak + Azure AD\nOIDC / PKCE"]:::cloud
+        TEAMS_EXT["Microsoft Teams\nGraph API"]:::cloud
+        OD_EXT["OneDrive\nGraph API"]:::cloud
+        ZOHO_EXT["Zoho HR\nREST API"]:::cloud
+    end
+
+    subgraph EXT_OP["ON-PREMISE EXTERNAL SYSTEMS"]
+        EDB_EXT["Employee / Timesheet DB"]:::onprem_ext
+        PES_EXT["PES\nM2M — 100 req/min"]:::onprem_ext
+    end
+
+    NFR["NFR Targets\nAPI P95 less than 500ms\nPage load less than 2s\nAvailability 99.5%\nConcurrent users under 1000\nAudit retention 5 years\nExports 24h"]:::nfr
+
+    SEC["Security Notes\nJWT in memory only — never in localStorage or DB\nJWT validated at BOTH APISIX and FastAPI\nInternal routes not exposed via APISIX\nPES M2M separate route group + IP allowlist"]:::sec
+
+    BROWSER -->|"HTTPS port 443"| APISIX_P
+    APISIX_P -->|"HTTPS port 443"| BROWSER
+    PES_EXT -->|"HTTPS M2M JWT"| APISIX_P
+    BROWSER -->|"PKCE / OIDC"| KC_EXT
+    KC_EXT -->|"JWT issued"| BROWSER
+    APISIX_P -->|"http://fastapi:8000\nJWT validated"| FASTAPI_P
+    FASTAPI_P -->|"SQLAlchemy ORM"| PG_DB
+    PG_DB -->|"query results"| FASTAPI_P
+    WORKER_P -->|"SQL queries"| PG_DB
+    PG_DB -->|"query results"| WORKER_P
+    FASTAPI_P -->|"async job dispatch"| WORKER_P
+    WORKER_P -->|"job status"| FASTAPI_P
+    FASTAPI_P -->|"OIDC validation + Admin API"| KC_EXT
+    FASTAPI_P -->|"Graph API streaming URL"| OD_EXT
+    WORKER_P -->|"Graph API meetings + attendance"| TEAMS_EXT
+    WORKER_P -->|"Graph API upload/delete"| OD_EXT
+    WORKER_P -->|"REST daily pull"| ZOHO_EXT
+    WORKER_P -->|"REST daily pull"| EDB_EXT
+    </div>
+  </div>
+</div>
+
+<div class="info">
+  <h3>Component Reference</h3>
+  <table>
+    <tr><th>Component</th><th>Technology</th><th>Port</th><th>Exposed Externally?</th><th>Notes</th></tr>
+    <tr><td>Browser SPA</td><td>React 18 + Keycloak JS Adapter</td><td>—</td><td>Client-side</td><td>JWT stored in Keycloak JS Adapter memory only. Never in localStorage or cookies.</td></tr>
+    <tr><td>APISIX API Gateway</td><td>APISIX (OpenResty / Nginx)</td><td>443 (TLS)</td><td>Yes — only external port</td><td>Validates JWT signature + expiry + aud claim. Injects X-Correlation-ID. Rate limits PES routes.</td></tr>
+    <tr><td>FastAPI Application</td><td>Python 3.11+ / Uvicorn / ASGI</td><td>8000</td><td>No — internal only</td><td>Re-validates JWT. Enforces role and hierarchy-based access control. Contains all business logic.</td></tr>
+    <tr><td>Worker Service</td><td>APScheduler + FastAPI background tasks</td><td>—</td><td>No — no HTTP interface</td><td>Separate OS process. Runs all 13 scheduled jobs and handles 9 event-driven background tasks.</td></tr>
+    <tr><td>PostgreSQL</td><td>PostgreSQL 15+</td><td>5432</td><td>No — internal only</td><td>Single database, single schema. All 51 tables across 13 modules. Accessed by both FastAPI and Worker.</td></tr>
+    <tr><td>JWT tokens</td><td>In-memory (Keycloak JS Adapter)</td><td>—</td><td>Never persisted anywhere</td><td>PKCE tokens live in browser memory. M2M tokens live in PES process memory. Nothing written to DB or disk.</td></tr>
+  </table>
+
+  <h3>Availability When External Systems Are Down</h3>
+  <table>
+    <tr><th>System Down</th><th>LMS Behavior</th></tr>
+    <tr><td><strong>Keycloak</strong></td><td>Login blocked. Existing valid sessions last until token expiry (~30 min). Users mid-session can complete current operations.</td></tr>
+    <tr><td><strong>Zoho HR</strong></td><td>Continue with last-synced user data. Sync job logged as FAILED in integration_jobs. No user-facing error shown.</td></tr>
+    <tr><td><strong>Employee DB</strong></td><td>Use last-known hierarchy. Manager-scoped operations may be degraded (stale reports list). No user-facing error shown.</td></tr>
+    <tr><td><strong>Microsoft Teams</strong></td><td>Session record persists. teams_link_status = PENDING_MANUAL. Admin provides manual meeting link. Attendance entered manually after session.</td></tr>
+    <tr><td><strong>OneDrive</strong></td><td>Resource file access blocked. Training metadata (title, description, structure) still accessible. New uploads blocked. 3 auto-retries then Admin alerted.</td></tr>
+    <tr><td><strong>PES</strong></td><td>PES calls fail on PES side. No LMS impact. LMS has no dependency on PES being available. Every call that does reach LMS is still audited.</td></tr>
+  </table>
+
+  <h3>NFR Targets</h3>
+  <table>
+    <tr><th>Category</th><th>Target</th></tr>
+    <tr><td>API response time (P95)</td><td>&lt; 500ms</td></tr>
+    <tr><td>Search response time</td><td>&lt; 500ms</td></tr>
+    <tr><td>Page load (SPA)</td><td>&lt; 2 seconds</td></tr>
+    <tr><td>File upload (large)</td><td>&lt; 30 seconds</td></tr>
+    <tr><td>Availability (on-prem)</td><td>99.5% uptime target</td></tr>
+    <tr><td>Concurrent users</td><td>&lt; 1,000 (200–300 typical)</td></tr>
+    <tr><td>Audit log retention</td><td>5 years (legal hold capable)</td></tr>
+    <tr><td>Notification record retention</td><td>90 days</td></tr>
+    <tr><td>Export file retention</td><td>24 hours</td></tr>
+  </table>
+
+  <h3>Security Architecture</h3>
+  <table>
+    <tr><th>Concern</th><th>Mechanism</th></tr>
+    <tr><td>JWT storage</td><td>Memory only — Keycloak JS Adapter. Never written to localStorage, sessionStorage, cookies, or database.</td></tr>
+    <tr><td>Double JWT validation</td><td>APISIX validates signature + expiry + aud claim. FastAPI re-validates independently. Two independent checks.</td></tr>
+    <tr><td>Internal route protection</td><td>Internal routes (/api/v1/internal/*) are not registered in APISIX. Only accessible via loopback from within the same process.</td></tr>
+    <tr><td>PES isolation</td><td>PES M2M uses a separate APISIX route group with a 100 req/min rate limit and optional IP allowlist.</td></tr>
+    <tr><td>Role enforcement location</td><td>APISIX does NOT check roles. All RBAC and hierarchy-based access control is enforced in FastAPI middleware.</td></tr>
+  </table>
+</div>
+
+<div class="desc" style="margin-left:28px;margin-right:28px">
+  <strong>Source:</strong> docs/requirements/04_architecture/01_architecture.md Section 6 + 02_nfr.md &nbsp;|&nbsp;
+  <strong>Type:</strong> Flowchart TD — on-premise deployment topology &nbsp;|&nbsp;
+  Single on-premise server. APISIX is the only port exposed externally (:443). FastAPI (:8000) and PostgreSQL (:5432) are <strong>internal only</strong>. Worker runs as a <strong>separate process</strong>. JWT tokens are <strong>never persisted</strong> — memory only.
+</div>
+
+<div class="controls">
+  <button class="cb" onclick="zi()" title="Zoom in">+</button>
+  <div id="zoom-label">100%</div>
+  <button class="cb" onclick="zo()" title="Zoom out">−</button>
+  <button class="cb" onclick="zr()" title="Reset (fit to screen)" style="font-size:13px">↺</button>
+</div>
+<script>
+  mermaid.initialize({startOnLoad:true,theme:'dark',securityLevel:'loose',
+    themeVariables:{edgeLabelBackground:'#1e2530'},
+    flowchart:{useMaxWidth:false,htmlLabels:false,curve:'basis',padding:24}});
+
+  let scale=1,origW=null,origH=null;
+  function getSvg(){return document.querySelector('.mermaid svg');}
+
+  function fixEdgeLabels(){
+    const svg=getSvg();if(!svg)return;
+    svg.querySelectorAll('.edgeLabel rect').forEach(r=>{
+      r.setAttribute('fill','#1e2530');r.setAttribute('rx','3');r.setAttribute('ry','3');
+      r.style.fill='#1e2530';r.style.opacity='1';
+      r.style.stroke='#444c56';r.style.strokeWidth='0.5px';
+    });
+    svg.querySelectorAll('.edgeLabel text,.edgeLabel tspan').forEach(t=>{t.style.fill='#c9d1d9';});
+  }
+
+  function moveSubgraphLabelsToBottom(){
+    const svg=getSvg();if(!svg)return;
+    svg.querySelectorAll('g.cluster').forEach(cluster=>{
+      const rectEl=cluster.querySelector('rect');
+      const labelEl=cluster.querySelector('.cluster-label');
+      if(!rectEl||!labelEl)return;
+      let rBox,lBox;
+      try{rBox=rectEl.getBBox();lBox=labelEl.getBBox();}catch(e){return;}
+      const targetY=rBox.y+rBox.height-lBox.height-6;
+      const dy=targetY-lBox.y;
+      const t=labelEl.getAttribute('transform')||'';
+      const m=t.match(/translate\(\s*([-\d.]+)[,\s]+([-\d.]+)\s*\)/);
+      const tx=m?parseFloat(m[1]):0;
+      const ty=m?parseFloat(m[2]):0;
+      labelEl.setAttribute('transform',`translate(${tx},${ty+dy})`);
+    });
+  }
+
+  function captureOriginal(){
+    const svg=getSvg();if(!svg)return false;
+    const vb=svg.viewBox&&svg.viewBox.baseVal;
+    if(vb&&vb.width>0){origW=vb.width;origH=vb.height;}
+    else{origW=svg.getBoundingClientRect().width||1000;origH=svg.getBoundingClientRect().height||700;}
+    svg.setAttribute('width',origW);svg.setAttribute('height',origH);
+    svg.style.maxWidth='none';return true;
+  }
+
+  function fitToScreen(){
+    const svg=getSvg();if(!svg||!origW)return;
+    const headerH=(document.querySelector('header')||{}).offsetHeight||60;
+    const navH=(document.querySelector('nav')||{}).offsetHeight||40;
+    const availW=document.querySelector('.wrap').clientWidth-80;
+    const availH=window.innerHeight-headerH-navH-80;
+    scale=Math.min(availW/origW,availH/origH);
+    scale=Math.max(scale,0.1);
+    svg.setAttribute('width',origW*scale);svg.setAttribute('height',origH*scale);
+    document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%';
+  }
+
+  function applyScale(){
+    const svg=getSvg();if(!svg)return;
+    if(!origW&&!captureOriginal())return;
+    svg.setAttribute('width',origW*scale);svg.setAttribute('height',origH*scale);
+    document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%';
+  }
+
+  function zi(){scale=Math.min(scale*1.25,8);applyScale();}
+  function zo(){scale=Math.max(scale*0.8,0.1);applyScale();}
+  function zr(){fitToScreen();}
+
+  window.addEventListener('load',()=>{
+    setTimeout(()=>{
+      if(captureOriginal()){fixEdgeLabels();moveSubgraphLabelsToBottom();fitToScreen();}
+    },500);
+  });
+</script>
+</body>
+</html>

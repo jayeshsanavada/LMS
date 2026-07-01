@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-LMS — Training Resources</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .resource-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+      transition: background 0.12s;
+    }
+    .resource-row:last-child { border-bottom: none; }
+    .resource-row:hover { background: #fafafa; }
+    .drag-handle {
+      color: #d1d5db;
+      cursor: grab;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .drag-handle:hover { color: #9ca3af; }
+    .seq-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .res-type-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .res-info { flex: 1; min-width: 0; }
+    .res-title { font-weight: 600; font-size: 13.5px; color: #1e2a3b; }
+    .res-meta { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .res-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .toggle-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; cursor: pointer;
+      border: 1px solid var(--border); background: #f9fafb;
+      color: var(--text-muted); transition: all 0.15s;
+    }
+    .toggle-pill.on { background: #d1fae5; border-color: #6ee7b7; color: #065f46; }
+    .toggle-pill.lock-on { background: #dbeafe; border-color: #93c5fd; color: #1e40af; }
+
+    /* Type selector grid */
+    .type-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+    .type-card {
+      border: 2px solid var(--border); border-radius: 10px;
+      padding: 14px 10px; text-align: center; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .type-card:hover { border-color: var(--primary); background: var(--primary-light); }
+    .type-card.selected { border-color: var(--primary); background: var(--primary-light); }
+    .type-card .icon { font-size: 24px; margin-bottom: 6px; }
+    .type-card .label { font-size: 12px; font-weight: 600; color: #374151; }
+
+    /* Question builder */
+    .question-card {
+      border: 1px solid var(--border); border-radius: 10px;
+      overflow: hidden; margin-bottom: 12px;
+    }
+    .question-card-header {
+      padding: 10px 14px; background: #f9fafb;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .option-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .option-row input[type="text"] {
+      flex: 1; padding: 6px 10px; border: 1px solid var(--border);
+      border-radius: 7px; font-size: 13px;
+    }
+    .correct-toggle {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0; font-size: 14px;
+      border: 2px solid var(--border); background: #fff;
+      transition: all 0.15s;
+    }
+    .correct-toggle.active { background: #d1fae5; border-color: #34d399; color: var(--success); }
+  </style>
+</head>
+<body>
+<div class="lms-wrapper">
+
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title">Training Resources</div>
+      <div class="topbar-actions">
+        <div class="role-switcher" id="role-switcher"></div>
+        <div style="position:relative">
+          <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+            <i class="bi bi-bell"></i><span class="notif-badge">1</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown-header"><span>Notifications</span><a href="#">Mark all read</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- Breadcrumb -->
+      <div class="breadcrumb-lms">
+        <a href="admin-training.html">Training Management</a>
+        <i class="bi bi-chevron-right"></i>
+        <span>Safety Compliance 2026</span>
+        <i class="bi bi-chevron-right"></i>
+        <span>Resources</span>
+      </div>
+
+      <div class="row g-4">
+
+        <!-- Left: Resource List -->
+        <div class="col-lg-8">
+
+          <!-- Training Header -->
+          <div class="card mb-3">
+            <div class="card-body-lms" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                  <span class="badge-lms badge-healthy">Published</span>
+                  <span class="badge-lms badge-mandatory">Mandatory</span>
+                  <span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">Course</span>
+                </div>
+                <div style="font-size:16px;font-weight:700;color:#1e2a3b">Safety Compliance 2026</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px">TRN-001 · Version 2 · Last updated Jan 15, 2026</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn-ghost-lms" style="font-size:12px" onclick="showToast('Changes saved as draft. Publish to make live.')">
+                  <i class="bi bi-floppy"></i> Save Draft
+                </button>
+                <button class="btn-primary-lms" style="font-size:12px" onclick="showToast('Training republished as Version 3.')">
+                  <i class="bi bi-send"></i> Publish Changes
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resource List Card -->
+          <div class="card">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-collection me-2" style="color:var(--primary)"></i>Resources <span style="font-size:12px;font-weight:400;color:var(--text-muted)" id="res-count">(5 resources · 2h 30m total)</span></h6>
+              <button class="btn-primary-lms" style="font-size:12px;padding:6px 12px" onclick="openAddModal()">
+                <i class="bi bi-plus-lg"></i> Add Resource
+              </button>
+            </div>
+
+            <!-- Completion Rule Banner -->
+            <div style="padding:10px 16px;background:#fef9ec;border-bottom:1px solid #fde68a;display:flex;align-items:center;justify-content:space-between;font-size:12.5px">
+              <span><i class="bi bi-info-circle me-2" style="color:#92400e"></i><strong>Completion rule:</strong> All resources must be completed</span>
+              <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="showToast('Completion rule settings updated.')">Change</button>
+            </div>
+
+            <div id="resource-list">
+
+              <!-- Resource 1: Video (done) -->
+              <div class="resource-row" data-id="r1">
+                <div class="drag-handle"><i class="bi bi-grip-vertical"></i></div>
+                <div class="seq-num">1</div>
+                <div class="res-type-icon" style="background:#dbeafe"><i class="bi bi-play-circle-fill" style="color:#1e40af"></i></div>
+                <div class="res-info">
+                  <div class="res-title">Introduction to Safety Regulations</div>
+                  <div class="res-meta">
+                    <span><i class="bi bi-camera-video me-1"></i>Video</span>
+                    <span><i class="bi bi-clock me-1"></i>25 min</span>
+                    <span><i class="bi bi-cloud me-1"></i>OneDrive</span>
+                  </div>
+                </div>
+                <div class="toggle-pill on" onclick="toggleRequired(this)" title="Toggle required/optional">
+                  <i class="bi bi-check-circle-fill"></i> Required
+                </div>
+                <div class="toggle-pill" onclick="toggleLock(this)" title="Toggle sequential lock">
+                  <i class="bi bi-unlock"></i> Unlocked
+                </div>
+                <div class="res-actions">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditResource('Introduction to Safety Regulations','VIDEO')"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px;color:var(--danger);border-color:var(--danger)" onclick="deleteResource(this,'Introduction to Safety Regulations')"><i class="bi bi-trash3"></i></button>
+                </div>
+              </div>
+
+              <!-- Resource 2: PDF -->
+              <div class="resource-row" data-id="r2">
+                <div class="drag-handle"><i class="bi bi-grip-vertical"></i></div>
+                <div class="seq-num">2</div>
+                <div class="res-type-icon" style="background:#fee2e2"><i class="bi bi-file-earmark-pdf-fill" style="color:#b91c1c"></i></div>
+                <div class="res-info">
+                  <div class="res-title">Workplace Hazard Identification</div>
+                  <div class="res-meta">
+                    <span><i class="bi bi-file-earmark-pdf me-1"></i>Document</span>
+                    <span><i class="bi bi-clock me-1"></i>15 min</span>
+                    <span><i class="bi bi-cloud me-1"></i>OneDrive</span>
+                  </div>
+                </div>
+                <div class="toggle-pill on" onclick="toggleRequired(this)" title="Toggle required/optional">
+                  <i class="bi bi-check-circle-fill"></i> Required
+                </div>
+                <div class="toggle-pill lock-on" onclick="toggleLock(this)" title="Toggle sequential lock">
+                  <i class="bi bi-lock-fill"></i> Locked
+                </div>
+                <div class="res-actions">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditResource('Workplace Hazard Identification','PDF')"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px;color:var(--danger);border-color:var(--danger)" onclick="deleteResource(this,'Workplace Hazard Identification')"><i class="bi bi-trash3"></i></button>
+                </div>
+              </div>
+
+              <!-- Resource 3: Video -->
+              <div class="resource-row" data-id="r3">
+                <div class="drag-handle"><i class="bi bi-grip-vertical"></i></div>
+                <div class="seq-num">3</div>
+                <div class="res-type-icon" style="background:#dbeafe"><i class="bi bi-play-circle-fill" style="color:#1e40af"></i></div>
+                <div class="res-info">
+                  <div class="res-title">Emergency Procedures</div>
+                  <div class="res-meta">
+                    <span><i class="bi bi-camera-video me-1"></i>Video</span>
+                    <span><i class="bi bi-clock me-1"></i>30 min</span>
+                    <span><i class="bi bi-cloud me-1"></i>OneDrive</span>
+                  </div>
+                </div>
+                <div class="toggle-pill on" onclick="toggleRequired(this)">
+                  <i class="bi bi-check-circle-fill"></i> Required
+                </div>
+                <div class="toggle-pill lock-on" onclick="toggleLock(this)">
+                  <i class="bi bi-lock-fill"></i> Locked
+                </div>
+                <div class="res-actions">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditResource('Emergency Procedures','VIDEO')"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px;color:var(--danger);border-color:var(--danger)" onclick="deleteResource(this,'Emergency Procedures')"><i class="bi bi-trash3"></i></button>
+                </div>
+              </div>
+
+              <!-- Resource 4: Assessment -->
+              <div class="resource-row" data-id="r4">
+                <div class="drag-handle"><i class="bi bi-grip-vertical"></i></div>
+                <div class="seq-num">4</div>
+                <div class="res-type-icon" style="background:#fef3c7"><i class="bi bi-patch-question-fill" style="color:#b45309"></i></div>
+                <div class="res-info">
+                  <div class="res-title">Compliance Assessment Quiz</div>
+                  <div class="res-meta">
+                    <span><i class="bi bi-patch-question me-1"></i>Assessment</span>
+                    <span><i class="bi bi-clock me-1"></i>20 min</span>
+                    <span><i class="bi bi-trophy me-1"></i>Pass: 70%</span>
+                    <span><i class="bi bi-arrow-repeat me-1"></i>Max 3 attempts</span>
+                    <span style="color:var(--primary);cursor:pointer;font-weight:600" onclick="openQuestionBuilder()">
+                      <i class="bi bi-list-ul me-1"></i>5 questions
+                    </span>
+                  </div>
+                </div>
+                <div class="toggle-pill on" onclick="toggleRequired(this)">
+                  <i class="bi bi-check-circle-fill"></i> Required
+                </div>
+                <div class="toggle-pill lock-on" onclick="toggleLock(this)">
+                  <i class="bi bi-lock-fill"></i> Locked
+                </div>
+                <div class="res-actions">
+                  <button class="btn-outline-lms" style="font-size:11px;padding:3px 10px" onclick="openQuestionBuilder()">
+                    <i class="bi bi-list-ul"></i> Questions
+                  </button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditResource('Compliance Assessment Quiz','ASSESSMENT')"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px;color:var(--danger);border-color:var(--danger)" onclick="deleteResource(this,'Compliance Assessment Quiz')"><i class="bi bi-trash3"></i></button>
+                </div>
+              </div>
+
+              <!-- Resource 5: Session -->
+              <div class="resource-row" data-id="r5">
+                <div class="drag-handle"><i class="bi bi-grip-vertical"></i></div>
+                <div class="seq-num">5</div>
+                <div class="res-type-icon" style="background:#d1fae5"><i class="bi bi-camera-video-fill" style="color:#065f46"></i></div>
+                <div class="res-info">
+                  <div class="res-title">Classroom Safety Session</div>
+                  <div class="res-meta">
+                    <span><i class="bi bi-camera-video me-1"></i>Session</span>
+                    <span><i class="bi bi-calendar3 me-1"></i>Apr 8, 2026</span>
+                    <span><i class="bi bi-geo-alt me-1"></i>Conference Hall B</span>
+                    <span><i class="bi bi-microsoft-teams me-1" style="color:#5558af"></i>Hybrid</span>
+                  </div>
+                </div>
+                <div class="toggle-pill" onclick="toggleRequired(this)">
+                  <i class="bi bi-circle"></i> Optional
+                </div>
+                <div class="toggle-pill lock-on" onclick="toggleLock(this)">
+                  <i class="bi bi-lock-fill"></i> Locked
+                </div>
+                <div class="res-actions">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditResource('Classroom Safety Session','SESSION')"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px;color:var(--danger);border-color:var(--danger)" onclick="deleteResource(this,'Classroom Safety Session')"><i class="bi bi-trash3"></i></button>
+                </div>
+              </div>
+
+            </div><!-- /resource-list -->
+
+            <!-- Empty state -->
+            <div id="empty-resources" style="display:none;padding:48px;text-align:center;color:var(--text-muted)">
+              <div style="font-size:40px;margin-bottom:10px">📂</div>
+              <div style="font-size:14px;font-weight:600;color:#374151">No resources yet</div>
+              <div style="font-size:13px;margin-top:4px">Add your first resource to get started.</div>
+              <button class="btn-primary-lms" style="margin-top:16px" onclick="openAddModal()"><i class="bi bi-plus-lg"></i> Add Resource</button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right: Settings Panel -->
+        <div class="col-lg-4">
+
+          <!-- Legend -->
+          <div class="card mb-3">
+            <div class="card-header-lms"><h6><i class="bi bi-info-circle me-2" style="color:var(--primary)"></i>Resource Types</h6></div>
+            <div style="padding:12px 16px;display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;gap:10px;font-size:12.5px">
+                <div class="res-type-icon" style="background:#dbeafe;width:30px;height:30px;font-size:13px"><i class="bi bi-play-circle-fill" style="color:#1e40af"></i></div>
+                <div><strong>Video</strong> — uploaded MP4 or URL; tracked by view %</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:12.5px">
+                <div class="res-type-icon" style="background:#fee2e2;width:30px;height:30px;font-size:13px"><i class="bi bi-file-earmark-pdf-fill" style="color:#b91c1c"></i></div>
+                <div><strong>Document</strong> — PDF/PPT/DOCX; tracked by open event</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:12.5px">
+                <div class="res-type-icon" style="background:#fef3c7;width:30px;height:30px;font-size:13px"><i class="bi bi-patch-question-fill" style="color:#b45309"></i></div>
+                <div><strong>Assessment</strong> — built-in quiz; pass score required</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:12.5px">
+                <div class="res-type-icon" style="background:#ede9fe;width:30px;height:30px;font-size:13px"><i class="bi bi-link-45deg" style="color:#5b21b6"></i></div>
+                <div><strong>External Link</strong> — URL; tracked by click event</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:12.5px">
+                <div class="res-type-icon" style="background:#d1fae5;width:30px;height:30px;font-size:13px"><i class="bi bi-camera-video-fill" style="color:#065f46"></i></div>
+                <div><strong>Session</strong> — linked hybrid session; tracked by attendance</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Settings -->
+          <div class="card mb-3">
+            <div class="card-header-lms"><h6><i class="bi bi-gear me-2" style="color:var(--primary)"></i>Controls</h6></div>
+            <div style="padding:12px 16px;display:flex;flex-direction:column;gap:10px;font-size:12.5px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="toggle-pill on"><i class="bi bi-check-circle-fill"></i> Required</span>
+                <span style="color:var(--text-muted)">Counts toward completion</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="toggle-pill"><i class="bi bi-circle"></i> Optional</span>
+                <span style="color:var(--text-muted)">Does not block completion</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="toggle-pill lock-on"><i class="bi bi-lock-fill"></i> Locked</span>
+                <span style="color:var(--text-muted)">Must finish previous resource first</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="toggle-pill"><i class="bi bi-unlock"></i> Unlocked</span>
+                <span style="color:var(--text-muted)">Can be accessed in any order</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="card">
+            <div class="card-header-lms"><h6><i class="bi bi-bar-chart me-2" style="color:var(--primary)"></i>Summary</h6></div>
+            <div style="padding:0">
+              <div style="padding:9px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;font-size:13px">
+                <span style="color:var(--text-muted)">Total Resources</span><strong>5</strong>
+              </div>
+              <div style="padding:9px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;font-size:13px">
+                <span style="color:var(--text-muted)">Required</span><strong>4</strong>
+              </div>
+              <div style="padding:9px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;font-size:13px">
+                <span style="color:var(--text-muted)">Optional</span><strong>1</strong>
+              </div>
+              <div style="padding:9px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;font-size:13px">
+                <span style="color:var(--text-muted)">Total Duration</span><strong>2h 30m</strong>
+              </div>
+              <div style="padding:9px 16px;display:flex;justify-content:space-between;font-size:13px">
+                <span style="color:var(--text-muted)">Completion Rule</span><strong>All Resources</strong>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     ADD RESOURCE MODAL (Step 1: Pick Type)
+     ═══════════════════════════════════════ -->
+<div class="modal-overlay" id="add-modal" style="display:none;position:fixed;inset:0;z-index:1050;background:rgba(15,23,42,0.55)" onclick="closeModal('add-modal',event)">
+  <div style="background:#fff;border-radius:14px;max-width:520px;width:94%;box-shadow:0 20px 60px rgba(0,0,0,0.18);max-height:92vh;overflow-y:auto" onclick="event.stopPropagation()">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1">
+      <h6 style="margin:0;font-weight:700" id="add-modal-title">Add Resource — Select Type</h6>
+      <button onclick="closeModal('add-modal')" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-muted)"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <!-- Step 1: Type selection -->
+    <div id="step-type" style="padding:20px">
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Choose the type of resource to add to this course:</div>
+      <div class="type-grid">
+        <div class="type-card" onclick="selectType('VIDEO',this)">
+          <div class="icon">🎬</div>
+          <div class="label">Video</div>
+        </div>
+        <div class="type-card" onclick="selectType('DOCUMENT',this)">
+          <div class="icon">📄</div>
+          <div class="label">Document</div>
+        </div>
+        <div class="type-card" onclick="selectType('ASSESSMENT',this)">
+          <div class="icon">📝</div>
+          <div class="label">Assessment</div>
+        </div>
+        <div class="type-card" onclick="selectType('LINK',this)">
+          <div class="icon">🔗</div>
+          <div class="label">External Link</div>
+        </div>
+        <div class="type-card" onclick="selectType('SESSION',this)">
+          <div class="icon">🎥</div>
+          <div class="label">Session</div>
+        </div>
+      </div>
+      <div style="margin-top:20px;display:flex;justify-content:flex-end">
+        <button class="btn-primary-lms" id="type-next-btn" disabled onclick="goToStep2()">
+          Next <i class="bi bi-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2: Type-specific form -->
+    <div id="step-form" style="display:none;padding:20px;display:none;flex-direction:column;gap:14px">
+
+      <!-- Common fields (all types) -->
+      <div>
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Resource Title <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="form-control" style="font-size:13px" placeholder="e.g. Introduction to Safety" id="r-title">
+      </div>
+
+      <!-- Video fields -->
+      <div id="fields-VIDEO" style="display:none;flex-direction:column;gap:12px">
+        <div>
+          <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">OneDrive File</label>
+          <div style="border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;color:var(--text-muted);font-size:13px" onclick="showToast('OneDrive file picker would open here.')">
+            <i class="bi bi-cloud-upload" style="font-size:24px;display:block;margin-bottom:6px"></i>
+            Click to select file from OneDrive<br>
+            <span style="font-size:11px">MP4, MOV — max 2GB</span>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Duration (minutes)</label>
+          <input type="number" class="form-control" style="font-size:13px" placeholder="e.g. 25" min="1">
+        </div>
+      </div>
+
+      <!-- Document fields -->
+      <div id="fields-DOCUMENT" style="display:none;flex-direction:column;gap:12px">
+        <div>
+          <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">OneDrive File</label>
+          <div style="border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;color:var(--text-muted);font-size:13px" onclick="showToast('OneDrive file picker would open here.')">
+            <i class="bi bi-cloud-upload" style="font-size:24px;display:block;margin-bottom:6px"></i>
+            Click to select file from OneDrive<br>
+            <span style="font-size:11px">PDF, PPTX, DOCX</span>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Estimated Read Time (minutes)</label>
+          <input type="number" class="form-control" style="font-size:13px" placeholder="e.g. 15" min="1">
+        </div>
+      </div>
+
+      <!-- Assessment fields -->
+      <div id="fields-ASSESSMENT" style="display:none;flex-direction:column;gap:12px">
+        <div style="background:#fef9ec;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#92400e">
+          <i class="bi bi-info-circle me-2"></i>Create the assessment settings here. Add questions after saving.
+        </div>
+        <div class="row g-2">
+          <div class="col-6">
+            <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:4px">Passing Score %</label>
+            <input type="number" class="form-control" style="font-size:13px" value="70" min="1" max="100">
+          </div>
+          <div class="col-6">
+            <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:4px">Max Attempts</label>
+            <input type="number" class="form-control" style="font-size:13px" value="3" min="0" placeholder="0 = unlimited">
+          </div>
+        </div>
+        <div class="row g-2">
+          <div class="col-6">
+            <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:4px">Time Limit (min)</label>
+            <input type="number" class="form-control" style="font-size:13px" value="20" min="0" placeholder="0 = no limit">
+          </div>
+          <div class="col-6">
+            <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:4px">Duration (minutes)</label>
+            <input type="number" class="form-control" style="font-size:13px" value="20" min="1">
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer">
+            <input type="checkbox" checked> Randomize question order
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer">
+            <input type="checkbox" checked> Randomize option order
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer">
+            <input type="checkbox" checked> Show correct answers after passing
+          </label>
+        </div>
+      </div>
+
+      <!-- External Link fields -->
+      <div id="fields-LINK" style="display:none;flex-direction:column;gap:12px">
+        <div>
+          <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">URL <span style="color:var(--danger)">*</span></label>
+          <input type="url" class="form-control" style="font-size:13px" placeholder="https://...">
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);background:#f9fafb;border-radius:8px;padding:8px 12px">
+          <i class="bi bi-info-circle me-1"></i>Marked complete when the employee clicks the link. No further tracking.
+        </div>
+      </div>
+
+      <!-- Session fields -->
+      <div id="fields-SESSION" style="display:none;flex-direction:column;gap:12px">
+        <div>
+          <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Link to Session <span style="color:var(--danger)">*</span></label>
+          <select class="form-select" style="font-size:13px">
+            <option value="">Select a scheduled session...</option>
+            <option>SES-2026-042 · Safety Compliance Workshop · Apr 8</option>
+            <option>SES-2026-043 · Leadership Masterclass · Apr 20</option>
+            <option>SES-2026-044 · Data Privacy Session · May 5</option>
+          </select>
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px">Only scheduled (upcoming) sessions shown. Attendance is auto-tracked via Teams.</div>
+        </div>
+      </div>
+
+      <!-- Common: Required + Lock toggles -->
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer">
+          <input type="checkbox" id="r-required" checked> Mark as Required
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer">
+          <input type="checkbox" id="r-locked"> Sequential Lock
+        </label>
+      </div>
+
+    </div><!-- /step-form -->
+
+    <div id="modal-footer" style="display:none;padding:12px 20px 18px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border)">
+      <button class="btn-ghost-lms" onclick="backToStep1()"><i class="bi bi-arrow-left me-1"></i> Back</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn-ghost-lms" onclick="closeModal('add-modal')">Cancel</button>
+        <button class="btn-primary-lms" onclick="saveResource()"><i class="bi bi-check-lg"></i> Save Resource</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     QUESTION BUILDER MODAL
+     ═══════════════════════════════════════ -->
+<div class="modal-overlay" id="question-modal" style="display:none;position:fixed;inset:0;z-index:1050;background:rgba(15,23,42,0.55)" onclick="closeModal('question-modal',event)">
+  <div style="background:#fff;border-radius:14px;max-width:640px;width:94%;box-shadow:0 20px 60px rgba(0,0,0,0.18);max-height:92vh;overflow-y:auto" onclick="event.stopPropagation()">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1">
+      <div>
+        <h6 style="margin:0;font-weight:700">Assessment Questions</h6>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Compliance Assessment Quiz · Pass: 70% · Max 3 attempts · 20 min</div>
+      </div>
+      <button onclick="closeModal('question-modal')" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-muted)"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <div style="padding:20px" id="questions-container">
+
+      <!-- Question 1 -->
+      <div class="question-card">
+        <div class="question-card-header">
+          <span style="font-size:12.5px;font-weight:600">Q1 · MCQ</span>
+          <div style="display:flex;gap:6px">
+            <select style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:6px">
+              <option selected>MCQ</option><option>MSAQ</option><option>True/False</option>
+            </select>
+            <button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px;color:var(--danger);border-color:var(--danger)" onclick="this.closest('.question-card').remove()"><i class="bi bi-trash3"></i></button>
+          </div>
+        </div>
+        <div style="padding:12px 14px">
+          <input type="text" class="form-control" style="font-size:13px;margin-bottom:10px" value="What is the first step during a fire emergency?">
+          <div style="font-size:11.5px;color:var(--text-muted);margin-bottom:8px">Options — click <span style="background:#d1fae5;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:#065f46">✓</span> to mark correct</div>
+          <div class="option-row">
+            <div class="correct-toggle active" onclick="toggleCorrect(this)"><i class="bi bi-check"></i></div>
+            <input type="text" value="Activate the nearest fire alarm">
+            <button onclick="this.closest('.option-row').remove()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px"><i class="bi bi-x"></i></button>
+          </div>
+          <div class="option-row">
+            <div class="correct-toggle" onclick="toggleCorrect(this)"><i class="bi bi-check"></i></div>
+            <input type="text" value="Call a colleague first">
+            <button onclick="this.closest('.option-row').remove()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px"><i class="bi bi-x"></i></button>
+          </div>
+          <div class="option-row">
+            <div class="correct-toggle" onclick="toggleCorrect(this)"><i class="bi bi-check"></i></div>
+            <input type="text" value="Gather your belongings">
+            <button onclick="this.closest('.option-row').remove()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px"><i class="bi bi-x"></i></button>
+          </div>
+          <div class="option-row">
+            <div class="correct-toggle" onclick="toggleCorrect(this)"><i class="bi bi-check"></i></div>
+            <input type="text" value="Wait for announcement">
+            <button onclick="this.closest('.option-row').remove()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px"><i class="bi bi-x"></i></button>
+          </div>
+          <button style="font-size:11.5px;background:none;border:none;color:var(--primary);cursor:pointer;padding:0;margin-top:4px" onclick="addOption(this)">
+            <i class="bi bi-plus-circle me-1"></i>Add option
+          </button>
+        </div>
+      </div>
+
+      <!-- Question 2 -->
+      <div class="question-card">
+        <div class="question-card-header">
+          <span style="font-size:12.5px;font-weight:600">Q2 · True/False</span>
+          <div style="display:flex;gap:6px">
+            <select style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:6px">
+              <option>MCQ</option><option>MSAQ</option><option selected>True/False</option>
+            </select>
+            <button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px;color:var(--danger);border-color:var(--danger)" onclick="this.closest('.question-card').remove()"><i class="bi bi-trash3"></i></button>
+          </div>
+        </div>
+        <div style="padding:12px 14px">
+          <input type="text" class="form-control" style="font-size:13px;margin-bottom:10px" value="Employees are allowed to use elevators during a fire evacuation.">
+          <div class="option-row">
+            <div class="correct-toggle" onclick="toggleCorrect(this)"><i class="bi bi-check"></i></div>
+            <input type="text" value="True" readonly style="background:#f9fafb">
+          </div>
+          <div class="option-row">
+            <div class="correct-toggle active" onclick="toggleCorrect(this)"><i class="bi bi-check"></i></div>
+            <input type="text" value="False" readonly style="background:#f9fafb">
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;bottom:0;background:#fff">
+      <button class="btn-outline-lms" style="font-size:12px" onclick="addQuestion()">
+        <i class="bi bi-plus-lg"></i> Add Question
+      </button>
+      <div style="display:flex;gap:8px">
+        <button class="btn-ghost-lms" onclick="closeModal('question-modal')">Cancel</button>
+        <button class="btn-primary-lms" onclick="saveQuestions()"><i class="bi bi-check-lg"></i> Save Questions</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:24px;right:24px;background:#1e2a3b;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:none;z-index:9999;align-items:center;gap:8px">
+  <i class="bi bi-check-circle-fill" style="color:var(--success)"></i>
+  <span id="toast-msg"></span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  if (!localStorage.getItem('lms_role') || localStorage.getItem('lms_role') === 'employee' || localStorage.getItem('lms_role') === 'manager') {
+    localStorage.setItem('lms_role', 'admin');
+  }
+</script>
+<script src="js/nav.js"></script>
+<script>
+  let selectedType = null;
+
+  /* ── Type toggles ── */
+  function toggleRequired(el) {
+    const isOn = el.classList.contains('on');
+    el.classList.toggle('on', !isOn);
+    el.innerHTML = isOn
+      ? '<i class="bi bi-circle"></i> Optional'
+      : '<i class="bi bi-check-circle-fill"></i> Required';
+    showToast('Resource updated.');
+  }
+
+  function toggleLock(el) {
+    const isOn = el.classList.contains('lock-on');
+    el.classList.toggle('lock-on', !isOn);
+    el.innerHTML = isOn
+      ? '<i class="bi bi-unlock"></i> Unlocked'
+      : '<i class="bi bi-lock-fill"></i> Locked';
+    showToast('Sequential lock ' + (isOn ? 'removed.' : 'enabled.'));
+  }
+
+  /* ── Add Resource Modal ── */
+  function openAddModal() {
+    selectedType = null;
+    document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('type-next-btn').disabled = true;
+    document.getElementById('step-type').style.display = 'block';
+    document.getElementById('step-form').style.display = 'none';
+    document.getElementById('modal-footer').style.display = 'none';
+    document.getElementById('add-modal-title').textContent = 'Add Resource — Select Type';
+    const modal = document.getElementById('add-modal');
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function selectType(type, card) {
+    document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedType = type;
+    document.getElementById('type-next-btn').disabled = false;
+  }
+
+  function goToStep2() {
+    if (!selectedType) return;
+    document.getElementById('step-type').style.display = 'none';
+    // show all field sections hidden first
+    ['VIDEO','DOCUMENT','ASSESSMENT','LINK','SESSION'].forEach(t => {
+      document.getElementById('fields-' + t).style.display = 'none';
+    });
+    document.getElementById('fields-' + selectedType).style.display = 'flex';
+    document.getElementById('step-form').style.display = 'flex';
+    document.getElementById('modal-footer').style.display = 'flex';
+    document.getElementById('add-modal-title').textContent = 'Add Resource — ' + selectedType.charAt(0) + selectedType.slice(1).toLowerCase();
+    document.getElementById('r-title').value = '';
+  }
+
+  function backToStep1() {
+    document.getElementById('step-form').style.display = 'none';
+    document.getElementById('modal-footer').style.display = 'none';
+    document.getElementById('step-type').style.display = 'block';
+    document.getElementById('add-modal-title').textContent = 'Add Resource — Select Type';
+  }
+
+  function saveResource() {
+    const title = document.getElementById('r-title').value.trim() || 'New Resource';
+    closeModal('add-modal');
+    showToast('"' + title + '" added. Save draft or publish to apply changes.');
+  }
+
+  function openEditResource(name, type) {
+    // Normalize document sub-types
+    if (['PDF','DOC','DOCX','WORD','POWERPOINT','PPT'].includes(type.toUpperCase())) type = 'DOCUMENT';
+    selectedType = type;
+    // Pre-select type card
+    document.querySelectorAll('.type-card').forEach(c => {
+      c.classList.toggle('selected', c.dataset.type === type);
+    });
+    // Jump to form step directly
+    document.getElementById('step-type').style.display = 'none';
+    ['VIDEO','DOCUMENT','ASSESSMENT','LINK','SESSION'].forEach(t => {
+      document.getElementById('fields-' + t).style.display = 'none';
+    });
+    const fieldsEl = document.getElementById('fields-' + type);
+    if (fieldsEl) fieldsEl.style.display = 'flex';
+    document.getElementById('step-form').style.display = 'flex';
+    document.getElementById('modal-footer').style.display = 'flex';
+    document.getElementById('add-modal-title').textContent = 'Edit Resource — ' + type.charAt(0) + type.slice(1).toLowerCase();
+    const titleInput = document.getElementById('r-title');
+    if (titleInput) titleInput.value = name;
+    const modal = document.getElementById('add-modal');
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function deleteResource(btn, name) {
+    const row = btn.closest('.resource-row');
+    row.style.opacity = '0.4';
+    row.style.transition = 'opacity 0.3s';
+    setTimeout(() => { row.remove(); }, 300);
+    showToast('"' + name + '" removed. Publish to apply changes.');
+  }
+
+  /* ── Question Builder ── */
+  function openQuestionBuilder() {
+    const modal = document.getElementById('question-modal');
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function addQuestion() {
+    const container = document.getElementById('questions-container');
+    const count = container.querySelectorAll('.question-card').length + 1;
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.innerHTML = `
+      <div class="question-card-header">
+        <span style="font-size:12.5px;font-weight:600">Q${count} · MCQ</span>
+        <div style="display:flex;gap:6px">
+          <select style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:6px">
+            <option selected>MCQ</option><option>MSAQ</option><option>True/False</option>
+          </select>
+          <button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px;color:var(--danger);border-color:var(--danger)" onclick="this.closest('.question-card').remove()"><i class="bi bi-trash3"></i></button>
+        </div>
+      </div>
+      <div style="padding:12px 14px">
+        <input type="text" class="form-control" style="font-size:13px;margin-bottom:10px" placeholder="Enter question text...">
+        <div style="font-size:11.5px;color:var(--text-muted);margin-bottom:8px">Options — click ✓ to mark correct</div>
+        <div class="option-row">
+          <div class="correct-toggle" onclick="toggleCorrect(this)"><i class="bi bi-check"></i></div>
+          <input type="text" placeholder="Option A">
+          <button onclick="this.closest('.option-row').remove()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px"><i class="bi bi-x"></i></button>
+        </div>
+        <div class="option-row">
+          <div class="correct-toggle" onclick="toggleCorrect(this)"><i class="bi bi-check"></i></div>
+          <input type="text" placeholder="Option B">
+          <button onclick="this.closest('.option-row').remove()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px"><i class="bi bi-x"></i></button>
+        </div>
+        <button style="font-size:11.5px;background:none;border:none;color:var(--primary);cursor:pointer;padding:0;margin-top:4px" onclick="addOption(this)">
+          <i class="bi bi-plus-circle me-1"></i>Add option
+        </button>
+      </div>`;
+    container.appendChild(card);
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function addOption(btn) {
+    const container = btn.closest('div[style*="padding"]');
+    const row = document.createElement('div');
+    row.className = 'option-row';
+    row.innerHTML = `
+      <div class="correct-toggle" onclick="toggleCorrect(this)"><i class="bi bi-check"></i></div>
+      <input type="text" placeholder="New option">
+      <button onclick="this.closest('.option-row').remove()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px"><i class="bi bi-x"></i></button>`;
+    container.insertBefore(row, btn);
+  }
+
+  function toggleCorrect(el) {
+    el.classList.toggle('active');
+  }
+
+  function saveQuestions() {
+    closeModal('question-modal');
+    showToast('Questions saved. Publish training to apply changes.');
+  }
+
+  /* ── Helpers ── */
+  function closeModal(id, e) {
+    const el = document.getElementById(id);
+    if (!e || e.target === el) {
+      el.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.style.display = 'flex';
+    setTimeout(() => t.style.display = 'none', 3000);
+  }
+</script>
+</body>
+</html>

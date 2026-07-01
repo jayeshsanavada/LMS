@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-LMS — Training Management</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="lms-wrapper">
+
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title">Training Management</div>
+      <div class="topbar-actions">
+        <div class="role-switcher" id="role-switcher"></div>
+        <button class="btn-outline-lms" style="font-size:12px;padding:6px 12px" onclick="showToast('Exporting training list...')">
+          <i class="bi bi-download"></i> Export
+        </button>
+        <button class="btn-primary-lms" style="font-size:12px;padding:6px 12px" onclick="openCreateModal()">
+          <i class="bi bi-plus-lg"></i> New Training
+        </button>
+        <div style="position:relative">
+          <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+            <i class="bi bi-bell"></i><span class="notif-badge">1</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown-header"><span>Notifications</span><a href="#">Mark all read</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- Stat Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-mortarboard"></i></div>
+            <div class="stat-info"><div class="stat-value">43</div><div class="stat-label">Published</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon amber"><i class="bi bi-pencil-square"></i></div>
+            <div class="stat-info"><div class="stat-value">6</div><div class="stat-label">Draft</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon red"><i class="bi bi-exclamation-circle"></i></div>
+            <div class="stat-info"><div class="stat-value">8</div><div class="stat-label">Mandatory</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-check2-all"></i></div>
+            <div class="stat-info"><div class="stat-value">1,248</div><div class="stat-label">Completions (Month)</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs-lms">
+        <a class="tab-item active" onclick="switchTab('all',this)">All <span class="tab-count">49</span></a>
+        <a class="tab-item" onclick="switchTab('published',this)">Published <span class="tab-count">43</span></a>
+        <a class="tab-item" onclick="switchTab('draft',this)">Draft <span class="tab-count">6</span></a>
+        <a class="tab-item" onclick="switchTab('mandatory',this)">Mandatory <span class="tab-count">8</span></a>
+        <a class="tab-item" onclick="switchTab('archived',this)">Archived <span class="tab-count">3</span></a>
+        <a class="tab-item" onclick="switchTab('cert-approvals',this)" style="display:flex;align-items:center;gap:5px">
+          <i class="bi bi-award" style="color:#f59e0b"></i> Cert Approvals
+          <span class="tab-count" style="background:#ef4444;color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;font-weight:700">7</span>
+        </a>
+      </div>
+
+      <!-- Cert Approvals Panel -->
+      <div id="panel-cert-approvals" style="display:none">
+        <div class="card">
+          <div class="card-header-lms">
+            <div style="font-size:13.5px;font-weight:600"><i class="bi bi-award me-2" style="color:#f59e0b"></i>Pending Certificate Approvals</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <div class="search-bar" style="width:200px"><i class="bi bi-search"></i><input type="text" placeholder="Search employee or training..."></div>
+              <button class="btn-ghost-lms" style="font-size:12px;padding:5px 10px" onclick="showToast('Exporting approvals list...')"><i class="bi bi-download"></i> Export</button>
+            </div>
+          </div>
+          <div style="padding:10px 16px;background:#fffbeb;border-bottom:1px solid #fde68a;font-size:12.5px;color:#92400e;display:flex;align-items:center;gap:8px">
+            <i class="bi bi-info-circle-fill" style="color:#f59e0b"></i>
+            Employees complete training and earn a certificate, but can only download it after you approve. Reject with a reason to ask the employee to re-attempt.
+          </div>
+          <table class="lms-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Training</th>
+                <th>Completed</th>
+                <th>Score</th>
+                <th>Cert ID</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="cert-approvals-tbody">
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="avatar" style="width:28px;height:28px;font-size:11px">RS</div>
+                    <div><div style="font-size:13px;font-weight:600">Rahul Sharma</div><div style="font-size:11px;color:var(--text-muted)">Engineering</div></div>
+                  </div>
+                </td>
+                <td><div style="font-size:13px;font-weight:500">Safety Compliance 2026</div><div style="font-size:11px;color:var(--text-muted)">TRN-001 · Mandatory</div></td>
+                <td style="font-size:12.5px">Apr 7, 2026</td>
+                <td><span style="color:var(--success);font-weight:600;font-size:13px">88%</span></td>
+                <td style="font-size:11.5px;font-family:monospace;color:var(--text-muted)">CERT-2026-00312</td>
+                <td>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn-ghost-lms" style="font-size:11px;padding:3px 10px;color:var(--success);border-color:var(--success)" onclick="approveCert(this,'Rahul Sharma','Safety Compliance 2026')"><i class="bi bi-check-lg"></i> Approve</button>
+                    <button class="btn-ghost-lms" style="font-size:11px;padding:3px 10px;color:var(--danger);border-color:var(--danger)" onclick="openRejectCert(this,'Rahul Sharma','Safety Compliance 2026')"><i class="bi bi-x-lg"></i> Reject</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="avatar" style="width:28px;height:28px;font-size:11px;background:#8b5cf6;color:#fff">AN</div>
+                    <div><div style="font-size:13px;font-weight:600">Arjun Nair</div><div style="font-size:11px;color:var(--text-muted)">Engineering</div></div>
+                  </div>
+                </td>
+                <td><div style="font-size:13px;font-weight:500">Code of Conduct</div><div style="font-size:11px;color:var(--text-muted)">TRN-002 · Mandatory</div></td>
+                <td style="font-size:12.5px">Apr 6, 2026</td>
+                <td><span style="color:var(--success);font-weight:600;font-size:13px">91%</span></td>
+                <td style="font-size:11.5px;font-family:monospace;color:var(--text-muted)">CERT-2026-00311</td>
+                <td>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn-ghost-lms" style="font-size:11px;padding:3px 10px;color:var(--success);border-color:var(--success)" onclick="approveCert(this,'Arjun Nair','Code of Conduct')"><i class="bi bi-check-lg"></i> Approve</button>
+                    <button class="btn-ghost-lms" style="font-size:11px;padding:3px 10px;color:var(--danger);border-color:var(--danger)" onclick="openRejectCert(this,'Arjun Nair','Code of Conduct')"><i class="bi bi-x-lg"></i> Reject</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="avatar" style="width:28px;height:28px;font-size:11px;background:var(--warning);color:#fff">NR</div>
+                    <div><div style="font-size:13px;font-weight:600">Nisha Rao</div><div style="font-size:11px;color:var(--text-muted)">Operations</div></div>
+                  </div>
+                </td>
+                <td><div style="font-size:13px;font-weight:500">Anti-Harassment Policy</div><div style="font-size:11px;color:var(--text-muted)">TRN-005 · Mandatory</div></td>
+                <td style="font-size:12.5px">Apr 5, 2026</td>
+                <td><span style="color:var(--warning);font-weight:600;font-size:13px">74%</span></td>
+                <td style="font-size:11.5px;font-family:monospace;color:var(--text-muted)">CERT-2026-00309</td>
+                <td>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn-ghost-lms" style="font-size:11px;padding:3px 10px;color:var(--success);border-color:var(--success)" onclick="approveCert(this,'Nisha Rao','Anti-Harassment Policy')"><i class="bi bi-check-lg"></i> Approve</button>
+                    <button class="btn-ghost-lms" style="font-size:11px;padding:3px 10px;color:var(--danger);border-color:var(--danger)" onclick="openRejectCert(this,'Nisha Rao','Anti-Harassment Policy')"><i class="bi bi-x-lg"></i> Reject</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="avatar" style="width:28px;height:28px;font-size:11px;background:#0891b2;color:#fff">VR</div>
+                    <div><div style="font-size:13px;font-weight:600">Vikram Reddy</div><div style="font-size:11px;color:var(--text-muted)">Finance</div></div>
+                  </div>
+                </td>
+                <td><div style="font-size:13px;font-weight:500">Data Privacy Training</div><div style="font-size:11px;color:var(--text-muted)">TRN-003 · Mandatory</div></td>
+                <td style="font-size:12.5px">Apr 4, 2026</td>
+                <td><span style="color:var(--success);font-weight:600;font-size:13px">83%</span></td>
+                <td style="font-size:11.5px;font-family:monospace;color:var(--text-muted)">CERT-2026-00305</td>
+                <td>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn-ghost-lms" style="font-size:11px;padding:3px 10px;color:var(--success);border-color:var(--success)" onclick="approveCert(this,'Vikram Reddy','Data Privacy Training')"><i class="bi bi-check-lg"></i> Approve</button>
+                    <button class="btn-ghost-lms" style="font-size:11px;padding:3px 10px;color:var(--danger);border-color:var(--danger)" onclick="openRejectCert(this,'Vikram Reddy','Data Privacy Training')"><i class="bi bi-x-lg"></i> Reject</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Table Card -->
+      <div class="card">
+        <div class="card-header-lms">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <div class="search-bar" style="width:240px">
+              <i class="bi bi-search"></i>
+              <input type="text" placeholder="Search trainings..." oninput="filterTrainings(this.value)">
+            </div>
+            <select class="form-select" style="width:140px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:8px" onchange="filterByType(this.value)">
+              <option value="">All Types</option>
+              <option>Course</option>
+              <option>Learning Path</option>
+              <option>Curriculum</option>
+            </select>
+            <select class="form-select" style="width:140px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:8px" onchange="filterByCategory(this.value)">
+              <option value="">All Categories</option>
+              <option>Compliance</option>
+              <option>Safety</option>
+              <option>Soft Skills</option>
+              <option>Technical</option>
+              <option>Leadership</option>
+            </select>
+          </div>
+          <span style="font-size:12.5px;color:var(--text-muted)">Showing 9 of 49</span>
+        </div>
+
+        <!-- Bulk Actions Bar (shown when rows are checked) -->
+        <div id="bulk-bar" style="display:none;padding:10px 16px;background:#eef2ff;border-bottom:1px solid #c7d2fe;align-items:center;justify-content:space-between;gap:8px">
+          <span style="font-size:13px;font-weight:600;color:#3730a3"><span id="bulk-count">0</span> selected</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn-ghost-lms" style="font-size:12px" onclick="openBulkAssignModal()"><i class="bi bi-person-plus me-1"></i>Assign Selected</button>
+            <button class="btn-ghost-lms" style="font-size:12px" onclick="bulkArchive()"><i class="bi bi-archive me-1"></i>Archive Selected</button>
+            <button class="btn-ghost-lms" style="font-size:12px" onclick="showToast('Exporting selected trainings...')"><i class="bi bi-download me-1"></i>Export Selected</button>
+          </div>
+        </div>
+
+        <table class="lms-table" id="training-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" onclick="toggleAll(this)"></th>
+              <th>Training</th>
+              <th>Type</th>
+              <th>Category</th>
+              <th>Assigned</th>
+              <th>Completion</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="training-tbody">
+
+            <tr data-status="published" data-type="Course" data-category="Safety">
+              <td><input type="checkbox" class="row-check" onchange="updateBulkBar()"></td>
+              <td>
+                <div style="font-weight:600;font-size:13px">Safety Compliance 2026</div>
+                <div style="font-size:11px;color:var(--text-muted)">TRN-001 · <span style="color:var(--danger)">Mandatory</span> · Updated Jan 15, 2026</div>
+              </td>
+              <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">Course</span></td>
+              <td style="font-size:12.5px">Safety</td>
+              <td style="font-size:13px">247</td>
+              <td>
+                <div style="display:flex;flex-direction:column;gap:3px">
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <div class="progress-lms" style="width:70px"><div class="bar green" style="width:84%"></div></div>
+                    <span style="font-size:12px;color:var(--success)">84%</span>
+                  </div>
+                  <a href="#" style="font-size:11px;color:var(--primary)" onclick="openChangeCompletion('Safety Compliance 2026');return false">Change rule</a>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-healthy">Published</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditTraining('Safety Compliance 2026')" title="Edit"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openResources('Safety Compliance 2026')" title="Manage Resources"><i class="bi bi-collection"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAssignmentsModal('Safety Compliance 2026')" title="Assignments"><i class="bi bi-people"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAssignModal('Safety Compliance 2026')" title="Assign"><i class="bi bi-person-plus"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px;color:var(--text-muted)" onclick="archiveTraining(this,'Safety Compliance 2026')" title="Archive"><i class="bi bi-archive"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-status="published" data-type="Course" data-category="Compliance">
+              <td><input type="checkbox" class="row-check" onchange="updateBulkBar()"></td>
+              <td>
+                <div style="font-weight:600;font-size:13px">Data Privacy Training</div>
+                <div style="font-size:11px;color:var(--text-muted)">TRN-003 · <span style="color:var(--danger)">Mandatory</span> · Updated Feb 1, 2026</div>
+              </td>
+              <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">Course</span></td>
+              <td style="font-size:12.5px">Compliance</td>
+              <td style="font-size:13px">247</td>
+              <td>
+                <div style="display:flex;flex-direction:column;gap:3px">
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <div class="progress-lms" style="width:70px"><div class="bar amber" style="width:61%"></div></div>
+                    <span style="font-size:12px;color:var(--warning)">61%</span>
+                  </div>
+                  <a href="#" style="font-size:11px;color:var(--primary)" onclick="openChangeCompletion('Data Privacy Training');return false">Change rule</a>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-healthy">Published</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditTraining('Data Privacy Training')" title="Edit"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openResources('Data Privacy Training')" title="Manage Resources"><i class="bi bi-collection"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAssignmentsModal('Data Privacy Training')" title="Assignments"><i class="bi bi-people"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAssignModal('Data Privacy Training')" title="Assign"><i class="bi bi-person-plus"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px;color:var(--text-muted)" onclick="archiveTraining(this,'Data Privacy Training')" title="Archive"><i class="bi bi-archive"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-status="published" data-type="Course" data-category="Compliance">
+              <td><input type="checkbox" class="row-check" onchange="updateBulkBar()"></td>
+              <td>
+                <div style="font-weight:600;font-size:13px">Anti-Harassment Policy</div>
+                <div style="font-size:11px;color:var(--text-muted)">TRN-005 · <span style="color:var(--danger)">Mandatory</span> · Updated Mar 1, 2026</div>
+              </td>
+              <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">Course</span></td>
+              <td style="font-size:12.5px">Compliance</td>
+              <td style="font-size:13px">247</td>
+              <td>
+                <div style="display:flex;flex-direction:column;gap:3px">
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <div class="progress-lms" style="width:70px"><div class="bar red" style="width:45%"></div></div>
+                    <span style="font-size:12px;color:var(--danger)">45%</span>
+                  </div>
+                  <a href="#" style="font-size:11px;color:var(--primary)" onclick="openChangeCompletion('Anti-Harassment Policy');return false">Change rule</a>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-healthy">Published</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditTraining('Anti-Harassment Policy')" title="Edit"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openResources('Anti-Harassment Policy')" title="Manage Resources"><i class="bi bi-collection"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAssignmentsModal('Anti-Harassment Policy')" title="Assignments"><i class="bi bi-people"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAssignModal('Anti-Harassment Policy')" title="Assign"><i class="bi bi-person-plus"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px;color:var(--text-muted)" onclick="archiveTraining(this,'Anti-Harassment Policy')" title="Archive"><i class="bi bi-archive"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-status="published" data-type="Course" data-category="Compliance">
+              <td><input type="checkbox" class="row-check" onchange="updateBulkBar()"></td>
+              <td>
+                <div style="font-weight:600;font-size:13px">Code of Conduct</div>
+                <div style="font-size:11px;color:var(--text-muted)">TRN-002 · <span style="color:var(--danger)">Mandatory</span> · Updated Dec 1, 2025</div>
+              </td>
+              <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">Course</span></td>
+              <td style="font-size:12.5px">Compliance</td>
+              <td style="font-size:13px">247</td>
+              <td>
+                <div style="display:flex;flex-direction:column;gap:3px">
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <div class="progress-lms" style="width:70px"><div class="bar green" style="width:92%"></div></div>
+                    <span style="font-size:12px;color:var(--success)">92%</span>
+                  </div>
+                  <a href="#" style="font-size:11px;color:var(--primary)" onclick="openChangeCompletion('Code of Conduct');return false">Change rule</a>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-healthy">Published</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditTraining('Code of Conduct')" title="Edit"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openResources('Code of Conduct')" title="Manage Resources"><i class="bi bi-collection"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAssignmentsModal('Code of Conduct')" title="Assignments"><i class="bi bi-people"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAssignModal('Code of Conduct')" title="Assign"><i class="bi bi-person-plus"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px;color:var(--text-muted)" onclick="archiveTraining(this,'Code of Conduct')" title="Archive"><i class="bi bi-archive"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-status="published" data-type="Course" data-category="Leadership">
+              <td><input type="checkbox" class="row-check" onchange="updateBulkBar()"></td>
+              <td>
+                <div style="font-weight:600;font-size:13px">Leadership Essentials</div>
+                <div style="font-size:11px;color:var(--text-muted)">TRN-006 · Optional · Updated Jan 5, 2026</div>
+              </td>
+              <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">Course</span></td>
+              <td style="font-size:12.5px">Leadership</td>
+              <td style="font-size:13px">38</td>
+              <td>
+                <div style="display:flex;flex-direction:column;gap:3px">
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <div class="progress-lms" style="width:70px"><div class="bar green" style="width:76%"></div></div>
+                    <span style="font-size:12px">76%</span>
+                  </div>
+                  <a href="#" style="font-size:11px;color:var(--primary)" onclick="openChangeCompletion('Leadership Essentials');return false">Change rule</a>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-healthy">Published</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditTraining('Leadership Essentials')" title="Edit"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openResources('Leadership Essentials')" title="Manage Resources"><i class="bi bi-collection"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAssignmentsModal('Leadership Essentials')" title="Assignments"><i class="bi bi-people"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAssignModal('Leadership Essentials')" title="Assign"><i class="bi bi-person-plus"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px;color:var(--text-muted)" onclick="archiveTraining(this,'Leadership Essentials')" title="Archive"><i class="bi bi-archive"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-status="published" data-type="Learning Path" data-category="Technical">
+              <td><input type="checkbox" class="row-check" onchange="updateBulkBar()"></td>
+              <td>
+                <div style="font-weight:600;font-size:13px">React Advanced Patterns</div>
+                <div style="font-size:11px;color:var(--text-muted)">TRN-007 · Optional · Updated Feb 20, 2026</div>
+              </td>
+              <td><span class="badge-lms badge-draft" style="background:#dbeafe;color:#1e40af">Learning Path</span></td>
+              <td style="font-size:12.5px">Technical</td>
+              <td style="font-size:13px">22</td>
+              <td>
+                <div style="display:flex;flex-direction:column;gap:3px">
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <div class="progress-lms" style="width:70px"><div class="bar amber" style="width:54%"></div></div>
+                    <span style="font-size:12px">54%</span>
+                  </div>
+                  <a href="#" style="font-size:11px;color:var(--primary)" onclick="openChangeCompletion('React Advanced Patterns');return false">Change rule</a>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-healthy">Published</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditTraining('React Advanced Patterns')" title="Edit"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAssignmentsModal('React Advanced Patterns')" title="Assignments"><i class="bi bi-people"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAssignModal('React Advanced Patterns')" title="Assign"><i class="bi bi-person-plus"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px;color:var(--text-muted)" onclick="archiveTraining(this,'React Advanced Patterns')" title="Archive"><i class="bi bi-archive"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-status="draft" data-type="Course" data-category="Soft Skills">
+              <td><input type="checkbox" class="row-check" onchange="updateBulkBar()"></td>
+              <td>
+                <div style="font-weight:600;font-size:13px">Communication Skills</div>
+                <div style="font-size:11px;color:var(--text-muted)">TRN-010 · Optional · Created Mar 28, 2026</div>
+              </td>
+              <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">Course</span></td>
+              <td style="font-size:12.5px">Soft Skills</td>
+              <td style="font-size:13px;color:var(--text-muted)">—</td>
+              <td style="font-size:12px;color:var(--text-muted)">Not published</td>
+              <td><span class="badge-lms badge-pending">Draft</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditTraining('Communication Skills')" title="Edit"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-primary-lms" style="font-size:11px;padding:3px 10px" onclick="publishTraining(this,'Communication Skills')">
+                    <i class="bi bi-send"></i> Publish
+                  </button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px;color:var(--text-muted)" onclick="archiveTraining(this,'Communication Skills')" title="Archive"><i class="bi bi-archive"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-status="draft" data-type="Curriculum" data-category="Technical">
+              <td><input type="checkbox" class="row-check" onchange="updateBulkBar()"></td>
+              <td>
+                <div style="font-weight:600;font-size:13px">Agile & Scrum Master Certification</div>
+                <div style="font-size:11px;color:var(--text-muted)">TRN-022 · Optional · Created Apr 1, 2026</div>
+              </td>
+              <td><span class="badge-lms badge-draft" style="background:#ede9fe;color:#5b21b6">Curriculum</span></td>
+              <td style="font-size:12.5px">Technical</td>
+              <td style="font-size:13px;color:var(--text-muted)">—</td>
+              <td style="font-size:12px;color:var(--text-muted)">Not published</td>
+              <td><span class="badge-lms badge-pending">Draft</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditTraining('Agile & Scrum Master Certification')" title="Edit"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-primary-lms" style="font-size:11px;padding:3px 10px" onclick="publishTraining(this,'Agile & Scrum Master Certification')">
+                    <i class="bi bi-send"></i> Publish
+                  </button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px;color:var(--text-muted)" onclick="archiveTraining(this,'Agile & Scrum Master Certification')" title="Archive"><i class="bi bi-archive"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-status="archived" data-type="Course" data-category="Compliance">
+              <td><input type="checkbox" class="row-check" onchange="updateBulkBar()"></td>
+              <td>
+                <div style="font-weight:600;font-size:13px;color:var(--text-muted)">Data Handling Basics 2025</div>
+                <div style="font-size:11px;color:var(--text-muted)">TRN-004 · Mandatory · Archived Jan 1, 2026</div>
+              </td>
+              <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#9ca3af">Course</span></td>
+              <td style="font-size:12.5px;color:var(--text-muted)">Compliance</td>
+              <td style="font-size:13px;color:var(--text-muted)">—</td>
+              <td style="font-size:12px;color:var(--text-muted)">Archived</td>
+              <td><span class="badge-lms badge-degraded">Archived</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="showToast('Data Handling Basics 2025 restored to draft.')">
+                    <i class="bi bi-arrow-counterclockwise"></i> Restore
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);font-size:13px;color:var(--text-muted)">
+          <span>Showing 9 of 49 trainings</span>
+          <div style="display:flex;gap:4px">
+            <button class="btn-ghost-lms" style="padding:4px 10px;font-size:12px" disabled><i class="bi bi-chevron-left"></i></button>
+            <button class="btn-ghost-lms" style="padding:4px 10px;font-size:12px;background:var(--primary);color:#fff;border-color:var(--primary)">1</button>
+            <button class="btn-ghost-lms" style="padding:4px 10px;font-size:12px">2</button>
+            <button class="btn-ghost-lms" style="padding:4px 10px;font-size:12px">3</button>
+            <button class="btn-ghost-lms" style="padding:4px 10px;font-size:12px"><i class="bi bi-chevron-right"></i></button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Training Wizard Overlay (4-step) -->
+<div id="training-wizard" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:1050;overflow-y:auto">
+  <div style="min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px">
+    <div style="background:#fff;border-radius:16px;width:100%;max-width:720px;box-shadow:0 24px 64px rgba(0,0,0,0.22)">
+
+      <!-- Wizard Header -->
+      <div style="padding:18px 24px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h6 style="margin:0;font-weight:700;font-size:16px" id="wizard-title">New Training</h6>
+          <button onclick="closeWizard()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-muted)"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <!-- Step Indicator -->
+        <div style="display:flex;gap:0;margin-bottom:-1px">
+          <div class="wiz-step active" id="wstep-1" onclick="goStep(1)" style="cursor:pointer;padding:8px 16px;font-size:12.5px;font-weight:600;border-bottom:2px solid var(--primary);color:var(--primary);display:flex;align-items:center;gap:6px">
+            <span style="width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;font-size:10px;display:inline-flex;align-items:center;justify-content:center">1</span> Basic Info
+          </div>
+          <div class="wiz-step" id="wstep-2" onclick="goStep(2)" style="cursor:pointer;padding:8px 16px;font-size:12.5px;font-weight:600;border-bottom:2px solid transparent;color:var(--text-muted);display:flex;align-items:center;gap:6px">
+            <span style="width:20px;height:20px;border-radius:50%;background:#e5e7eb;color:#6b7280;font-size:10px;display:inline-flex;align-items:center;justify-content:center" id="wstep-2-num">2</span> <span id="wstep-2-label">Resources</span>
+          </div>
+          <div class="wiz-step" id="wstep-3" onclick="goStep(3)" style="cursor:pointer;padding:8px 16px;font-size:12.5px;font-weight:600;border-bottom:2px solid transparent;color:var(--text-muted);display:flex;align-items:center;gap:6px">
+            <span style="width:20px;height:20px;border-radius:50%;background:#e5e7eb;color:#6b7280;font-size:10px;display:inline-flex;align-items:center;justify-content:center" id="wstep-3-num">3</span> Settings
+          </div>
+          <div class="wiz-step" id="wstep-4" onclick="goStep(4)" style="cursor:pointer;padding:8px 16px;font-size:12.5px;font-weight:600;border-bottom:2px solid transparent;color:var(--text-muted);display:flex;align-items:center;gap:6px">
+            <span style="width:20px;height:20px;border-radius:50%;background:#e5e7eb;color:#6b7280;font-size:10px;display:inline-flex;align-items:center;justify-content:center" id="wstep-4-num">4</span> Review
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: Basic Info -->
+      <div id="wiz-panel-1" style="padding:24px;display:flex;flex-direction:column;gap:16px">
+        <div class="row g-3">
+          <div class="col-8">
+            <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Title <span style="color:var(--danger)">*</span></label>
+            <input type="text" class="form-control" style="font-size:13px" placeholder="e.g. Safety Compliance 2026" id="t-title">
+          </div>
+          <div class="col-4">
+            <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Training Code</label>
+            <input type="text" class="form-control" style="font-size:13px;background:#f9fafb" value="TRN-050" readonly id="t-code">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Description</label>
+          <textarea rows="3" class="form-control" style="font-size:13px;resize:none" placeholder="Brief description of this training..." id="t-desc"></textarea>
+        </div>
+        <div class="row g-3">
+          <div class="col-6">
+            <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Type <span style="color:var(--danger)">*</span></label>
+            <select class="form-select" style="font-size:13px" id="t-type" onchange="handleTypeChange(this.value)">
+              <option value="">Select...</option>
+              <option>Course</option>
+              <option>Learning Path</option>
+              <option>Curriculum</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Category <span style="color:var(--danger)">*</span></label>
+            <select class="form-select" style="font-size:13px" id="t-category" onchange="handleCategorySelect(this)">
+              <option value="">Select...</option>
+              <option>Compliance</option>
+              <option>Safety</option>
+              <option>Soft Skills</option>
+              <option>Technical</option>
+              <option>Leadership</option>
+              <option value="__new__">+ Add new category…</option>
+            </select>
+            <div id="new-category-row" style="display:none;margin-top:6px;display:none">
+              <div style="display:flex;gap:6px">
+                <input type="text" class="form-control" style="font-size:13px" placeholder="New category name..." id="new-category-input">
+                <button class="btn-primary-lms" style="font-size:12px;white-space:nowrap" onclick="confirmNewCategory()">Add</button>
+                <button class="btn-ghost-lms" style="font-size:12px" onclick="cancelNewCategory()">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row g-3">
+          <div class="col-6">
+            <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Difficulty Level</label>
+            <select class="form-select" style="font-size:13px" id="t-level">
+              <option>Beginner</option>
+              <option selected>Intermediate</option>
+              <option>Advanced</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Estimated Duration</label>
+            <input type="text" class="form-control" style="font-size:13px" placeholder="e.g. 2h 30m" id="t-duration">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Tags</label>
+          <input type="text" class="form-control" style="font-size:13px" placeholder="Enter tags separated by comma — e.g. onboarding, compliance, safety" id="t-tags">
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Separate tags with commas</div>
+        </div>
+      </div>
+
+      <!-- Step 2: Resources / Structure -->
+      <div id="wiz-panel-2" style="padding:24px;display:none">
+
+        <!-- ===== COURSE panel (default) ===== -->
+        <div id="wiz-course-panel">
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Add learning resources to this course. You can skip this step and add resources later using "Manage Resources" from the training list.</div>
+
+        <!-- Resource list (inline) -->
+        <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px" id="wiz-resource-list">
+          <div style="padding:10px 14px;background:#f8fafc;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text-muted)" id="res-count-label">RESOURCES (3)</div>
+          <!-- Resource row 1 -->
+          <div class="res-row" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
+            <span style="color:#d1d5db;cursor:grab;font-size:16px">⠿</span>
+            <span style="width:28px;height:28px;border-radius:8px;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-play-circle-fill" style="color:#3b82f6;font-size:13px"></i></span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600">Introduction Video</div>
+              <div style="font-size:11px;color:var(--text-muted)">VIDEO · 15 min · Required</div>
+            </div>
+            <button class="btn-ghost-lms" style="font-size:11px;padding:2px 8px" onclick="showToast('Edit resource')"><i class="bi bi-pencil"></i></button>
+            <button class="btn-ghost-lms" style="font-size:11px;padding:2px 8px;color:var(--danger)" onclick="removeResource(this)"><i class="bi bi-trash"></i></button>
+          </div>
+          <!-- Resource row 2 -->
+          <div class="res-row" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
+            <span style="color:#d1d5db;cursor:grab;font-size:16px">⠿</span>
+            <span style="width:28px;height:28px;border-radius:8px;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-file-earmark-text-fill" style="color:#16a34a;font-size:13px"></i></span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600">Policy Document</div>
+              <div style="font-size:11px;color:var(--text-muted)">DOCUMENT · PDF · Required</div>
+            </div>
+            <button class="btn-ghost-lms" style="font-size:11px;padding:2px 8px" onclick="showToast('Edit resource')"><i class="bi bi-pencil"></i></button>
+            <button class="btn-ghost-lms" style="font-size:11px;padding:2px 8px;color:var(--danger)" onclick="removeResource(this)"><i class="bi bi-trash"></i></button>
+          </div>
+          <!-- Resource row 3 -->
+          <div class="res-row" style="display:flex;align-items:center;gap:10px;padding:10px 14px">
+            <span style="color:#d1d5db;cursor:grab;font-size:16px">⠿</span>
+            <span style="width:28px;height:28px;border-radius:8px;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-patch-question-fill" style="color:#d97706;font-size:13px"></i></span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600">Knowledge Check</div>
+              <div style="font-size:11px;color:var(--text-muted)">ASSESSMENT · 10 questions · Required</div>
+            </div>
+            <button class="btn-ghost-lms" style="font-size:11px;padding:2px 8px" onclick="showToast('Edit resource')"><i class="bi bi-pencil"></i></button>
+            <button class="btn-ghost-lms" style="font-size:11px;padding:2px 8px;color:var(--danger)" onclick="removeResource(this)"><i class="bi bi-trash"></i></button>
+          </div>
+        </div>
+
+        <!-- Add Resource Buttons -->
+        <div style="margin-bottom:12px">
+          <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px">ADD RESOURCE</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap" id="res-type-btns">
+            <button id="rbtn-VIDEO"      class="btn-ghost-lms" style="font-size:12px" onclick="showResForm('VIDEO')"><i class="bi bi-play-circle me-1"></i>Video</button>
+            <button id="rbtn-DOCUMENT"   class="btn-ghost-lms" style="font-size:12px" onclick="showResForm('DOCUMENT')"><i class="bi bi-file-earmark-text me-1"></i>Document</button>
+            <button id="rbtn-ASSESSMENT" class="btn-ghost-lms" style="font-size:12px" onclick="showResForm('ASSESSMENT')"><i class="bi bi-patch-question me-1"></i>Assessment</button>
+            <button id="rbtn-LINK"       class="btn-ghost-lms" style="font-size:12px" onclick="showResForm('LINK')"><i class="bi bi-link-45deg me-1"></i>Link</button>
+            <button id="rbtn-SESSION"    class="btn-ghost-lms" style="font-size:12px" onclick="showResForm('SESSION')"><i class="bi bi-camera-video me-1"></i>Session</button>
+          </div>
+        </div>
+
+
+        <div style="margin-top:12px;padding:10px 14px;background:#f0f9ff;border-radius:8px;font-size:12px;color:#0369a1;display:flex;align-items:center;gap:8px">
+          <i class="bi bi-info-circle"></i>
+          <span>You can also manage resources later — click the <strong>Manage Resources</strong> <i class="bi bi-collection"></i> button on the training list.</span>
+        </div>
+        </div><!-- /wiz-course-panel -->
+
+        <!-- ===== LEARNING PATH structure panel ===== -->
+        <div id="wiz-lp-panel" style="display:none">
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Add courses to this Learning Path. Define the order and whether each course is required for completion.</div>
+
+          <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px">
+            <div style="padding:10px 14px;background:#f8fafc;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text-muted)">COURSES IN THIS LEARNING PATH <span id="lp-course-count">(2)</span></div>
+            <div id="lp-course-list">
+              <div class="lp-course-row" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
+                <span style="color:#d1d5db;cursor:grab;font-size:16px">⠿</span>
+                <span style="width:28px;height:28px;border-radius:8px;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-mortarboard-fill" style="color:#3b82f6;font-size:13px"></i></span>
+                <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">Safety Compliance 2026</div><div style="font-size:11px;color:var(--text-muted)">TRN-001 · Course · 3 resources</div></div>
+                <select class="form-select" style="font-size:12px;width:120px;padding:3px 8px"><option>Required</option><option>Optional</option></select>
+                <button class="btn-ghost-lms" style="font-size:11px;padding:2px 8px;color:var(--danger)" onclick="removeLPCourse(this)"><i class="bi bi-trash"></i></button>
+              </div>
+              <div class="lp-course-row" style="display:flex;align-items:center;gap:10px;padding:10px 14px">
+                <span style="color:#d1d5db;cursor:grab;font-size:16px">⠿</span>
+                <span style="width:28px;height:28px;border-radius:8px;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-mortarboard-fill" style="color:#16a34a;font-size:13px"></i></span>
+                <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">Code of Conduct</div><div style="font-size:11px;color:var(--text-muted)">TRN-002 · Course · 2 resources</div></div>
+                <select class="form-select" style="font-size:12px;width:120px;padding:3px 8px"><option>Required</option><option>Optional</option></select>
+                <button class="btn-ghost-lms" style="font-size:11px;padding:2px 8px;color:var(--danger)" onclick="removeLPCourse(this)"><i class="bi bi-trash"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Course row -->
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+            <select class="form-select" style="font-size:13px;flex:1" id="lp-add-course-select">
+              <option value="">Select a course to add...</option>
+              <option>Anti-Harassment Policy</option>
+              <option>Data Privacy Training</option>
+              <option>Leadership Essentials</option>
+              <option>React Advanced Patterns</option>
+              <option>AWS Cloud Practitioner</option>
+            </select>
+            <button class="btn-primary-lms" style="font-size:12px;padding:7px 14px;white-space:nowrap" onclick="addLPCourse()"><i class="bi bi-plus-lg me-1"></i>Add Course</button>
+          </div>
+          <div style="padding:10px 14px;background:#f0f9ff;border-radius:8px;font-size:12px;color:#0369a1;display:flex;align-items:center;gap:8px">
+            <i class="bi bi-info-circle"></i>
+            <span>Only <strong>Published Courses</strong> can be added to a Learning Path. The order above determines the learning sequence.</span>
+          </div>
+        </div><!-- /wiz-lp-panel -->
+
+        <!-- ===== CURRICULUM structure panel ===== -->
+        <div id="wiz-curriculum-panel" style="display:none">
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Add Learning Paths to this Curriculum. Each Learning Path brings its own set of courses.</div>
+
+          <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px">
+            <div style="padding:10px 14px;background:#f8fafc;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text-muted)">LEARNING PATHS IN THIS CURRICULUM <span id="curr-lp-count">(1)</span></div>
+            <div id="curr-lp-list">
+              <div class="curr-lp-row">
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
+                  <span style="color:#d1d5db;cursor:grab;font-size:16px">⠿</span>
+                  <span style="width:28px;height:28px;border-radius:8px;background:#ede9fe;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-diagram-3-fill" style="color:#7c3aed;font-size:13px"></i></span>
+                  <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">Compliance Fundamentals</div><div style="font-size:11px;color:var(--text-muted)">LP-003 · Learning Path · 2 courses</div></div>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:2px 8px" onclick="this.closest('.curr-lp-row').querySelector('.lp-courses-expand').classList.toggle('d-none')"><i class="bi bi-chevron-down"></i></button>
+                  <select class="form-select" style="font-size:12px;width:120px;padding:3px 8px"><option>Required</option><option>Optional</option></select>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:2px 8px;color:var(--danger)" onclick="removeCurrLP(this)"><i class="bi bi-trash"></i></button>
+                </div>
+                <div class="lp-courses-expand d-none" style="padding:8px 14px 8px 56px;background:#fafafa;border-bottom:1px solid var(--border)">
+                  <div style="font-size:11.5px;color:var(--text-muted);margin-bottom:4px">Courses in this Learning Path:</div>
+                  <div style="display:flex;flex-direction:column;gap:4px">
+                    <div style="font-size:12px;display:flex;align-items:center;gap:6px"><i class="bi bi-mortarboard" style="color:#3b82f6"></i> Safety Compliance 2026 <span style="font-size:11px;color:var(--text-muted)">· Required</span></div>
+                    <div style="font-size:12px;display:flex;align-items:center;gap:6px"><i class="bi bi-mortarboard" style="color:#3b82f6"></i> Code of Conduct <span style="font-size:11px;color:var(--text-muted)">· Required</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Learning Path row -->
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+            <select class="form-select" style="font-size:13px;flex:1" id="curr-add-lp-select">
+              <option value="">Select a learning path to add...</option>
+              <option>Onboarding Track</option>
+              <option>Technical Excellence</option>
+              <option>Leadership Development</option>
+              <option>Data & Privacy Essentials</option>
+            </select>
+            <button class="btn-primary-lms" style="font-size:12px;padding:7px 14px;white-space:nowrap" onclick="addCurrLP()"><i class="bi bi-plus-lg me-1"></i>Add Learning Path</button>
+          </div>
+          <div style="padding:10px 14px;background:#f0f9ff;border-radius:8px;font-size:12px;color:#0369a1;display:flex;align-items:center;gap:8px">
+            <i class="bi bi-info-circle"></i>
+            <span>Only <strong>Published Learning Paths</strong> can be added to a Curriculum.</span>
+          </div>
+        </div><!-- /wiz-curriculum-panel -->
+
+      </div>
+
+      <!-- Step 3: Settings -->
+      <div id="wiz-panel-3" style="padding:24px;display:none;flex-direction:column;gap:16px">
+
+        <!-- Mandatory toggle -->
+        <div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-size:13px;font-weight:600">Mandatory Training</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Enables assignment rules. Mandatory trainings are auto-assigned to matching employees.</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;cursor:pointer">
+            <input type="checkbox" id="t-mandatory" style="opacity:0;width:0;height:0" onchange="toggleMandatory(this)">
+            <span id="mandatory-slider" style="position:absolute;inset:0;background:#d1d5db;border-radius:24px;transition:0.2s"></span>
+            <span id="mandatory-knob" style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.2s"></span>
+          </label>
+        </div>
+
+        <!-- Assignment Rule (shown when mandatory is ON) -->
+        <div id="mandatory-rule-section" style="display:none;background:#fef9ec;border:1px solid #fde68a;border-radius:10px;padding:16px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px;color:#92400e"><i class="bi bi-lightning-fill me-2"></i>Auto-Assignment Rule</div>
+          <div style="font-size:12px;color:#b45309;margin-bottom:12px">This rule runs automatically — new employees matching the scope below are assigned this training on account creation. The rule is visible and auditable in <strong>Settings → Mandatory Rules</strong>.</div>
+          <div class="row g-3">
+            <div class="col-6">
+              <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Assign To</label>
+              <select class="form-select" style="font-size:12.5px" id="t-assign-scope" onchange="toggleProbationFilters(this.value)">
+                <option value="GLOBAL">All Employees</option>
+                <option value="DEPARTMENT">Specific Department</option>
+                <option value="DESIGNATION">Specific Designation</option>
+                <option value="CAPABILITY">Specific Capability</option>
+                <option value="PROJECT">Specific Project</option>
+                <option value="EMPLOYMENT_PHASE">New Joiners (Probation)</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Due in (days from joining)</label>
+              <input type="number" class="form-control" style="font-size:12.5px" value="30" min="1" id="t-due-days">
+            </div>
+          </div>
+
+          <!-- Scope value (shown for non-global, non-probation scopes) -->
+          <div id="scope-value-row" style="margin-top:10px;display:none">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px" id="scope-value-label">Value</label>
+            <input type="text" class="form-control" style="font-size:12.5px" placeholder="Enter value..." id="t-scope-value">
+          </div>
+
+          <!-- Probation filters (shown when EMPLOYMENT_PHASE) -->
+          <div id="probation-filters" style="display:none;margin-top:10px;padding:12px;background:#fffbeb;border-radius:8px;border:1px solid #fde68a">
+            <div style="font-size:12px;font-weight:600;color:#92400e;margin-bottom:10px"><i class="bi bi-person-badge me-1"></i>Probation Targeting Filters <span style="font-weight:400;color:#b45309">(optional — leave blank to match all)</span></div>
+            <div class="row g-3">
+              <div class="col-6">
+                <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Limit to Designation</label>
+                <select class="form-select" style="font-size:12.5px" id="t-prob-designation">
+                  <option value="">All Designations</option>
+                  <option>Software Engineer</option>
+                  <option>Senior Software Engineer</option>
+                  <option>QA Engineer</option>
+                  <option>Business Analyst</option>
+                  <option>Project Manager</option>
+                  <option>Designer</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Limit to Capability</label>
+                <select class="form-select" style="font-size:12.5px" id="t-prob-capability">
+                  <option value="">All Capabilities</option>
+                  <option>Java Backend</option>
+                  <option>React Frontend</option>
+                  <option>QA Automation</option>
+                  <option>DevOps</option>
+                  <option>Data Engineering</option>
+                  <option>Product Management</option>
+                </select>
+              </div>
+            </div>
+            <!-- Probation gate toggle -->
+            <div style="margin-top:10px;display:flex;align-items:center;gap:10px">
+              <label style="position:relative;display:inline-block;width:38px;height:20px;flex-shrink:0;cursor:pointer">
+                <input type="checkbox" id="t-probation-gate" checked style="opacity:0;width:0;height:0" onchange="toggleSwitch(this,'probgate-slider','probgate-knob')">
+                <span id="probgate-slider" style="position:absolute;inset:0;background:var(--primary);border-radius:20px;transition:0.2s"></span>
+                <span id="probgate-knob" style="position:absolute;height:14px;width:14px;left:23px;bottom:3px;background:#fff;border-radius:50%;transition:0.2s"></span>
+              </label>
+              <div>
+                <div style="font-size:12.5px;font-weight:600">Required for probation completion</div>
+                <div style="font-size:11.5px;color:var(--text-muted)">Employee cannot be confirmed from probation until this training is completed</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Completion Mode -->
+        <div>
+          <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Completion Mode</label>
+          <select class="form-select" style="font-size:13px" id="t-completion-mode">
+            <option value="ALL_RESOURCES">All resources must be completed</option>
+            <option value="MIXED">Minimum resources (configurable %)</option>
+            <option value="ADMIN_OVERRIDE">Admin override only</option>
+          </select>
+        </div>
+
+        <!-- Prerequisites -->
+        <div>
+          <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Prerequisites</label>
+          <div style="border:1px solid var(--border);border-radius:8px;padding:8px 12px;min-height:44px;display:flex;flex-wrap:wrap;gap:6px;align-items:center" id="prereq-pills">
+            <span style="display:inline-flex;align-items:center;gap:4px;background:#e0e7ff;color:#3730a3;font-size:12px;padding:3px 10px;border-radius:20px;font-weight:500">
+              Code of Conduct <button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#3730a3;padding:0;font-size:11px;margin-left:2px">×</button>
+            </span>
+            <input type="text" placeholder="Search trainings..." style="border:none;outline:none;font-size:12.5px;color:var(--text-muted);flex:1;min-width:120px" onfocus="showToast('In production: searchable prerequisite selector')">
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Employees must complete these trainings before accessing this one</div>
+        </div>
+
+        <!-- Requires Approval toggle -->
+        <div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-size:13px;font-weight:600">Require Manager Approval for Self-Enrollment</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px">When enabled, employees who self-enroll must get manager approval before access is granted.</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;cursor:pointer">
+            <input type="checkbox" id="t-requires-approval" style="opacity:0;width:0;height:0" onchange="toggleSwitch(this,'approval-slider','approval-knob')">
+            <span id="approval-slider" style="position:absolute;inset:0;background:#d1d5db;border-radius:24px;transition:0.2s"></span>
+            <span id="approval-knob" style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.2s"></span>
+          </label>
+        </div>
+
+        <!-- Certificate toggle -->
+        <div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-size:13px;font-weight:600">Issue Certificate on Completion</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px">A certificate is generated on completion. Employee can download only after admin approves it from the Cert Approvals tab.</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;cursor:pointer">
+            <input type="checkbox" id="t-cert" checked style="opacity:0;width:0;height:0" onchange="toggleSwitch(this,'cert-slider','cert-knob')">
+            <span id="cert-slider" style="position:absolute;inset:0;background:var(--primary);border-radius:24px;transition:0.2s"></span>
+            <span id="cert-knob" style="position:absolute;height:18px;width:18px;left:23px;bottom:3px;background:#fff;border-radius:50%;transition:0.2s"></span>
+          </label>
+        </div>
+
+        <!-- Probation Gateway toggle (visible only when mandatory) -->
+        <div id="probation-gateway-row" style="display:none;border:1px solid #c7d2fe;border-radius:10px;padding:14px 16px;align-items:center;justify-content:space-between;gap:12px;background:#eef2ff">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:#3730a3">Available as Probation Training</div>
+            <div style="font-size:12px;color:#4338ca;margin-top:2px">Marks this training as eligible to be targeted by probation assignment rules.</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;cursor:pointer">
+            <input type="checkbox" id="t-probation-gateway" style="opacity:0;width:0;height:0" onchange="toggleSwitch(this,'probgw-slider','probgw-knob')">
+            <span id="probgw-slider" style="position:absolute;inset:0;background:#d1d5db;border-radius:24px;transition:0.2s"></span>
+            <span id="probgw-knob" style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.2s"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Step 4: Review & Publish -->
+      <div id="wiz-panel-4" style="padding:24px;display:none">
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Review your training details before publishing. You can go back to any step to make changes.</div>
+
+        <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden">
+          <div style="padding:12px 16px;background:#f8fafc;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text-muted)">BASIC INFO</div>
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;gap:8px;font-size:13px"><span style="width:130px;color:var(--text-muted);flex-shrink:0">Title</span><span id="rev-title" style="font-weight:600">—</span></div>
+            <div style="display:flex;gap:8px;font-size:13px"><span style="width:130px;color:var(--text-muted);flex-shrink:0">Code</span><span id="rev-code" style="font-weight:600">TRN-050</span></div>
+            <div style="display:flex;gap:8px;font-size:13px"><span style="width:130px;color:var(--text-muted);flex-shrink:0">Type</span><span id="rev-type">—</span></div>
+            <div style="display:flex;gap:8px;font-size:13px"><span style="width:130px;color:var(--text-muted);flex-shrink:0">Category</span><span id="rev-category">—</span></div>
+            <div style="display:flex;gap:8px;font-size:13px"><span style="width:130px;color:var(--text-muted);flex-shrink:0">Difficulty</span><span id="rev-level">Intermediate</span></div>
+          </div>
+          <div style="padding:12px 16px;background:#f8fafc;border-top:1px solid var(--border);border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text-muted)">RESOURCES</div>
+          <div style="padding:14px 16px;font-size:13px" id="rev-resources">3 resources added</div>
+          <div style="padding:12px 16px;background:#f8fafc;border-top:1px solid var(--border);border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text-muted)">SETTINGS</div>
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;gap:8px;font-size:13px"><span style="width:130px;color:var(--text-muted);flex-shrink:0">Mandatory</span><span id="rev-mandatory">No</span></div>
+            <div style="display:flex;gap:8px;font-size:13px" id="rev-scope-row"><span style="width:130px;color:var(--text-muted);flex-shrink:0">Assign To</span><span id="rev-scope">—</span></div>
+            <div style="display:flex;gap:8px;font-size:13px"><span style="width:130px;color:var(--text-muted);flex-shrink:0">Completion Mode</span><span id="rev-completion">All resources</span></div>
+            <div style="display:flex;gap:8px;font-size:13px"><span style="width:130px;color:var(--text-muted);flex-shrink:0">Certificate</span><span id="rev-cert">Yes</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;gap:8px">
+          <button class="btn-ghost-lms" id="wiz-back-btn" onclick="wizBack()" style="display:none"><i class="bi bi-arrow-left me-1"></i>Back</button>
+          <button class="btn-ghost-lms" onclick="saveTraining('draft')"><i class="bi bi-floppy me-1"></i>Save as Draft</button>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-ghost-lms" onclick="closeWizard()">Cancel</button>
+          <button class="btn-primary-lms" id="wiz-next-btn" onclick="wizNext()"><i class="bi bi-arrow-right me-1"></i>Next: Resources</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Training Modal -->
+<div class="modal-overlay" id="assign-modal" style="display:none;position:fixed;inset:0;z-index:1050;background:rgba(15,23,42,0.55)" onclick="closeAssignModal(event)">
+  <div style="background:#fff;border-radius:14px;max-width:480px;width:94%;box-shadow:0 20px 60px rgba(0,0,0,0.18);max-height:90vh;overflow-y:auto" onclick="event.stopPropagation()">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <h6 style="margin:0;font-weight:700">Assign Training</h6>
+      <button onclick="closeAssignModal()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-muted)"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+      <div style="font-size:13px;color:var(--text-muted)">Assigning: <strong id="assign-training-name"></strong></div>
+      <div>
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Assign To <span style="color:var(--danger)">*</span></label>
+        <select class="form-select" style="font-size:13px" id="assign-scope-select" onchange="toggleAssignScope(this.value)">
+          <option value="ALL">All Employees (247)</option>
+          <option value="DEPARTMENT">Specific Department</option>
+          <option value="EMPLOYMENT_PHASE">New Joiners (Probation)</option>
+          <option value="USERS">Specific Users</option>
+        </select>
+      </div>
+
+      <!-- Department multi-select (shown when DEPARTMENT) -->
+      <div id="assign-dept-panel" style="display:none">
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Select Departments</label>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox"> Engineering (48)</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox"> HR (12)</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox"> Finance (18)</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox"> Operations (35)</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox"> Sales (29)</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox"> Marketing (22)</label>
+        </div>
+      </div>
+
+      <!-- Users search + tag (shown when USERS) -->
+      <div id="assign-users-panel" style="display:none">
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Search & Select Users</label>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px" id="assign-user-pills">
+            <span style="display:inline-flex;align-items:center;gap:4px;background:#dbeafe;color:#1e40af;font-size:12px;padding:3px 9px;border-radius:20px">Priya Shah <button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#1e40af;font-size:11px;padding:0;margin-left:2px">×</button></span>
+          </div>
+          <input type="text" class="form-control" style="font-size:12.5px;border:1px solid var(--border)" placeholder="Type name to search employees..." onfocus="showToast('In production: employee search typeahead')">
+        </div>
+      </div>
+
+      <!-- Probation panel (shown when EMPLOYMENT_PHASE) -->
+      <div id="assign-probation-panel" style="display:none">
+        <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#92400e;margin-bottom:10px">
+          <i class="bi bi-info-circle" style="margin-right:5px"></i>
+          Assigns to all employees currently in probation period. <strong>This is a one-time assignment</strong> — for ongoing auto-assignment of new joiners, configure a Mandatory Rule in Settings.
+        </div>
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:6px">Filter by (optional)</label>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div>
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px">Designation</label>
+            <select class="form-select" style="font-size:13px">
+              <option value="">All Designations</option>
+              <option>Software Engineer</option>
+              <option>Senior Engineer</option>
+              <option>Analyst</option>
+              <option>Associate</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px">Capability</label>
+            <select class="form-select" style="font-size:13px">
+              <option value="">All Capabilities</option>
+              <option>Engineering</option>
+              <option>Design</option>
+              <option>Product</option>
+              <option>Operations</option>
+            </select>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);padding-top:2px">
+            <i class="bi bi-people"></i> 14 employees currently in probation match these filters
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Due Date <span style="color:var(--danger)">*</span></label>
+        <input type="date" class="form-control" style="font-size:13px">
+      </div>
+      <div>
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Note <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+        <textarea rows="2" class="form-control" style="font-size:13px;resize:none" placeholder="Optional message to employees..."></textarea>
+      </div>
+    </div>
+    <div style="padding:12px 20px 18px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--border)">
+      <button class="btn-ghost-lms" onclick="closeAssignModal()">Cancel</button>
+      <button class="btn-primary-lms" onclick="confirmAssign()"><i class="bi bi-person-plus"></i> Assign</button>
+    </div>
+  </div>
+</div>
+
+<!-- Assignments Viewer Modal -->
+<div id="assignments-modal" style="display:none;position:fixed;inset:0;z-index:1050;background:rgba(15,23,42,0.55);align-items:center;justify-content:center" onclick="closeAssignmentsModal(event)">
+  <div style="background:#fff;border-radius:14px;max-width:640px;width:95%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.2)" onclick="event.stopPropagation()">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+      <div>
+        <h6 style="margin:0;font-weight:700">Assignments</h6>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px" id="asgn-modal-subtitle"></div>
+      </div>
+      <button onclick="closeAssignmentsModal()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-muted)"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-shrink:0">
+      <input type="text" class="form-control" style="font-size:13px;max-width:220px" placeholder="Search employees..." oninput="filterAssignmentsTable(this.value)">
+      <select class="form-select" style="font-size:13px;width:150px" onchange="filterAssignmentsStatus(this.value)">
+        <option value="">All Statuses</option>
+        <option value="Completed">Completed</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Not Started">Not Started</option>
+        <option value="Overdue">Overdue</option>
+      </select>
+    </div>
+    <div style="overflow-y:auto;flex:1">
+      <table class="lms-table" id="asgn-table">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Department</th>
+            <th>Status</th>
+            <th>Progress</th>
+            <th>Due Date</th>
+          </tr>
+        </thead>
+        <tbody id="asgn-tbody">
+          <tr>
+            <td><div style="font-size:13px;font-weight:600">Priya Shah</div><div style="font-size:11px;color:var(--text-muted)">EMP-001</div></td>
+            <td style="font-size:13px">Engineering</td>
+            <td><span class="badge-lms badge-healthy">Completed</span></td>
+            <td><div style="display:flex;align-items:center;gap:5px"><div class="progress-lms" style="width:60px"><div class="bar green" style="width:100%"></div></div><span style="font-size:11px">100%</span></div></td>
+            <td style="font-size:12.5px">Mar 31, 2026</td>
+          </tr>
+          <tr>
+            <td><div style="font-size:13px;font-weight:600">Arjun Mehta</div><div style="font-size:11px;color:var(--text-muted)">EMP-002</div></td>
+            <td style="font-size:13px">HR</td>
+            <td><span class="badge-lms badge-pending" style="background:#fef9c3;color:#854d0e">In Progress</span></td>
+            <td><div style="display:flex;align-items:center;gap:5px"><div class="progress-lms" style="width:60px"><div class="bar amber" style="width:60%"></div></div><span style="font-size:11px">60%</span></div></td>
+            <td style="font-size:12.5px">Apr 15, 2026</td>
+          </tr>
+          <tr>
+            <td><div style="font-size:13px;font-weight:600">Sneha Patil</div><div style="font-size:11px;color:var(--text-muted)">EMP-005</div></td>
+            <td style="font-size:13px">Finance</td>
+            <td><span class="badge-lms badge-degraded">Overdue</span></td>
+            <td><div style="display:flex;align-items:center;gap:5px"><div class="progress-lms" style="width:60px"><div class="bar red" style="width:30%"></div></div><span style="font-size:11px">30%</span></div></td>
+            <td style="font-size:12.5px;color:var(--danger)">Mar 15, 2026</td>
+          </tr>
+          <tr>
+            <td><div style="font-size:13px;font-weight:600">Rahul Desai</div><div style="font-size:11px;color:var(--text-muted)">EMP-008</div></td>
+            <td style="font-size:13px">Operations</td>
+            <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#6b7280">Not Started</span></td>
+            <td><div style="display:flex;align-items:center;gap:5px"><div class="progress-lms" style="width:60px"><div class="bar" style="width:0%"></div></div><span style="font-size:11px">0%</span></div></td>
+            <td style="font-size:12.5px">Apr 30, 2026</td>
+          </tr>
+          <tr>
+            <td><div style="font-size:13px;font-weight:600">Kavya Nair</div><div style="font-size:11px;color:var(--text-muted)">EMP-011</div></td>
+            <td style="font-size:13px">Engineering</td>
+            <td><span class="badge-lms badge-healthy">Completed</span></td>
+            <td><div style="display:flex;align-items:center;gap:5px"><div class="progress-lms" style="width:60px"><div class="bar green" style="width:100%"></div></div><span style="font-size:11px">100%</span></div></td>
+            <td style="font-size:12.5px">Mar 31, 2026</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+      <span style="font-size:12.5px;color:var(--text-muted)">Showing 5 of 247 assigned</span>
+      <button class="btn-ghost-lms" style="font-size:12px" onclick="showToast('Exporting assignment report...')"><i class="bi bi-download me-1"></i>Export</button>
+    </div>
+  </div>
+</div>
+
+<!-- Change Completion Rule Modal -->
+<div id="change-completion-modal" style="display:none;position:fixed;inset:0;z-index:1050;background:rgba(15,23,42,0.55);align-items:center;justify-content:center" onclick="closeChangeCompletion(event)">
+  <div style="background:#fff;border-radius:14px;max-width:400px;width:94%;box-shadow:0 20px 60px rgba(0,0,0,0.18)" onclick="event.stopPropagation()">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <h6 style="margin:0;font-weight:700">Change Completion Rule</h6>
+      <button onclick="closeChangeCompletion()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-muted)"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+      <div style="font-size:13px;color:var(--text-muted)">Training: <strong id="change-comp-name"></strong></div>
+      <div>
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Completion Mode</label>
+        <select class="form-select" style="font-size:13px" id="change-comp-mode">
+          <option value="ALL_RESOURCES">All resources must be completed</option>
+          <option value="MIXED">Minimum resources (configurable %)</option>
+          <option value="ADMIN_OVERRIDE">Admin override only</option>
+        </select>
+      </div>
+      <div id="change-comp-pct-row" style="display:none">
+        <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px">Minimum completion %</label>
+        <input type="number" class="form-control" style="font-size:13px" value="80" min="1" max="100" id="change-comp-pct">
+      </div>
+    </div>
+    <div style="padding:12px 20px 18px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--border)">
+      <button class="btn-ghost-lms" onclick="closeChangeCompletion()">Cancel</button>
+      <button class="btn-primary-lms" onclick="saveCompletionRule()"><i class="bi bi-check-lg me-1"></i>Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:24px;right:24px;background:#1e2a3b;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:none;z-index:9999;align-items:center;gap:8px">
+  <i class="bi bi-check-circle-fill" style="color:var(--success)"></i>
+  <span id="toast-msg"></span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  if (!localStorage.getItem('lms_role') || localStorage.getItem('lms_role') === 'employee' || localStorage.getItem('lms_role') === 'manager') {
+    localStorage.setItem('lms_role', 'admin');
+  }
+</script>
+<script src="js/nav.js"></script>
+<script>
+  function switchTab(status, el) {
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    const isCertTab = status === 'cert-approvals';
+    document.getElementById('panel-cert-approvals').style.display = isCertTab ? '' : 'none';
+    document.querySelector('.card:has(#training-tbody)') && (document.querySelector('.card:has(#training-tbody)').style.display = isCertTab ? 'none' : '');
+    if (!isCertTab) {
+      document.querySelectorAll('#training-tbody tr').forEach(row => {
+        row.style.display = (status === 'all' || row.dataset.status === status || (status === 'mandatory' && row.querySelector('td:nth-child(2)').textContent.includes('Mandatory'))) ? '' : 'none';
+      });
+    }
+  }
+
+  function approveCert(btn, employee, training) {
+    const row = btn.closest('tr');
+    row.innerHTML = '<td colspan="6" style="padding:12px 16px;color:var(--success);font-size:13px;font-weight:500"><i class="bi bi-check-circle-fill me-2"></i>Certificate approved for ' + employee + ' — ' + training + '. Employee can now download.</td>';
+    showToast('Certificate approved for ' + employee + '.');
+  }
+
+  let rejectRow = null;
+  function openRejectCert(btn, employee, training) {
+    rejectRow = btn.closest('tr');
+    document.getElementById('reject-cert-title').textContent = 'Reject Certificate — ' + training;
+    document.getElementById('reject-cert-employee').textContent = employee + ' · ' + training;
+    document.getElementById('reject-reason').value = '';
+    const m = document.getElementById('reject-cert-modal');
+    m.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeRejectCert(e) {
+    if (!e || e.target === document.getElementById('reject-cert-modal')) {
+      document.getElementById('reject-cert-modal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+
+  function confirmRejectCert() {
+    const reason = document.getElementById('reject-reason').value.trim();
+    if (!reason) { showToast('Please enter a rejection reason.'); return; }
+    if (rejectRow) {
+      const name = rejectRow.querySelector('td:first-child .avatar').nextElementSibling.querySelector('div').textContent;
+      rejectRow.innerHTML = '<td colspan="6" style="padding:12px 16px;color:var(--danger);font-size:13px;font-weight:500"><i class="bi bi-x-circle-fill me-2"></i>Certificate rejected. Reason sent to employee: "' + reason + '"</td>';
+    }
+    closeRejectCert();
+    showToast('Certificate rejected. Employee notified.');
+  }
+
+  function filterTrainings(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('#training-tbody tr').forEach(row => {
+      row.style.display = row.querySelector('td:nth-child(2)').textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  }
+
+  function filterByType(type) {
+    document.querySelectorAll('#training-tbody tr').forEach(row => {
+      row.style.display = (!type || row.dataset.type === type) ? '' : 'none';
+    });
+  }
+
+  function filterByCategory(cat) {
+    document.querySelectorAll('#training-tbody tr').forEach(row => {
+      row.style.display = (!cat || row.dataset.category === cat) ? '' : 'none';
+    });
+  }
+
+  function toggleAll(cb) {
+    document.querySelectorAll('.row-check').forEach(c => c.checked = cb.checked);
+    updateBulkBar();
+  }
+
+  function updateBulkBar() {
+    const checked = document.querySelectorAll('.row-check:checked').length;
+    const bar = document.getElementById('bulk-bar');
+    document.getElementById('bulk-count').textContent = checked;
+    bar.style.display = checked > 0 ? 'flex' : 'none';
+  }
+
+  function bulkArchive() {
+    const checked = document.querySelectorAll('.row-check:checked');
+    checked.forEach(cb => {
+      const row = cb.closest('tr');
+      if (row) row.style.opacity = '0.4';
+    });
+    showToast(checked.length + ' training(s) archived.');
+    updateBulkBar();
+  }
+
+  // ── Training Wizard ──────────────────────────────────────────
+  let currentWizStep = 1;
+
+  const WIZ_STEPS = [
+    { label: 'Next: Resources',  icon: 'bi-arrow-right' },
+    { label: 'Next: Settings',   icon: 'bi-arrow-right' },
+    { label: 'Next: Review',     icon: 'bi-arrow-right' },
+    { label: 'Publish',          icon: 'bi-send'        },
+  ];
+
+  function openCreateModal() {
+    document.getElementById('wizard-title').textContent = 'New Training';
+    resetWizard();
+    document.getElementById('training-wizard').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function openEditTraining(name) {
+    document.getElementById('wizard-title').textContent = 'Edit Training — ' + name;
+    resetWizard();
+    document.getElementById('t-title').value = name;
+    document.getElementById('training-wizard').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function openResources(name) {
+    window.location.href = 'admin-training-resources.html';
+  }
+
+  function resetWizard() {
+    goStep(1);
+    document.getElementById('t-mandatory').checked = false;
+    document.getElementById('mandatory-slider').style.background = '#d1d5db';
+    document.getElementById('mandatory-knob').style.left = '3px';
+    document.getElementById('mandatory-rule-section').style.display = 'none';
+    document.getElementById('probation-filters').style.display = 'none';
+    document.getElementById('probation-gateway-row').style.display = 'none';
+    // Reset type-specific panels to Course (default)
+    handleTypeChange('Course');
+    const typeSelect = document.getElementById('t-type');
+    if (typeSelect) typeSelect.value = 'Course';
+  }
+
+  function closeWizard() {
+    document.getElementById('training-wizard').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  // kept for compatibility
+  function closeTrainingModal(e) { closeWizard(); }
+
+  function goStep(step) {
+    currentWizStep = step;
+    // Show/hide panels
+    for (let i = 1; i <= 4; i++) {
+      const panel = document.getElementById('wiz-panel-' + i);
+      if (panel) panel.style.display = (i === step) ? (i === 3 ? 'flex' : 'block') : 'none';
+    }
+    // Update step indicator
+    for (let i = 1; i <= 4; i++) {
+      const tab  = document.getElementById('wstep-' + i);
+      const num  = document.getElementById('wstep-' + i + '-num') || tab.querySelector('span');
+      const done = i < step;
+      const active = i === step;
+      if (tab) {
+        tab.style.borderBottomColor = active ? 'var(--primary)' : (done ? 'var(--success)' : 'transparent');
+        tab.style.color = active ? 'var(--primary)' : (done ? 'var(--success)' : 'var(--text-muted)');
+      }
+      if (num) {
+        num.style.background = active ? 'var(--primary)' : (done ? 'var(--success)' : '#e5e7eb');
+        num.style.color = (active || done) ? '#fff' : '#6b7280';
+        num.innerHTML = done ? '<i class="bi bi-check"></i>' : i;
+      }
+    }
+    // Back button
+    const backBtn = document.getElementById('wiz-back-btn');
+    if (backBtn) backBtn.style.display = step > 1 ? '' : 'none';
+    // Next button
+    const nextBtn = document.getElementById('wiz-next-btn');
+    if (nextBtn) {
+      const s = WIZ_STEPS[step - 1];
+      nextBtn.innerHTML = `<i class="bi ${s.icon} me-1"></i>${s.label}`;
+    }
+    // Populate review if step 4
+    if (step === 4) populateReview();
+  }
+
+  function wizNext() {
+    if (currentWizStep < 4) goStep(currentWizStep + 1);
+    else saveTraining('publish');
+  }
+
+  function wizBack() {
+    if (currentWizStep > 1) goStep(currentWizStep - 1);
+  }
+
+  function populateReview() {
+    const v = id => (document.getElementById(id) || {value: ''}).value || '—';
+    document.getElementById('rev-title').textContent    = v('t-title') || '—';
+    document.getElementById('rev-code').textContent     = v('t-code');
+    document.getElementById('rev-type').textContent     = v('t-type') || '—';
+    document.getElementById('rev-category').textContent = v('t-category') || '—';
+    document.getElementById('rev-level').textContent    = v('t-level');
+    const mandatory = document.getElementById('t-mandatory').checked;
+    document.getElementById('rev-mandatory').textContent = mandatory ? 'Yes' : 'No';
+    if (mandatory) {
+      const scope = document.getElementById('t-assign-scope');
+      document.getElementById('rev-scope').textContent = scope ? scope.options[scope.selectedIndex].text : '—';
+    }
+    document.getElementById('rev-cert').textContent = document.getElementById('t-cert').checked ? 'Yes' : 'No';
+    const cm = document.getElementById('t-completion-mode');
+    document.getElementById('rev-completion').textContent = cm ? cm.options[cm.selectedIndex].text : '—';
+  }
+
+  function saveTraining(mode) {
+    closeWizard();
+    showToast(mode === 'draft' ? 'Training saved as draft.' : 'Training published successfully.');
+  }
+
+  function publishTraining(btn, name) {
+    btn.innerHTML = '<i class="bi bi-check-lg"></i> Published';
+    btn.disabled = true;
+    showToast(name + ' published successfully.');
+  }
+
+  function toggleMandatory(cb) {
+    const slider  = document.getElementById('mandatory-slider');
+    const knob    = document.getElementById('mandatory-knob');
+    const section = document.getElementById('mandatory-rule-section');
+    const gwRow   = document.getElementById('probation-gateway-row');
+    if (cb.checked) {
+      slider.style.background = 'var(--primary)';
+      knob.style.left = '23px';
+      section.style.display = 'block';
+      gwRow.style.display = 'flex';
+    } else {
+      slider.style.background = '#d1d5db';
+      knob.style.left = '3px';
+      section.style.display = 'none';
+      gwRow.style.display = 'none';
+      document.getElementById('probation-filters').style.display = 'none';
+    }
+  }
+
+  function toggleProbationFilters(scope) {
+    const probFilters = document.getElementById('probation-filters');
+    const scopeRow    = document.getElementById('scope-value-row');
+    const scopeLabel  = document.getElementById('scope-value-label');
+    const dueInput    = document.getElementById('t-due-days');
+    if (scope === 'EMPLOYMENT_PHASE') {
+      probFilters.style.display = 'block';
+      scopeRow.style.display = 'none';
+      dueInput.value = 90;
+    } else {
+      probFilters.style.display = 'none';
+      if (scope && scope !== 'GLOBAL') {
+        scopeRow.style.display = 'block';
+        const labels = { DEPARTMENT: 'Department', DESIGNATION: 'Designation', CAPABILITY: 'Capability', PROJECT: 'Project Code' };
+        scopeLabel.textContent = labels[scope] || 'Value';
+      } else {
+        scopeRow.style.display = 'none';
+      }
+    }
+  }
+
+  function toggleSwitch(cb, sliderId, knobId) {
+    const slider = document.getElementById(sliderId);
+    const knob   = document.getElementById(knobId);
+    if (cb.checked) { slider.style.background = 'var(--primary)'; knob.style.left = '23px'; }
+    else            { slider.style.background = '#d1d5db';        knob.style.left = '3px'; }
+  }
+
+  // Assign modal
+  /* ---- Wizard type-change handler ---- */
+  function handleTypeChange(type) {
+    const coursePanel = document.getElementById('wiz-course-panel');
+    const lpPanel     = document.getElementById('wiz-lp-panel');
+    const currPanel   = document.getElementById('wiz-curriculum-panel');
+    const label       = document.getElementById('wstep-2-label');
+    if (coursePanel) coursePanel.style.display = (type === 'Course' || type === '') ? 'block' : 'none';
+    if (lpPanel)     lpPanel.style.display     = type === 'Learning Path'           ? 'block' : 'none';
+    if (currPanel)   currPanel.style.display   = type === 'Curriculum'              ? 'block' : 'none';
+    if (label)       label.textContent         = (type === 'Learning Path' || type === 'Curriculum') ? 'Structure' : 'Resources';
+  }
+
+  /* ---- Learning Path course helpers ---- */
+  function removeLPCourse(btn) {
+    btn.closest('.lp-course-row').remove();
+  }
+  function addLPCourse() {
+    const sel  = document.getElementById('lp-add-course-select');
+    const name = sel.options[sel.selectedIndex].text;
+    if (!name || sel.value === '') return;
+    const list = document.getElementById('lp-course-list');
+    const row  = document.createElement('div');
+    row.className = 'lp-course-row';
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)';
+    row.innerHTML = `
+      <span style="color:#d1d5db;cursor:grab;font-size:16px">⠿</span>
+      <span style="width:28px;height:28px;border-radius:8px;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-mortarboard-fill" style="color:#3b82f6;font-size:13px"></i></span>
+      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">${name}</div></div>
+      <select class="form-select" style="font-size:12px;width:120px;padding:3px 8px"><option>Required</option><option>Optional</option></select>
+      <button class="btn-ghost-lms" style="font-size:11px;padding:2px 8px;color:var(--danger)" onclick="removeLPCourse(this)"><i class="bi bi-trash"></i></button>
+    `;
+    list.appendChild(row);
+    sel.value = '';
+  }
+
+  /* ---- Curriculum LP helpers ---- */
+  function removeCurrLP(btn) {
+    btn.closest('.curr-lp-row').remove();
+  }
+  function addCurrLP() {
+    const sel  = document.getElementById('curr-add-lp-select');
+    const name = sel.options[sel.selectedIndex].text;
+    if (!name || sel.value === '') return;
+    const list = document.getElementById('curr-lp-list');
+    const row  = document.createElement('div');
+    row.className = 'curr-lp-row';
+    row.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
+        <span style="color:#d1d5db;cursor:grab;font-size:16px">⠿</span>
+        <span style="width:28px;height:28px;border-radius:8px;background:#ede9fe;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-diagram-3-fill" style="color:#7c3aed;font-size:13px"></i></span>
+        <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">${name}</div></div>
+        <select class="form-select" style="font-size:12px;width:120px;padding:3px 8px"><option>Required</option><option>Optional</option></select>
+        <button class="btn-ghost-lms" style="font-size:11px;padding:2px 8px;color:var(--danger)" onclick="removeCurrLP(this)"><i class="bi bi-trash"></i></button>
+      </div>
+    `;
+    list.appendChild(row);
+    sel.value = '';
+  }
+
+  /* ---- Bulk assign selected trainings ---- */
+  function openBulkAssignModal() {
+    const checked = document.querySelectorAll('#training-tbody input[type=checkbox]:checked');
+    if (checked.length === 0) { showToast('Select at least one training to assign.'); return; }
+    const names = Array.from(checked).map(cb => cb.closest('tr').querySelector('td:nth-child(2)')?.textContent?.trim()).filter(Boolean);
+    const label = names.length === 1 ? names[0] : names.length + ' trainings';
+    openAssignModal(label);
+  }
+
+  function openAssignModal(name) {
+    document.getElementById('assign-training-name').textContent = name;
+    const sel = document.getElementById('assign-scope-select');
+    if (sel) sel.value = 'ALL';
+    toggleAssignScope('ALL');
+    document.getElementById('assign-modal').style.cssText = 'display:flex;position:fixed;inset:0;z-index:1050;background:rgba(15,23,42,0.55);align-items:center;justify-content:center';
+  }
+
+  function closeAssignModal(e) {
+    if (!e || e.target === document.getElementById('assign-modal')) {
+      document.getElementById('assign-modal').style.display = 'none';
+    }
+  }
+
+  function toggleAssignScope(scope) {
+    document.getElementById('assign-dept-panel').style.display      = scope === 'DEPARTMENT'       ? 'block' : 'none';
+    document.getElementById('assign-users-panel').style.display     = scope === 'USERS'            ? 'block' : 'none';
+    document.getElementById('assign-probation-panel').style.display = scope === 'EMPLOYMENT_PHASE' ? 'block' : 'none';
+  }
+
+  function confirmAssign() {
+    closeAssignModal();
+    showToast('Training assigned. Employees will be notified.');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.style.display = 'flex';
+    setTimeout(() => t.style.display = 'none', 3000);
+  }
+
+  /* ---- Resource form functions (Step 2) ---- */
+  const RES_TITLES = { VIDEO:'Add Video', DOCUMENT:'Add Document', ASSESSMENT:'Add Assessment', LINK:'Add Link', SESSION:'Link Session' };
+  let currentResType = '';
+  let wizQuestions = [];
+
+  function showResForm(type) {
+    currentResType = type;
+    wizQuestions = [];
+    // Show modal
+    const modal = document.getElementById('res-add-modal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    // Set title
+    document.getElementById('res-modal-title').textContent = RES_TITLES[type] || 'Add Resource';
+    // Show correct form, hide others
+    ['VIDEO','DOCUMENT','ASSESSMENT','LINK','SESSION'].forEach(t => {
+      const el = document.getElementById('res-form-' + t);
+      if (el) el.style.display = (t === type) ? 'flex' : 'none';
+    });
+    // Reset question list for assessment
+    if (type === 'ASSESSMENT') updateQuestionList();
+    document.getElementById('q-required-msg').style.display = 'none';
+  }
+
+  function closeResModal(e) {
+    if (!e || e.target === document.getElementById('res-add-modal')) {
+      document.getElementById('res-add-modal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+
+  function hideResForm() { closeResModal(); }
+
+  /* ---- Question builder ---- */
+  function handleQTypeChange(type) {
+    document.getElementById('q-mcq-options').style.display  = type === 'MCQ'  ? 'block' : 'none';
+    document.getElementById('q-msaq-options').style.display = type === 'MSQ' ? 'block' : 'none';
+    document.getElementById('q-tf-options').style.display   = type === 'TF'   ? 'block' : 'none';
+  }
+
+  function addQuestion() {
+    const qType = document.getElementById('q-type-select').value;
+    const qText = document.getElementById('q-text').value.trim();
+    if (!qText) { showToast('Please enter the question text.'); return; }
+
+    let correct = null;
+    let options = [];
+
+    if (qType === 'MCQ') {
+      const correctRadio = document.querySelector('input[name="q-correct"]:checked');
+      if (!correctRadio) { showToast('Please select the correct answer.'); return; }
+      correct = parseInt(correctRadio.value);
+      for (let i = 0; i < 4; i++) {
+        const opt = document.getElementById('q-opt-' + i).value.trim();
+        if (!opt) { showToast('Please fill all 4 option fields.'); return; }
+        options.push(opt);
+      }
+    } else if (qType === 'MSQ') {
+      const checkedBoxes = document.querySelectorAll('input[name="q-msaq-correct"]:checked');
+      if (checkedBoxes.length < 2) { showToast('Select at least 2 correct answers for a multiple-select question.'); return; }
+      correct = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+      for (let i = 0; i < 4; i++) {
+        const opt = document.getElementById('q-ms-opt-' + i).value.trim();
+        if (!opt) { showToast('Please fill all 4 option fields.'); return; }
+        options.push(opt);
+      }
+    } else {
+      const tfRadio = document.querySelector('input[name="q-tf-correct"]:checked');
+      if (!tfRadio) { showToast('Please select True or False as the correct answer.'); return; }
+      correct = tfRadio.value === 'true';
+      options = ['True', 'False'];
+    }
+
+    wizQuestions.push({ type: qType, text: qText, options, correct });
+
+    // Reset add-question fields
+    document.getElementById('q-text').value = '';
+    document.querySelectorAll('input[name="q-correct"]').forEach(r => r.checked = false);
+    document.querySelectorAll('input[name="q-msaq-correct"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('input[name="q-tf-correct"]').forEach(r => r.checked = false);
+    for (let i = 0; i < 4; i++) { document.getElementById('q-opt-' + i).value = ''; document.getElementById('q-ms-opt-' + i).value = ''; }
+
+    updateQuestionList();
+    document.getElementById('q-required-msg').style.display = 'none';
+  }
+
+  function removeQuestion(idx) {
+    wizQuestions.splice(idx, 1);
+    updateQuestionList();
+  }
+
+  function updateQuestionList() {
+    const list    = document.getElementById('modal-question-list');
+    const empty   = document.getElementById('modal-q-empty');
+    const countEl = document.getElementById('modal-q-count');
+    if (countEl) countEl.textContent = '(' + wizQuestions.length + ')';
+    list.querySelectorAll('.wiz-q-row').forEach(r => r.remove());
+    if (wizQuestions.length === 0) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    wizQuestions.forEach((q, idx) => {
+      const row = document.createElement('div');
+      row.className = 'wiz-q-row';
+      row.style.cssText = 'display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:#fff';
+      const typeLabel = q.type === 'MCQ' ? 'MCQ' : q.type === 'MSQ' ? 'MSQ' : 'T/F';
+      let answerHint;
+      if (q.type === 'MCQ') {
+        answerHint = `Options: ${q.options.join(' · ')} &nbsp;·&nbsp; <strong>Correct: ${q.options[q.correct]}</strong>`;
+      } else if (q.type === 'MSQ') {
+        const correctLabels = q.correct.map(i => q.options[i]).join(', ');
+        answerHint = `Options: ${q.options.join(' · ')} &nbsp;·&nbsp; <strong>Correct: ${correctLabels}</strong>`;
+      } else {
+        answerHint = `Correct: <strong>${q.correct ? 'True' : 'False'}</strong>`;
+      }
+      row.innerHTML = `
+        <span style="flex-shrink:0;width:30px;height:22px;border-radius:5px;background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#d97706;margin-top:1px">${typeLabel}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12.5px;font-weight:600">${idx + 1}. ${q.text}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${answerHint}</div>
+        </div>
+        <button onclick="removeQuestion(${idx})" style="background:none;border:none;cursor:pointer;color:var(--danger);padding:2px 5px;flex-shrink:0" title="Remove"><i class="bi bi-x-lg" style="font-size:12px"></i></button>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  function saveResource() {
+    const type = currentResType;
+    // Assessment: enforce at least 1 question
+    if (type === 'ASSESSMENT' && wizQuestions.length === 0) {
+      document.getElementById('q-required-msg').style.display = 'block';
+      document.getElementById('modal-q-empty').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+    // Get title
+    let title = '';
+    const titleInput = document.querySelector('#res-form-' + type + ' input[placeholder*="title"], #res-form-' + type + ' input[placeholder*="Title"]');
+    if (titleInput && titleInput.value.trim()) title = titleInput.value.trim();
+    else { const fb = { VIDEO:'Video Resource', DOCUMENT:'Document Resource', ASSESSMENT:'Assessment', LINK:'Link Resource', SESSION:'Session Resource' }; title = fb[type] || 'New Resource'; }
+
+    const iconMap  = { VIDEO:'bi-play-circle-fill', DOCUMENT:'bi-file-earmark-text-fill', ASSESSMENT:'bi-clipboard-check-fill', LINK:'bi-link-45deg', SESSION:'bi-camera-video-fill' };
+    const colorMap = { VIDEO:'#3b82f6', DOCUMENT:'#6366f1', ASSESSMENT:'#f59e0b', LINK:'#22c55e', SESSION:'#8b5cf6' };
+    const bgMap    = { VIDEO:'#dbeafe', DOCUMENT:'#e0e7ff', ASSESSMENT:'#fef3c7', LINK:'#dcfce7', SESSION:'#ede9fe' };
+    const subtitle = type === 'ASSESSMENT'
+      ? `ASSESSMENT · ${wizQuestions.length} question${wizQuestions.length !== 1 ? 's' : ''} · Required`
+      : type;
+
+    const list = document.getElementById('wiz-resource-list');
+    if (list) {
+      const row = document.createElement('div');
+      row.className = 'res-row';
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)';
+      row.innerHTML = `
+        <span style="color:#d1d5db;cursor:grab;font-size:16px">⠿</span>
+        <span style="width:28px;height:28px;border-radius:8px;background:${bgMap[type]};display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi ${iconMap[type]}" style="color:${colorMap[type]};font-size:13px"></i></span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600">${title}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${subtitle}</div>
+        </div>
+        <button class="btn-ghost-lms" style="font-size:11px;padding:2px 8px" onclick="showToast('Edit resource')"><i class="bi bi-pencil"></i></button>
+        <button class="btn-ghost-lms" style="font-size:11px;padding:2px 8px;color:var(--danger)" onclick="removeResource(this)"><i class="bi bi-trash"></i></button>
+      `;
+      list.appendChild(row);
+      updateResCount();
+    }
+    // Reset form fields
+    const activeForm = document.getElementById('res-form-' + type);
+    if (activeForm) activeForm.querySelectorAll('input:not([type=radio]):not([type=checkbox]), textarea').forEach(el => el.value = '');
+    wizQuestions = [];
+    closeResModal();
+    showToast('Resource added successfully.');
+  }
+
+  function removeResource(btn) {
+    btn.closest('.res-row').remove();
+    updateResCount();
+  }
+
+  function updateResCount() {
+    const count = document.querySelectorAll('#wiz-resource-list .res-row').length;
+    const lbl = document.getElementById('res-count-label');
+    if (lbl) lbl.textContent = 'RESOURCES (' + count + ')';
+  }
+
+  // Category inline add
+  function handleCategorySelect(sel) {
+    const row = document.getElementById('new-category-row');
+    if (sel.value === '__new__') {
+      row.style.display = 'block';
+      document.getElementById('new-category-input').focus();
+    } else {
+      row.style.display = 'none';
+    }
+  }
+
+  function confirmNewCategory() {
+    const input = document.getElementById('new-category-input');
+    const name = input.value.trim();
+    if (!name) { showToast('Please enter a category name.'); return; }
+    const sel = document.getElementById('t-category');
+    // Add new option before the "+ Add new category" option
+    const newOpt = document.createElement('option');
+    newOpt.value = name;
+    newOpt.textContent = name;
+    sel.insertBefore(newOpt, sel.querySelector('option[value="__new__"]'));
+    sel.value = name;
+    input.value = '';
+    document.getElementById('new-category-row').style.display = 'none';
+    showToast('Category "' + name + '" added.');
+  }
+
+  function cancelNewCategory() {
+    document.getElementById('new-category-input').value = '';
+    document.getElementById('new-category-row').style.display = 'none';
+    const sel = document.getElementById('t-category');
+    if (sel) sel.value = '';
+  }
+
+  // Assignments viewer modal
+  function openAssignmentsModal(name) {
+    document.getElementById('asgn-modal-subtitle').textContent = name;
+    document.getElementById('assignments-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeAssignmentsModal(e) {
+    if (!e || e.target === document.getElementById('assignments-modal')) {
+      document.getElementById('assignments-modal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+
+  function filterAssignmentsTable(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('#asgn-tbody tr').forEach(row => {
+      row.style.display = row.querySelector('td').textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  }
+
+  function filterAssignmentsStatus(status) {
+    document.querySelectorAll('#asgn-tbody tr').forEach(row => {
+      const s = row.querySelector('.badge-lms');
+      row.style.display = (!status || (s && s.textContent.trim() === status)) ? '' : 'none';
+    });
+  }
+
+  // Archive training
+  function archiveTraining(btn, name) {
+    const row = btn.closest('tr');
+    const statusCell = row.querySelector('.badge-lms');
+    if (statusCell) { statusCell.className = 'badge-lms badge-degraded'; statusCell.textContent = 'Archived'; }
+    if (row) row.setAttribute('data-status', 'archived');
+    btn.style.display = 'none';
+    showToast(name + ' archived.');
+  }
+
+  // Completion rule modal
+  function openChangeCompletion(name) {
+    document.getElementById('change-comp-name').textContent = name;
+    document.getElementById('change-comp-mode').value = 'ALL_RESOURCES';
+    document.getElementById('change-comp-pct-row').style.display = 'none';
+    document.getElementById('change-completion-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeChangeCompletion(e) {
+    if (!e || e.target === document.getElementById('change-completion-modal')) {
+      document.getElementById('change-completion-modal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const modeSelect = document.getElementById('change-comp-mode');
+    if (modeSelect) modeSelect.addEventListener('change', function() {
+      document.getElementById('change-comp-pct-row').style.display = this.value === 'MIXED' ? 'block' : 'none';
+    });
+  });
+
+  function saveCompletionRule() {
+    const mode = document.getElementById('change-comp-mode');
+    const label = mode ? mode.options[mode.selectedIndex].text : 'Updated';
+    closeChangeCompletion();
+    showToast('Completion rule updated: ' + label);
+  }
+</script>
+
+<!-- ===================== Add Resource Modal ===================== -->
+<div id="res-add-modal" style="display:none;position:fixed;inset:0;z-index:1060;background:rgba(15,23,42,0.55);align-items:center;justify-content:center" onclick="closeResModal(event)">
+  <div style="background:#fff;border-radius:14px;width:600px;max-width:95vw;max-height:88vh;overflow-y:auto;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.2)" onclick="event.stopPropagation()">
+
+    <!-- Header -->
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1;border-radius:14px 14px 0 0">
+      <div style="font-size:14px;font-weight:700;color:var(--primary)" id="res-modal-title">Add Video</div>
+      <button onclick="closeResModal()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-muted);line-height:1">&times;</button>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:20px;flex:1;display:flex;flex-direction:column;gap:14px" id="res-modal-body">
+
+      <!-- VIDEO form -->
+      <div id="res-form-VIDEO" style="display:none;flex-direction:column;gap:12px">
+        <div>
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Resource Title <span style="color:var(--danger)">*</span></label>
+          <input type="text" class="form-control" style="font-size:13px" placeholder="e.g. Introduction to Safety Procedures" id="rf-video-title">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">OneDrive Video URL <span style="color:var(--danger)">*</span></label>
+          <div style="display:flex;gap:6px">
+            <input type="url" class="form-control" style="font-size:13px" placeholder="Paste OneDrive video link..." id="rf-video-url">
+            <button type="button" class="btn-ghost-lms" style="font-size:12px;white-space:nowrap" onclick="showToast('Opening OneDrive file picker...')"><i class="bi bi-cloud me-1"></i>Browse</button>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Video is streamed via OneDrive — file stays in your OneDrive folder</div>
+        </div>
+        <div class="row g-3">
+          <div class="col-6">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Duration (minutes)</label>
+            <input type="number" class="form-control" style="font-size:13px" placeholder="e.g. 15" min="1" id="rf-video-duration">
+          </div>
+          <div class="col-6">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Required?</label>
+            <select class="form-select" style="font-size:13px" id="rf-video-required">
+              <option value="true">Yes — required for completion</option>
+              <option value="false">No — optional</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- DOCUMENT form -->
+      <div id="res-form-DOCUMENT" style="display:none;flex-direction:column;gap:12px">
+        <div>
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Resource Title <span style="color:var(--danger)">*</span></label>
+          <input type="text" class="form-control" style="font-size:13px" placeholder="e.g. Policy Handbook 2026" id="rf-doc-title">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">OneDrive Document URL <span style="color:var(--danger)">*</span></label>
+          <div style="display:flex;gap:6px">
+            <input type="url" class="form-control" style="font-size:13px" placeholder="Paste OneDrive document link..." id="rf-doc-url">
+            <button type="button" class="btn-ghost-lms" style="font-size:12px;white-space:nowrap" onclick="showToast('Opening OneDrive file picker...')"><i class="bi bi-cloud me-1"></i>Browse</button>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Supported: PDF, Word (.docx), PowerPoint (.pptx)</div>
+        </div>
+        <div class="row g-3">
+          <div class="col-6">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Document Type</label>
+            <select class="form-select" style="font-size:13px" id="rf-doc-type">
+              <option>PDF</option>
+              <option>Word Document</option>
+              <option>PowerPoint</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Required?</label>
+            <select class="form-select" style="font-size:13px" id="rf-doc-required">
+              <option value="true">Yes — required</option>
+              <option value="false">No — optional</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Access Mode</label>
+          <select class="form-select" style="font-size:13px" id="rf-doc-access">
+            <option value="STREAM_ONLY">View only (no download)</option>
+            <option value="DOWNLOAD">Allow download</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ASSESSMENT form -->
+      <div id="res-form-ASSESSMENT" style="display:none;flex-direction:column;gap:14px">
+        <!-- Settings -->
+        <div>
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Assessment Title <span style="color:var(--danger)">*</span></label>
+          <input type="text" class="form-control" style="font-size:13px" placeholder="e.g. End-of-Module Quiz" id="rf-asmnt-title">
+        </div>
+        <div class="row g-3">
+          <div class="col-4">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Passing Score %</label>
+            <input type="number" class="form-control" style="font-size:13px" value="70" min="1" max="100" id="rf-asmnt-pass">
+          </div>
+          <div class="col-4">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Max Attempts</label>
+            <input type="number" class="form-control" style="font-size:13px" value="3" min="0" id="rf-asmnt-attempts">
+            <div style="font-size:10px;color:var(--text-muted);margin-top:2px">0 = unlimited</div>
+          </div>
+          <div class="col-4">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Time Limit (min)</label>
+            <input type="number" class="form-control" style="font-size:13px" value="0" min="0" id="rf-asmnt-time">
+            <div style="font-size:10px;color:var(--text-muted);margin-top:2px">0 = no limit</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer"><input type="checkbox" id="rf-asmnt-random-q"> Randomize question order</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer"><input type="checkbox" id="rf-asmnt-random-o"> Randomize option order</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer"><input type="checkbox" id="rf-asmnt-show-ans" checked> Show correct answers after passing</label>
+        </div>
+
+        <!-- Question Builder -->
+        <div style="border-top:2px solid var(--border);padding-top:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:.05em">QUESTIONS <span id="modal-q-count" style="font-weight:400">(0)</span></div>
+          </div>
+
+          <!-- Question list -->
+          <div id="modal-question-list" style="margin-bottom:12px">
+            <div id="modal-q-empty" style="font-size:12.5px;color:var(--text-muted);padding:14px;text-align:center;border:1px dashed var(--border);border-radius:8px">No questions added yet. Use the form below to add questions.</div>
+          </div>
+          <div id="q-required-msg" style="display:none;font-size:12px;color:var(--danger);margin-bottom:8px"><i class="bi bi-exclamation-circle me-1"></i>At least one question is required before saving this assessment.</div>
+
+          <!-- Add Question form -->
+          <div style="border:1px solid var(--border);border-radius:10px;padding:14px;background:#f8fafc">
+            <div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:10px">Add Question</div>
+            <div style="margin-bottom:10px">
+              <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Question Type</label>
+              <select id="q-type-select" class="form-select" style="font-size:12.5px;max-width:280px" onchange="handleQTypeChange(this.value)">
+                <option value="MCQ">Multiple Choice — single correct (MCQ)</option>
+                <option value="MSQ">Multiple Select — many correct (MSQ)</option>
+                <option value="TF">True / False</option>
+              </select>
+            </div>
+            <div style="margin-bottom:10px">
+              <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Question Text <span style="color:var(--danger)">*</span></label>
+              <textarea id="q-text" class="form-control" rows="2" style="font-size:13px;resize:none" placeholder="Enter your question here..."></textarea>
+            </div>
+            <!-- MCQ options (radio — single correct) -->
+            <div id="q-mcq-options">
+              <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px">Options <span style="font-size:11px;font-weight:400;color:var(--text-muted)">— select the one correct answer</span></label>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;align-items:center;gap:8px"><input type="radio" name="q-correct" value="0" style="flex-shrink:0"> <input type="text" class="form-control" style="font-size:12.5px" placeholder="Option A" id="q-opt-0"></div>
+                <div style="display:flex;align-items:center;gap:8px"><input type="radio" name="q-correct" value="1" style="flex-shrink:0"> <input type="text" class="form-control" style="font-size:12.5px" placeholder="Option B" id="q-opt-1"></div>
+                <div style="display:flex;align-items:center;gap:8px"><input type="radio" name="q-correct" value="2" style="flex-shrink:0"> <input type="text" class="form-control" style="font-size:12.5px" placeholder="Option C" id="q-opt-2"></div>
+                <div style="display:flex;align-items:center;gap:8px"><input type="radio" name="q-correct" value="3" style="flex-shrink:0"> <input type="text" class="form-control" style="font-size:12.5px" placeholder="Option D" id="q-opt-3"></div>
+              </div>
+            </div>
+            <!-- MSQ options (checkboxes — multiple correct) -->
+            <div id="q-msaq-options" style="display:none">
+              <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px">Options <span style="font-size:11px;font-weight:400;color:var(--text-muted)">— check all correct answers</span></label>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" name="q-msaq-correct" value="0" style="flex-shrink:0"> <input type="text" class="form-control" style="font-size:12.5px" placeholder="Option A" id="q-ms-opt-0"></div>
+                <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" name="q-msaq-correct" value="1" style="flex-shrink:0"> <input type="text" class="form-control" style="font-size:12.5px" placeholder="Option B" id="q-ms-opt-1"></div>
+                <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" name="q-msaq-correct" value="2" style="flex-shrink:0"> <input type="text" class="form-control" style="font-size:12.5px" placeholder="Option C" id="q-ms-opt-2"></div>
+                <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" name="q-msaq-correct" value="3" style="flex-shrink:0"> <input type="text" class="form-control" style="font-size:12.5px" placeholder="Option D" id="q-ms-opt-3"></div>
+              </div>
+            </div>
+            <!-- T/F options -->
+            <div id="q-tf-options" style="display:none">
+              <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px">Correct Answer</label>
+              <div style="display:flex;gap:20px">
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="radio" name="q-tf-correct" value="true"> True</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="radio" name="q-tf-correct" value="false"> False</label>
+              </div>
+            </div>
+            <div style="margin-top:12px;display:flex;justify-content:flex-end">
+              <button class="btn-primary-lms" style="font-size:12px;padding:6px 14px" onclick="addQuestion()"><i class="bi bi-plus-lg me-1"></i>Add Question</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LINK form -->
+      <div id="res-form-LINK" style="display:none;flex-direction:column;gap:12px">
+        <div>
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Resource Title <span style="color:var(--danger)">*</span></label>
+          <input type="text" class="form-control" style="font-size:13px" placeholder="e.g. External Reference Guide" id="rf-link-title">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">URL <span style="color:var(--danger)">*</span></label>
+          <input type="url" class="form-control" style="font-size:13px" placeholder="https://..." id="rf-link-url">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Description</label>
+          <input type="text" class="form-control" style="font-size:13px" placeholder="Brief description of this link..." id="rf-link-desc">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Required?</label>
+          <select class="form-select" style="font-size:13px" id="rf-link-required">
+            <option value="true">Yes — required for completion</option>
+            <option value="false">No — optional</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- SESSION form -->
+      <div id="res-form-SESSION" style="display:none;flex-direction:column;gap:12px">
+        <div style="padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;color:#166534">
+          <i class="bi bi-info-circle me-1"></i>
+          A Session resource links this training to a scheduled classroom session. Employees must attend (online via Teams or offline) to complete this resource.
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Resource Title <span style="color:var(--danger)">*</span></label>
+          <input type="text" class="form-control" style="font-size:13px" placeholder="e.g. Classroom Session" id="rf-session-title">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Link to Session <span style="color:var(--danger)">*</span></label>
+          <select class="form-select" style="font-size:13px" id="rf-session-select">
+            <option value="">Select scheduled session...</option>
+            <option value="ses-001">SES-001 — Safety Compliance Workshop — Apr 20, 2026</option>
+            <option value="ses-002">SES-002 — Data Privacy Briefing — Apr 28, 2026</option>
+            <option value="ses-003">SES-003 — Leadership Bootcamp — May 5, 2026</option>
+          </select>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Sessions are created in the Sessions module. Only SCHEDULED sessions are listed here.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:#fff;border-radius:0 0 14px 14px">
+      <button class="btn-outline-lms" style="font-size:13px" onclick="closeResModal()">Cancel</button>
+      <button class="btn-primary-lms" style="font-size:13px" onclick="saveResource()"><i class="bi bi-plus-lg me-1"></i>Add Resource</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reject Certificate Modal -->
+<div class="modal-overlay" id="reject-cert-modal" style="display:none;position:fixed;inset:0;z-index:1060;background:rgba(15,23,42,0.55);align-items:center;justify-content:center" onclick="closeRejectCert(event)">
+  <div style="background:#fff;border-radius:14px;max-width:460px;width:94%;box-shadow:0 20px 60px rgba(0,0,0,0.18)" onclick="event.stopPropagation()">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:14px;font-weight:700;color:var(--danger)" id="reject-cert-title">Reject Certificate</div>
+      <button onclick="closeRejectCert()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-muted)">&times;</button>
+    </div>
+    <div style="padding:20px">
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px" id="reject-cert-employee"></div>
+      <label style="font-size:12.5px;font-weight:600;display:block;margin-bottom:6px">Rejection Reason <span style="color:var(--danger)">*</span></label>
+      <textarea id="reject-reason" class="form-control" rows="3" style="font-size:13px;resize:none" placeholder="e.g. Score did not meet the minimum threshold. Please re-attempt the training."></textarea>
+      <div style="font-size:11.5px;color:var(--text-muted);margin-top:6px">This reason will be sent to the employee as a notification.</div>
+    </div>
+    <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn-outline-lms" style="font-size:13px" onclick="closeRejectCert()">Cancel</button>
+      <button class="btn-primary-lms" style="font-size:13px;background:var(--danger);border-color:var(--danger)" onclick="confirmRejectCert()"><i class="bi bi-x-lg me-1"></i>Reject Certificate</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

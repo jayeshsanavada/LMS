@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Architecture Overview — AZ-LMS</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg:#0d1117; --card:#161b22; --border:#30363d;
+    --accent:#58a6ff; --text:#c9d1d9; --muted:#8b949e;
+    --green:#3fb950; --orange:#d29922; --red:#f85149; --purple:#bc8cff;
+    --c-pres:#1565c0; --c-gw:#e65100; --c-api:#1b5e20; --c-worker:#4a148c;
+    --c-core:#006064; --c-support:#4e342e; --c-platform:#2e7d32;
+    --c-data:#b71c1c; --c-ext:#37474f;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; }
+
+  /* ── header / nav ── */
+  header { background:var(--card); border-bottom:1px solid var(--border); padding:14px 28px; display:flex; align-items:center; justify-content:space-between; }
+  .hl .label { font-size:11px; font-weight:700; letter-spacing:2px; color:var(--accent); text-transform:uppercase; }
+  .hl .title { font-size:18px; font-weight:600; margin-top:3px; }
+  .hl .sub   { font-size:12px; color:var(--muted); margin-top:2px; }
+  nav { background:var(--card); border-bottom:1px solid var(--border); padding:8px 28px; display:flex; gap:6px; flex-wrap:wrap; }
+  nav a { font-size:11px; padding:4px 10px; border-radius:5px; color:var(--muted); text-decoration:none; border:1px solid var(--border); white-space:nowrap; transition:all .15s; }
+  nav a:hover  { color:var(--text); border-color:var(--muted); }
+  nav a.active { background:var(--accent); color:#0d1117; border-color:var(--accent); font-weight:600; }
+
+  /* ── diagram area ── */
+  .wrap  { padding:24px 28px 32px; overflow:auto; }
+  .dcard { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:28px 32px; display:inline-block; min-width:100%; }
+  .mermaid svg { display:block; max-width:none !important; }
+  /* CSS fallback — JS post-render override is the real fix (Mermaid uses inline style) */
+  #diagram .edgeLabel rect {
+    fill: #1e2530 !important;
+    opacity: 1 !important;
+  }
+  #diagram .edgeLabel text,
+  #diagram .edgeLabel tspan {
+    fill: #c9d1d9 !important;
+  }
+
+  /* ── zoom controls ── */
+  .controls { position:fixed; bottom:20px; right:20px; display:flex; flex-direction:column; gap:6px; z-index:100; }
+  .cb { background:var(--card); border:1px solid var(--border); color:var(--text); width:36px; height:36px; border-radius:7px; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+  .cb:hover { background:var(--accent); border-color:var(--accent); color:#0d1117; }
+  #zoom-label { background:var(--card); border:1px solid var(--border); border-radius:7px; font-size:11px; color:var(--muted); text-align:center; padding:4px 0; min-width:36px; }
+
+  /* ── reference section ── */
+  .ref-section { max-width:1200px; margin:0 auto; padding:0 28px 60px; }
+  .ref-title { font-size:13px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1.5px; padding:28px 0 16px; border-top:1px solid var(--border); margin-top:8px; }
+
+  .layer-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px,1fr)); gap:14px; margin-bottom:14px; }
+  .layer-card { background:var(--card); border:1px solid var(--border); border-radius:9px; padding:18px 20px; border-left:4px solid var(--border); }
+  .layer-card.pres     { border-left-color:var(--c-pres); }
+  .layer-card.gw       { border-left-color:var(--c-gw); }
+  .layer-card.api      { border-left-color:var(--c-api); }
+  .layer-card.worker   { border-left-color:var(--c-worker); }
+  .layer-card.data     { border-left-color:var(--c-data); }
+  .layer-card.external { border-left-color:var(--c-ext); }
+  .layer-card.fullrow  { grid-column:1/-1; }
+
+  .lc-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .lc-dot  { width:12px; height:12px; border-radius:3px; flex-shrink:0; }
+  .lc-name { font-size:13px; font-weight:700; color:var(--text); }
+  .lc-tag  { font-size:10px; font-weight:600; padding:2px 7px; border-radius:4px; background:rgba(255,255,255,.06); color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-left:auto; }
+  .lc-body { font-size:13px; color:var(--muted); line-height:1.65; }
+  .lc-body strong { color:var(--text); }
+  .lc-body ul { padding-left:16px; margin-top:6px; }
+  .lc-body li { margin-bottom:3px; }
+
+  /* sub-tables inside worker card */
+  .worker-tables { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; }
+  @media(max-width:760px){ .worker-tables{ grid-template-columns:1fr; } }
+  .wt-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; padding:4px 0; border-bottom:1px solid var(--border); }
+  .wt-label.sched { color:#58a6ff; }
+  .wt-label.event { color:#bc8cff; }
+
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th { background:rgba(255,255,255,.04); color:var(--muted); font-weight:600; padding:6px 10px; text-align:left; border:1px solid var(--border); font-size:10px; text-transform:uppercase; letter-spacing:.5px; }
+  td { padding:6px 10px; border:1px solid var(--border); color:var(--text); vertical-align:top; line-height:1.4; }
+  tr:nth-child(even) td { background:rgba(255,255,255,.015); }
+  td code { background:rgba(88,166,255,.1); color:var(--accent); padding:1px 5px; border-radius:3px; font-family:monospace; font-size:11px; }
+  td.sched-tag { color:#58a6ff; font-size:11px; }
+  td.event-tag { color:#bc8cff; font-size:11px; }
+
+  /* modules 3-col grid */
+  .mod-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:12px; }
+  @media(max-width:760px){ .mod-grid{ grid-template-columns:1fr; } }
+  .mod-group { padding:12px 14px; border-radius:7px; }
+  .mod-group.core     { background:rgba(0,96,100,.15); border:1px solid rgba(0,96,100,.4); }
+  .mod-group.support  { background:rgba(78,52,46,.2); border:1px solid rgba(109,76,65,.4); }
+  .mod-group.platform { background:rgba(46,125,50,.12); border:1px solid rgba(46,125,50,.35); }
+  .mod-group-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+  .mod-group.core     .mod-group-title { color:#4dd0e1; }
+  .mod-group.support  .mod-group-title { color:#a1887f; }
+  .mod-group.platform .mod-group-title { color:#81c784; }
+  .mod-item { font-size:12px; color:var(--text); margin-bottom:5px; }
+  .mod-item span { color:var(--muted); font-size:11px; display:block; margin-top:1px; }
+
+  /* source note */
+  .source-note { max-width:1200px; margin:0 auto; padding:0 28px 32px; font-size:12px; color:var(--muted); }
+  .source-note strong { color:var(--text); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hl">
+    <div class="label">AZ-LMS · Architecture Diagrams</div>
+    <div class="title">Diagram 01 — System Architecture Overview</div>
+    <div class="sub">Layered architecture: Presentation → APISIX → FastAPI → 16 Modules → Data Layer + Worker process</div>
+  </div>
+  <div style="font-size:11px;color:var(--muted)">Last updated: 2026-04-15</div>
+</header>
+
+<nav>
+  <a href="index.html">Index</a>
+  <a href="01_system_architecture.html" class="active">1. System</a>
+  <a href="02_module_dependency.html">2. Modules</a>
+  <a href="03_database_er_diagram.html">3. ER Diagram</a>
+  <a href="04_auth_flow.html">4. Auth Flow</a>
+  <a href="05_integration_data_flow.html">5. Integrations</a>
+  <a href="06_background_jobs.html">6. Background Jobs</a>
+  <a href="07_apisix_route_map.html">7. APISIX Routes</a>
+  <a href="08_deployment_architecture.html">8. Deployment</a>
+  <a href="09_assignment_state_machine.html">9. Assignment</a>
+  <a href="10_compliance_state_machine.html">10. Compliance</a>
+  <a href="11_session_state_machine.html">11. Session</a>
+</nav>
+
+<!-- ═══════════════════════ DIAGRAM ═══════════════════════ -->
+<div class="wrap">
+  <div class="dcard">
+    <div class="mermaid" id="diagram">
+flowchart LR
+    classDef presentation fill:#1565c0,color:#fff,stroke:#0d47a1
+    classDef gateway      fill:#e65100,color:#fff,stroke:#bf360c
+    classDef api          fill:#1b5e20,color:#fff,stroke:#003300
+    classDef worker       fill:#4a148c,color:#fff,stroke:#2a004a
+    classDef coremod      fill:#006064,color:#fff,stroke:#003d40
+    classDef supportmod   fill:#6d4c41,color:#fff,stroke:#4e342e
+    classDef platformmod  fill:#2e7d32,color:#fff,stroke:#1b5e20
+    classDef data         fill:#b71c1c,color:#fff,stroke:#7f0000
+    classDef external     fill:#37474f,color:#fff,stroke:#263238
+
+    subgraph PRES["PRESENTATION LAYER"]
+        SPA["ReactJS SPA\nKeycloak JS Adapter"]
+    end
+
+    subgraph GW["GATEWAY LAYER"]
+        APISIX["APISIX API Gateway\nJWT validate, TLS, Rate limit\nX-Correlation-ID inject"]
+    end
+
+    subgraph APILAYER["API LAYER  /api/v1/"]
+        FASTAPI["FastAPI\nBusiness logic\nRole + hierarchy auth"]
+    end
+
+    subgraph WORKERLAYER["WORKER LAYER  separate process"]
+        SCHED["APScheduler\n13 Scheduled Jobs"]
+        ASYNC["Background Tasks\n9 Event-Driven Jobs"]
+    end
+
+    subgraph MODULES["APPLICATION LAYER  16 Modules"]
+        CORE["Core Modules\nUsers, Training, Assignments, Sessions"]
+        SUPPORT["Supporting Modules\nNotifications, Reporting, Audit, Integrations"]
+        PLATFORM["Platform Modules\nAuth, Authz, Search, Files, Admin, BG Jobs"]
+    end
+
+    subgraph DATA["DATA LAYER"]
+        PG[("PostgreSQL\nAll structured data")]
+        OD[("OneDrive\nBinary training files")]
+    end
+
+    subgraph EXT["EXTERNAL SYSTEMS"]
+        KC["Keycloak + Azure AD\nIdentity Provider"]
+        ZOHO["Zoho HR"]
+        EDB["Employee DB"]
+        TEAMS["Microsoft Teams"]
+        PES["PES\nM2M service"]
+    end
+
+    SPA      -->|"Bearer JWT"| APISIX
+    PES      -->|"M2M JWT"| APISIX
+    SPA      -->|"PKCE login"| KC
+    KC       -->|"JWT token"| SPA
+    APISIX   -->|"JWT validated"| FASTAPI
+    FASTAPI  --> CORE
+    FASTAPI  --> SUPPORT
+    FASTAPI  --> PLATFORM
+    CORE     --> PG
+    SUPPORT  --> PG
+    PLATFORM --> PG
+    SUPPORT  -->|"Graph API"| TEAMS
+    SUPPORT  -->|"Graph API"| OD
+    SUPPORT  -->|"Scheduled pull"| ZOHO
+    SUPPORT  -->|"Scheduled pull"| EDB
+    FASTAPI  -->|"Admin API"| KC
+    SCHED    -->|"time triggers"| MODULES
+    ASYNC    -->|"event triggers"| MODULES
+
+    class SPA presentation
+    class APISIX gateway
+    class FASTAPI api
+    class SCHED,ASYNC worker
+    class CORE coremod
+    class SUPPORT supportmod
+    class PLATFORM platformmod
+    class PG,OD data
+    class KC,ZOHO,EDB,TEAMS,PES external
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ COMPONENT REFERENCE ═══════════════════════ -->
+<div class="ref-section">
+
+  <div class="ref-title">Component Reference — Layer by Layer</div>
+
+  <div class="layer-grid">
+
+    <!-- Presentation -->
+    <div class="layer-card pres">
+      <div class="lc-header">
+        <div class="lc-dot" style="background:var(--c-pres)"></div>
+        <div class="lc-name">Presentation Layer</div>
+        <div class="lc-tag">Browser</div>
+      </div>
+      <div class="lc-body">
+        <strong>ReactJS SPA</strong> — Single-page application served to the browser. Users interact with all LMS features (catalog browsing, assignments, reports, admin) through this UI. No server-side rendering; all data fetched from FastAPI via REST.<br><br>
+        <strong>Keycloak JS Adapter</strong> — Client-side library embedded in the SPA. Handles the full PKCE login flow silently, stores the JWT <em>in browser memory only</em> (never localStorage or cookies), and auto-refreshes tokens before they expire without the user noticing.
+      </div>
+    </div>
+
+    <!-- Gateway -->
+    <div class="layer-card gw">
+      <div class="lc-header">
+        <div class="lc-dot" style="background:var(--c-gw)"></div>
+        <div class="lc-name">Gateway Layer</div>
+        <div class="lc-tag">APISIX</div>
+      </div>
+      <div class="lc-body">
+        <strong>APISIX API Gateway</strong> — The only entry point from the internet into the backend. Every request — from browsers and external services — must pass through here.<br><br>
+        It performs four things before forwarding to FastAPI:
+        <ul>
+          <li>Validates JWT signature, expiry, and <code>aud</code> claim</li>
+          <li>Terminates TLS (port 443)</li>
+          <li>Injects <code>X-Correlation-ID</code> header for request tracing</li>
+          <li>Applies rate limiting (100 req/min on PES M2M routes)</li>
+        </ul>
+        It does <em>not</em> check roles — that is FastAPI's job.
+      </div>
+    </div>
+
+    <!-- API -->
+    <div class="layer-card api">
+      <div class="lc-header">
+        <div class="lc-dot" style="background:var(--c-api)"></div>
+        <div class="lc-name">API Layer</div>
+        <div class="lc-tag">FastAPI / Python</div>
+      </div>
+      <div class="lc-body">
+        <strong>FastAPI</strong> — The backend application server. Runs on port 8000 (internal only, not reachable from outside). Handles all business logic after APISIX forwards the request.<br><br>
+        Responsibilities:
+        <ul>
+          <li>Re-validates JWT and extracts user identity</li>
+          <li>Enforces role-based access (ADMIN / HR / EMPLOYEE)</li>
+          <li>Enforces hierarchy scope — managers can only see their direct reports (depth = 1), derived from the <code>user_hierarchy</code> table, not from Keycloak</li>
+          <li>Delegates work to the 16 application modules</li>
+          <li>Fires background tasks asynchronously for notifications, audit writes, and Teams meetings</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Data -->
+    <div class="layer-card data">
+      <div class="lc-header">
+        <div class="lc-dot" style="background:var(--c-data)"></div>
+        <div class="lc-name">Data Layer</div>
+        <div class="lc-tag">Persistence</div>
+      </div>
+      <div class="lc-body">
+        <strong>PostgreSQL</strong> — Single relational database holding all structured LMS data: users, training items, assignments, sessions, compliance records, notifications, audit logs, and settings.<br><br>
+        <strong>OneDrive</strong> — Binary file storage for training resources (PDFs, videos, PPTXs). LMS never stores file bytes in PostgreSQL — only metadata (<code>external_file_id</code>, <code>reference_url</code>). Streaming URLs are re-generated on each access if expired.
+      </div>
+    </div>
+
+  </div><!-- /layer-grid -->
+
+  <!-- Worker Layer — full width with two tables -->
+  <div class="layer-card worker fullrow" style="margin-bottom:14px">
+    <div class="lc-header">
+      <div class="lc-dot" style="background:var(--c-worker)"></div>
+      <div class="lc-name">Worker Layer</div>
+      <div class="lc-tag">Separate OS Process</div>
+    </div>
+    <div class="lc-body">
+      Runs as a <strong>completely separate server process</strong> from FastAPI — they share no memory. If the Worker crashes, the API server keeps serving users. If FastAPI crashes, scheduled jobs keep running.<br>
+      Contains two types of jobs:
+      <strong>Scheduled jobs</strong> (APScheduler — run on a clock) and <strong>Event-driven jobs</strong> (FastAPI background tasks — fired by application events, not a schedule).
+      All jobs are <strong>idempotent</strong> — re-running produces the same result with no duplication.
+      Failed jobs are written to dead-letter tables (<code>audit_write_failures</code>, <code>notification_delivery_log</code>) and are visible in the Admin dashboard.
+    </div>
+
+    <div class="worker-tables">
+
+      <!-- Scheduled Jobs -->
+      <div>
+        <div class="wt-label sched">Scheduled Jobs — APScheduler (run on a timer)</div>
+        <table>
+          <tr><th>Job</th><th>Schedule</th><th>What It Does</th></tr>
+          <tr><td>Zoho HR Sync</td><td class="sched-tag">Daily 02:00</td><td>Pulls employee name, dept, status, joining date from Zoho. Zoho is source of truth — overwrites LMS unless field has an Admin override.</td></tr>
+          <tr><td>Employee DB Sync</td><td class="sched-tag">Daily 02:30</td><td>Pulls manager hierarchy, capabilities, and project allocations. This is the source of truth for <em>who reports to whom</em> — not Keycloak.</td></tr>
+          <tr><td>Integration Health Check</td><td class="sched-tag">Every 15 min</td><td>Pings each external system (Zoho, Teams, OneDrive, Keycloak). Updates <code>integration_health_status</code> to HEALTHY / DEGRADED / DOWN.</td></tr>
+          <tr><td>Compliance Evaluation</td><td class="sched-tag">Nightly 03:00</td><td>Evaluates all mandatory assignment rules. Creates new assignment records for employees who qualify. Updates <code>compliance_status</code> to PENDING / COMPLIANT / NON_COMPLIANT.</td></tr>
+          <tr><td>Overdue Detection + Escalation</td><td class="sched-tag">Daily</td><td>Finds assignments past due date. Updates status to OVERDUE. Triggers escalation notifications to manager if threshold is exceeded.</td></tr>
+          <tr><td>Approval Expiry Check</td><td class="sched-tag">Daily</td><td>Finds pending approval requests past their expiry date. Marks them EXPIRED and fires a notification to the employee.</td></tr>
+          <tr><td>Due-Date Reminder Dispatch</td><td class="sched-tag">Daily</td><td>Sends reminder notifications to employees whose assignment due date is approaching (configurable days-before window from Admin settings).</td></tr>
+          <tr><td>Session Reminder Dispatch</td><td class="sched-tag">Hourly</td><td>Sends reminder notifications to session participants before upcoming sessions (configurable hours-before window).</td></tr>
+          <tr><td>Notification Record Purge</td><td class="sched-tag">Daily</td><td>Deletes notification records older than 90 days to keep the table size manageable.</td></tr>
+          <tr><td>Notification Dead-Letter Retry</td><td class="sched-tag">Hourly</td><td>Retries delivery of failed notifications sitting in <code>notification_delivery_log</code> (up to 3 attempts with exponential backoff).</td></tr>
+          <tr><td>Export File Cleanup</td><td class="sched-tag">Daily</td><td>Deletes export files (CSV, Excel) from storage that are older than 24 hours.</td></tr>
+          <tr><td>Audit Log Retention Purge</td><td class="sched-tag">Weekly</td><td>Deletes audit records older than 5 years (unless flagged with <code>legal_hold = true</code>).</td></tr>
+          <tr><td>Audit Dead-Letter Retry</td><td class="sched-tag">Hourly</td><td>Retries failed audit writes sitting in <code>audit_write_failures</code>. Failed audit writes never blocked the original operation — they are caught here.</td></tr>
+        </table>
+      </div>
+
+      <!-- Event-Driven Jobs -->
+      <div>
+        <div class="wt-label event">Event-Driven Jobs — Background Tasks (fired by application events)</div>
+        <table>
+          <tr><th>Trigger Event</th><th>What Runs in Background</th></tr>
+          <tr><td>Assignment created</td><td class="event-tag">Send ASSIGNMENT_CREATED notification to the employee. If delivery fails, written to dead-letter for hourly retry.</td></tr>
+          <tr><td>Session created</td><td class="event-tag">Call Microsoft Teams Graph API to create an online meeting. Store <code>teams_meeting_id</code> and link in the sessions table. If Teams is down, set <code>teams_link_status = PENDING_MANUAL</code>.</td></tr>
+          <tr><td>Session rescheduled</td><td class="event-tag">Call Teams Graph API to update the meeting time. Re-send notifications to all confirmed participants with the new time.</td></tr>
+          <tr><td>Session cancelled</td><td class="event-tag">Call Teams Graph API to cancel the meeting. Send SESSION_CANCELLED notification to all participants.</td></tr>
+          <tr><td>Session end time passes</td><td class="event-tag">Call Teams Graph API to pull the attendance report. Populate <code>session_attendance</code> with who joined online. If Teams is down, attendance must be entered manually by Admin.</td></tr>
+          <tr><td>Approval request expires</td><td class="event-tag">Update <code>assignment_requests.status = EXPIRED</code>. Send APPROVAL_EXPIRED notification to the employee so they can re-request.</td></tr>
+          <tr><td>Training completion expires</td><td class="event-tag">Create a new recertification assignment for the employee so they must redo the training before the validity window closes.</td></tr>
+          <tr><td>Compliance state changes to NON_COMPLIANT</td><td class="event-tag">If configured threshold is exceeded, send escalation notifications to the employee's manager and HR.</td></tr>
+          <tr><td>Any state-changing API operation</td><td class="event-tag">Async write to <code>audit_logs</code>. This never blocks the API response — if the write fails it goes to <code>audit_write_failures</code> dead-letter and is retried hourly.</td></tr>
+        </table>
+      </div>
+
+    </div><!-- /worker-tables -->
+  </div>
+
+  <!-- Application Modules — full width -->
+  <div class="layer-card fullrow" style="border-left:4px solid #444;margin-bottom:14px">
+    <div class="lc-header">
+      <div class="lc-dot" style="background:#444"></div>
+      <div class="lc-name">Application Layer — 16 Modules</div>
+      <div class="lc-tag">DDD Bounded Contexts</div>
+    </div>
+    <div class="lc-body">
+      Each module owns its own tables and exposes services only through its public API — no module may write directly to another module's tables. All 16 modules share the single PostgreSQL database.
+    </div>
+    <div class="mod-grid">
+      <div class="mod-group core">
+        <div class="mod-group-title">Core Modules — Primary Business Value</div>
+        <div class="mod-item"><strong>M1 User Management</strong><span>Manages employee profiles, org hierarchy, probation status. Syncs data from Zoho HR and Employee DB. Single source of identity within LMS.</span></div>
+        <div class="mod-item"><strong>M2 Training Management</strong><span>Manages the training catalog: courses, learning paths, curricula. Handles versions, resource uploads to OneDrive, certificates, and completion rules.</span></div>
+        <div class="mod-item"><strong>M3 Assignment Engine</strong><span>Owns all assignment logic: mandatory rule evaluation, compliance tracking, approval workflow, probation gates. This is the only module that may write compliance state.</span></div>
+        <div class="mod-item"><strong>M4 Sessions</strong><span>Manages instructor-led training sessions: scheduling, venue/facilitator booking, participant nominations, Microsoft Teams meeting creation, and attendance tracking.</span></div>
+      </div>
+      <div class="mod-group support">
+        <div class="mod-group-title">Supporting Modules — Enable Core Flows</div>
+        <div class="mod-item"><strong>M5 Notifications</strong><span>Delivers in-app and email notifications. Always async — never blocks API responses. Manages user preferences and dead-letter retry for failed deliveries.</span></div>
+        <div class="mod-item"><strong>M6 Reporting</strong><span>Read-only module. Generates dashboards and downloadable reports (compliance, completion, sessions). No data modification — only reads from other modules' tables.</span></div>
+        <div class="mod-item"><strong>M7 Audit</strong><span>INSERT-only audit log for all state changes. Async writes so failures never block operations. 5-year retention with legal-hold support. Dead-letter for failed writes.</span></div>
+        <div class="mod-item"><strong>M8 Integrations</strong><span>Manages connections to external systems: Zoho HR, Employee DB, Microsoft Teams, OneDrive. Owns integration job records and health status. Exposes PES compliance API.</span></div>
+        <div class="mod-item"><strong>M9 Migration</strong><span style="color:#f85149">Phase 2 — Deferred. Will handle one-time migration of historical training data from the legacy system.</span></div>
+      </div>
+      <div class="mod-group platform">
+        <div class="mod-group-title">Platform Modules — Reusable Capabilities</div>
+        <div class="mod-item"><strong>M10 Authentication</strong><span>Wraps Keycloak JWT validation. Provides the current-user context (identity + role) to all other modules.</span></div>
+        <div class="mod-item"><strong>M11 Authorization</strong><span>Evaluates role + hierarchy-based access rules. Derived from user_hierarchy (not Keycloak). Manager scope = direct reports only (depth 1).</span></div>
+        <div class="mod-item"><strong>M12 Search</strong><span>Full-text and filter-based search over the training catalog. Respects authorization — employees only see published content.</span></div>
+        <div class="mod-item"><strong>M13 File Management</strong><span>Handles upload, delete, and streaming-URL generation for training files on OneDrive via Graph API. LMS never stores file bytes.</span></div>
+        <div class="mod-item"><strong>M14 Admin Configuration</strong><span>Key-value system settings (reminder windows, approval expiry, retention periods). All changes are audit-logged.</span></div>
+        <div class="mod-item"><strong>M15 API Layer</strong><span>The FastAPI route definitions and middleware: JWT re-validation, X-Correlation-ID propagation, Pydantic request/response schemas.</span></div>
+        <div class="mod-item"><strong>M16 Background Jobs</strong><span>Hosts APScheduler and wires up all event-driven background task handlers. Shared by all modules that need async processing.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- External Systems -->
+  <div class="layer-card external fullrow" style="margin-bottom:14px">
+    <div class="lc-header">
+      <div class="lc-dot" style="background:var(--c-ext)"></div>
+      <div class="lc-name">External Systems</div>
+      <div class="lc-tag">Outside LMS Boundary</div>
+    </div>
+    <div class="lc-body">
+      <table>
+        <tr><th>System</th><th>Direction</th><th>What It Provides / Receives</th><th>If It Goes Down</th></tr>
+        <tr><td><strong>Keycloak + Azure AD</strong></td><td>Bidirectional</td><td>Identity provider. LMS reads JWT on every request. LMS writes role assignments via Keycloak Admin API when Admin changes a user's role.</td><td>Login blocked. Existing sessions last until token expiry (~30 min). No LMS data is lost.</td></tr>
+        <tr><td><strong>Zoho HR</strong></td><td>Zoho → LMS (pull)</td><td>Source of truth for HR fields: full name, department, employment status, joining date. LMS pulls daily at 02:00.</td><td>LMS continues with last-synced data. Sync failure is logged and Admin is alerted.</td></tr>
+        <tr><td><strong>Employee DB</strong></td><td>Employee DB → LMS (pull)</td><td>Source of truth for org hierarchy (who reports to whom), capabilities, and project allocations. LMS pulls daily at 02:30.</td><td>LMS uses last-known hierarchy. Manager-scoped operations may be slightly stale.</td></tr>
+        <tr><td><strong>Microsoft Teams</strong></td><td>LMS → Teams (push)</td><td>LMS creates/updates/cancels Teams meetings for ILT sessions via Graph API. Also pulls attendance reports after session ends.</td><td>Meeting link set to PENDING_MANUAL status. Admin provides a manual link. Attendance entered manually by Admin.</td></tr>
+        <tr><td><strong>OneDrive</strong></td><td>LMS → OneDrive (push)</td><td>Stores all training resource files (PDFs, videos, PPTXs). LMS uploads on resource creation, deletes on resource removal, and generates streaming URLs on each access.</td><td>File access blocked; training metadata still accessible. 3 auto-retries then Admin alerted.</td></tr>
+        <tr><td><strong>PES (M2M)</strong></td><td>PES → LMS (pull)</td><td>Performance Evaluation System calls LMS to check compliance status of employees. Uses Keycloak Client Credentials (service account). Rate limited to 100 req/min. Every call is audited.</td><td>Failure is on PES side. No LMS impact.</td></tr>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /ref-section -->
+
+<!-- Source note -->
+<div class="source-note">
+  <strong>Source:</strong> docs/requirements/04_architecture/01_architecture.md — Section 3 &nbsp;|&nbsp;
+  <strong>Type:</strong> Flowchart LR &nbsp;|&nbsp;
+  Arrow direction on diagram: solid arrow = data / request flow. Worker layer arrows = async / non-blocking.
+</div>
+
+<!-- ═══════════════════════ ZOOM CONTROLS ═══════════════════════ -->
+<div class="controls">
+  <button class="cb" onclick="zi()" title="Zoom in">+</button>
+  <div id="zoom-label">100%</div>
+  <button class="cb" onclick="zo()" title="Zoom out">−</button>
+  <button class="cb" onclick="zr()" title="Reset zoom" style="font-size:13px">↺</button>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    securityLevel: 'loose',
+    themeVariables: { edgeLabelBackground: '#1e2530' },
+    flowchart: { useMaxWidth: false, htmlLabels: false, curve: 'basis', padding: 20 }
+  });
+
+  let scale = 1, origW = null, origH = null;
+
+  function getSvg() { return document.querySelector('#diagram svg'); }
+
+  /* ── 1. Fix edge label backgrounds ─────────────────────────────────────────
+     Mermaid writes fill:rgba(0,0,0,0.3) as an inline style attribute on the
+     rect behind each edge label — CSS !important cannot beat inline style in
+     all browsers, so we override the attribute directly after render.        */
+  function fixEdgeLabels() {
+    const svg = getSvg();
+    if (!svg) return;
+    svg.querySelectorAll('.edgeLabel rect').forEach(r => {
+      r.setAttribute('fill', '#1e2530');
+      r.setAttribute('rx', '3');
+      r.setAttribute('ry', '3');
+      r.style.fill        = '#1e2530';
+      r.style.opacity     = '1';
+      r.style.stroke      = '#444c56';
+      r.style.strokeWidth = '0.5px';
+    });
+    svg.querySelectorAll('.edgeLabel text, .edgeLabel tspan').forEach(t => {
+      t.style.fill = '#c9d1d9';
+    });
+  }
+
+  /* ── 2. Move subgraph titles to bottom of their box ────────────────────────
+     Mermaid always places .cluster-label at the top. We use getBBox() to find
+     the actual rendered positions of both the rect and the label, compute the
+     delta needed to sit 6px above the bottom edge, and rewrite the transform. */
+  function moveSubgraphLabelsToBottom() {
+    const svg = getSvg();
+    if (!svg) return;
+    svg.querySelectorAll('g.cluster').forEach(cluster => {
+      const rectEl  = cluster.querySelector('rect');
+      const labelEl = cluster.querySelector('.cluster-label');
+      if (!rectEl || !labelEl) return;
+      let rBox, lBox;
+      try { rBox = rectEl.getBBox(); lBox = labelEl.getBBox(); } catch(e) { return; }
+
+      /* Target: label bottom edge sits 6px above rect bottom edge */
+      const targetY = rBox.y + rBox.height - lBox.height - 6;
+      const dy = targetY - lBox.y;
+
+      /* Preserve existing horizontal transform, only shift Y */
+      const t  = labelEl.getAttribute('transform') || '';
+      const m  = t.match(/translate\(\s*([-\d.]+)[,\s]+([-\d.]+)\s*\)/);
+      const tx = m ? parseFloat(m[1]) : 0;
+      const ty = m ? parseFloat(m[2]) : 0;
+      labelEl.setAttribute('transform', `translate(${tx}, ${ty + dy})`);
+    });
+  }
+
+  /* ── 3. Capture natural SVG dimensions ─────────────────────────────────── */
+  function captureOriginal() {
+    const svg = getSvg();
+    if (!svg) return false;
+    const vb = svg.viewBox && svg.viewBox.baseVal;
+    if (vb && vb.width > 0) { origW = vb.width; origH = vb.height; }
+    else { origW = svg.getBoundingClientRect().width || 1000; origH = svg.getBoundingClientRect().height || 700; }
+    svg.setAttribute('width',  origW);
+    svg.setAttribute('height', origH);
+    svg.style.maxWidth = 'none';
+    return true;
+  }
+
+  /* ── 4. Fit whole diagram into the visible area ─────────────────────────── */
+  function fitToScreen() {
+    const svg = getSvg();
+    if (!svg || !origW) return;
+    const headerH = (document.querySelector('header') || {}).offsetHeight || 60;
+    const navH    = (document.querySelector('nav')    || {}).offsetHeight || 40;
+    const padding = 80;  /* wrap padding + dcard padding */
+    const availW  = document.querySelector('.wrap').clientWidth  - padding;
+    const availH  = window.innerHeight - headerH - navH - padding;
+    scale = Math.min(availW / origW, availH / origH);
+    scale = Math.max(scale, 0.1);
+    svg.setAttribute('width',  origW * scale);
+    svg.setAttribute('height', origH * scale);
+    document.getElementById('zoom-label').textContent = Math.round(scale * 100) + '%';
+  }
+
+  function applyScale() {
+    const svg = getSvg();
+    if (!svg || !origW) return;
+    svg.setAttribute('width',  origW * scale);
+    svg.setAttribute('height', origH * scale);
+    document.getElementById('zoom-label').textContent = Math.round(scale * 100) + '%';
+  }
+
+  function zi() { scale = Math.min(scale * 1.25, 8);   applyScale(); }
+  function zo() { scale = Math.max(scale * 0.8,  0.1); applyScale(); }
+  function zr() { fitToScreen(); } /* reset = back to fit-to-screen, not 1:1 */
+
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      if (captureOriginal()) {
+        fixEdgeLabels();
+        moveSubgraphLabelsToBottom();
+        fitToScreen();   /* show full diagram on first load */
+      }
+    }, 500);
+  });
+</script>
+</body>
+</html>

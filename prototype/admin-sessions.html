@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-LMS — Session Management</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<script>
+  const _sr = localStorage.getItem('lms_role');
+  if (!_sr || (_sr !== 'admin' && _sr !== 'hr')) {
+    localStorage.setItem('lms_role', 'admin');
+  }
+</script>
+<div class="lms-wrapper">
+
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title">Session Management</div>
+      <div class="topbar-actions">
+        <div class="role-switcher" id="role-switcher"></div>
+        <button class="btn-outline-lms" style="font-size:12px;padding:6px 12px" onclick="showToast('Exporting sessions...')">
+          <i class="bi bi-download"></i> Export
+        </button>
+        <button class="btn-primary-lms" style="font-size:12px;padding:6px 12px" onclick="openCreateModal()">
+          <i class="bi bi-plus-lg"></i> New Session
+        </button>
+        <div style="position:relative">
+          <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+            <i class="bi bi-bell"></i><span class="notif-badge">1</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown-header"><span>Notifications</span><a href="#">Mark all read</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- Stat Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-camera-video"></i></div>
+            <div class="stat-info"><div class="stat-value">14</div><div class="stat-label">Upcoming</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-check2-circle"></i></div>
+            <div class="stat-info"><div class="stat-value">38</div><div class="stat-label">Completed</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon amber"><i class="bi bi-person-raised-hand"></i></div>
+            <div class="stat-info"><div class="stat-value">7</div><div class="stat-label">Pending Nominations</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon red"><i class="bi bi-x-circle"></i></div>
+            <div class="stat-info"><div class="stat-value">3</div><div class="stat-label">Cancelled</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs-lms">
+        <a class="tab-item active" onclick="switchTab('all',this)">All <span class="tab-count">55</span></a>
+        <a class="tab-item" onclick="switchTab('upcoming',this)">Upcoming <span class="tab-count">14</span></a>
+        <a class="tab-item" onclick="switchTab('ongoing',this)">Ongoing <span class="tab-count">1</span></a>
+        <a class="tab-item" onclick="switchTab('completed',this)">Completed <span class="tab-count">38</span></a>
+        <a class="tab-item" onclick="switchTab('cancelled',this)">Cancelled <span class="tab-count">3</span></a>
+      </div>
+
+      <!-- Table Card -->
+      <div class="card">
+        <div class="card-header-lms">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <div class="search-bar" style="width:240px">
+              <i class="bi bi-search"></i>
+              <input type="text" placeholder="Search sessions..." oninput="filterSessions(this.value)">
+            </div>
+            <select class="form-select" style="width:160px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:8px">
+              <option value="">All Facilitators</option>
+              <option>Arun Kumar</option>
+              <option>Meena Joshi</option>
+              <option>Rajesh Nair</option>
+              <option>Dr. Suresh Pillai</option>
+            </select>
+            <select class="form-select" style="width:160px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:8px">
+              <option value="">All Venues</option>
+              <option>Conference Hall B</option>
+              <option>Training Room A</option>
+              <option>Board Room</option>
+            </select>
+            <select class="form-select" style="width:155px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:8px">
+              <option value="">All BU Heads</option>
+              <option>Ravi Patel</option>
+              <option>Suresh Kumar</option>
+              <option>Meena Shah</option>
+            </select>
+          </div>
+          <span style="font-size:12.5px;color:var(--text-muted)">Showing 8 of 55</span>
+        </div>
+
+        <table class="lms-table" id="sessions-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" onclick="toggleAll(this)"></th>
+              <th>Session</th>
+              <th>Venue</th>
+              <th>Date &amp; Time</th>
+              <th>Facilitator</th>
+              <th>Enrolled / Cap</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sessions-tbody">
+
+            <tr data-status="upcoming">
+              <td><input type="checkbox" class="row-check"></td>
+              <td>
+                <div style="font-weight:600;font-size:13px">Safety Compliance Workshop</div>
+                <div style="font-size:11px;color:var(--text-muted)">SES-001 · <span style="background:#dbeafe;color:#1e40af;border-radius:10px;padding:1px 6px;font-size:10px">Course</span> Safety Compliance 2026</div>
+              </td>
+              <td style="font-size:12.5px">Conference Hall B</td>
+              <td style="font-size:12.5px">Apr 15, 2026<br><span style="color:var(--text-muted)">10:00 – 12:00</span></td>
+              <td style="font-size:12.5px">Arun Kumar</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <div class="progress-lms" style="width:60px"><div class="bar amber" style="width:60%"></div></div>
+                  <span style="font-size:12px">18 / 30</span>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-pending">Upcoming</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditModal('Safety Compliance Workshop')" title="Edit"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px;position:relative" onclick="openNominationsModal('Safety Compliance Workshop')" title="Nominations">
+                    <i class="bi bi-person-raised-hand"></i>
+                    <span style="position:absolute;top:-4px;right:-4px;background:var(--primary);color:#fff;border-radius:50%;width:14px;height:14px;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:700">3</span>
+                  </button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAttendanceModal('Safety Compliance Workshop')" title="Manage Attendance"><i class="bi bi-people"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-status="upcoming">
+              <td><input type="checkbox" class="row-check"></td>
+              <td>
+                <div style="font-weight:600;font-size:13px">Data Privacy Awareness</div>
+                <div style="font-size:11px;color:var(--text-muted)">SES-002 · <span style="background:#ede9fe;color:#5b21b6;border-radius:10px;padding:1px 6px;font-size:10px">Learning Path</span> Data Privacy</div>
+              </td>
+              <td style="font-size:12.5px">Training Room A</td>
+              <td style="font-size:12.5px">Apr 18, 2026<br><span style="color:var(--text-muted)">14:00 – 15:30</span></td>
+              <td style="font-size:12.5px">Meena Joshi</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <div class="progress-lms" style="width:60px"><div class="bar green" style="width:80%"></div></div>
+                  <span style="font-size:12px">24 / 30</span>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-pending">Upcoming</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditModal('Data Privacy Awareness')" title="Edit"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openNominationsModal('Data Privacy Awareness')" title="Nominations"><i class="bi bi-person-raised-hand"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAttendanceModal('Data Privacy Awareness')" title="Manage Attendance"><i class="bi bi-people"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-status="upcoming">
+              <td><input type="checkbox" class="row-check"></td>
+              <td>
+                <div style="font-weight:600;font-size:13px">Leadership Development – Cohort 3</div>
+                <div style="font-size:11px;color:var(--text-muted)">SES-003 · <span style="background:#dcfce7;color:#166534;border-radius:10px;padding:1px 6px;font-size:10px">Curriculum</span> Leadership Excellence</div>
+              </td>
+              <td style="font-size:12.5px">Board Room</td>
+              <td style="font-size:12.5px">Apr 22, 2026<br><span style="color:var(--text-muted)">09:00 – 13:00</span></td>
+              <td style="font-size:12.5px">Dr. Suresh Pillai</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <div class="progress-lms" style="width:60px"><div class="bar amber" style="width:40%"></div></div>
+                  <span style="font-size:12px">8 / 20</span>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-pending">Upcoming</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openEditModal('Leadership Development – Cohort 3')" title="Edit"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px;position:relative" onclick="openNominationsModal('Leadership Development – Cohort 3')" title="Nominations">
+                    <i class="bi bi-person-raised-hand"></i>
+                    <span style="position:absolute;top:-4px;right:-4px;background:var(--warning);color:#fff;border-radius:50%;width:14px;height:14px;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:700">4</span>
+                  </button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAttendanceModal('Leadership Development – Cohort 3')" title="Manage Attendance"><i class="bi bi-people"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-status="ongoing">
+              <td><input type="checkbox" class="row-check"></td>
+              <td>
+                <div style="font-weight:600;font-size:13px">Anti-Harassment Policy Briefing</div>
+                <div style="font-size:11px;color:var(--text-muted)">SES-004 · <span style="background:#dbeafe;color:#1e40af;border-radius:10px;padding:1px 6px;font-size:10px">Course</span> Anti-Harassment Policy</div>
+              </td>
+              <td style="font-size:12.5px">Conference Hall B</td>
+              <td style="font-size:12.5px">Apr 7, 2026<br><span style="color:var(--text-muted)">11:00 – 12:30</span></td>
+              <td style="font-size:12.5px">Meena Joshi</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <div class="progress-lms" style="width:60px"><div class="bar green" style="width:100%"></div></div>
+                  <span style="font-size:12px">25 / 25</span>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-healthy" style="background:#dcfce7;color:#166534">Ongoing</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAttendanceModal('Anti-Harassment Policy Briefing')" title="Mark Attendance"><i class="bi bi-person-check"></i></button>
+                  <button class="btn-primary-lms" style="font-size:11px;padding:3px 10px" onclick="completeSession(this,'Anti-Harassment Policy Briefing')">
+                    <i class="bi bi-check2-circle"></i> Complete
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-status="completed">
+              <td><input type="checkbox" class="row-check"></td>
+              <td>
+                <div style="font-weight:600;font-size:13px">Code of Conduct Refresher</div>
+                <div style="font-size:11px;color:var(--text-muted)">SES-010 · <span style="background:#dbeafe;color:#1e40af;border-radius:10px;padding:1px 6px;font-size:10px">Course</span> Code of Conduct</div>
+              </td>
+              <td style="font-size:12.5px">Training Room A</td>
+              <td style="font-size:12.5px">Mar 20, 2026<br><span style="color:var(--text-muted)">10:00 – 11:00</span></td>
+              <td style="font-size:12.5px">Arun Kumar</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <div class="progress-lms" style="width:60px"><div class="bar green" style="width:90%"></div></div>
+                  <span style="font-size:12px">27 / 30</span>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-healthy">Completed</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAttendanceModal('Code of Conduct Refresher')" title="View Attendance"><i class="bi bi-people"></i></button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="showToast('Downloading attendance report...')" title="Export Report"><i class="bi bi-download"></i></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-status="cancelled">
+              <td><input type="checkbox" class="row-check"></td>
+              <td>
+                <div style="font-weight:600;font-size:13px">Agile Workshop – Q1</div>
+                <div style="font-size:11px;color:var(--text-muted)">SES-012 · <span style="background:#ede9fe;color:#5b21b6;border-radius:10px;padding:1px 6px;font-size:10px">Learning Path</span> Agile &amp; Scrum</div>
+              </td>
+              <td style="font-size:12.5px">Board Room</td>
+              <td style="font-size:12.5px">Feb 28, 2026<br><span style="color:var(--text-muted)">14:00 – 17:00</span></td>
+              <td style="font-size:12.5px">Rajesh Nair</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <div class="progress-lms" style="width:60px"><div class="bar red" style="width:50%"></div></div>
+                  <span style="font-size:12px">10 / 20</span>
+                </div>
+              </td>
+              <td><span class="badge-lms badge-danger" style="background:#fee2e2;color:#991b1b">Cancelled</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" title="View only"><i class="bi bi-eye"></i></button>
+                </div>
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /page-body -->
+  </div><!-- /main-content -->
+</div><!-- /lms-wrapper -->
+
+<!-- ===== Create / Edit Session Modal ===== -->
+<div class="modal-overlay" id="session-modal" onclick="closeSessionModal(event)" style="display:none;position:fixed;inset:0;z-index:1050;background:rgba(15,23,42,0.55);align-items:center;justify-content:center">
+  <div class="modal-box" style="max-width:640px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="session-modal-title">New Session</div>
+      <button class="modal-close" onclick="closeSessionModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+
+      <div class="row g-3">
+        <!-- Title -->
+        <div class="col-12">
+          <label class="form-label-lms">Session Title <span class="text-danger">*</span></label>
+          <input type="text" class="form-control-lms" id="ses-title" placeholder="e.g. Safety Compliance Workshop">
+        </div>
+
+        <!-- Linked Training -->
+        <div class="col-12">
+          <label class="form-label-lms">Linked Training <span class="text-danger">*</span></label>
+          <select class="form-control-lms" id="ses-training" onchange="updateTrainingTypeBadge(this)">
+            <option value="">-- Select published training --</option>
+            <option value="course" data-type="Course">Safety Compliance 2026</option>
+            <option value="course" data-type="Course">Data Privacy Training</option>
+            <option value="course" data-type="Course">Anti-Harassment Policy</option>
+            <option value="course" data-type="Course">Code of Conduct</option>
+            <option value="lp" data-type="Learning Path">Leadership Excellence LP</option>
+            <option value="lp" data-type="Learning Path">Agile &amp; Scrum LP</option>
+            <option value="curriculum" data-type="Curriculum">Engineering Onboarding Curriculum</option>
+          </select>
+          <div id="training-type-badge" style="margin-top:6px;display:none">
+            <span id="training-type-label" style="font-size:11.5px;padding:2px 8px;border-radius:10px;font-weight:600"></span>
+          </div>
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px">
+            <i class="bi bi-info-circle"></i> Sessions can be linked to published Courses, Learning Paths, or Curriculums.
+          </div>
+        </div>
+
+        <!-- Facilitator with Settings Icon -->
+        <div class="col-md-6">
+          <label class="form-label-lms">Facilitator <span class="text-danger">*</span></label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <select class="form-control-lms" style="flex:1" id="ses-facilitator">
+              <option value="">-- Select facilitator --</option>
+              <option>Arun Kumar</option>
+              <option>Meena Joshi</option>
+              <option>Rajesh Nair</option>
+              <option>Dr. Suresh Pillai</option>
+              <option>Anita Shah (External)</option>
+            </select>
+            <button class="btn-ghost-lms" style="padding:6px 10px;flex-shrink:0" title="Manage facilitator list" onclick="openFacilitatorsModal()">
+              <i class="bi bi-gear-fill" style="color:var(--primary)"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Max Participants -->
+        <div class="col-md-6">
+          <label class="form-label-lms">Max Capacity</label>
+          <input type="number" class="form-control-lms" id="ses-capacity" placeholder="e.g. 30" min="1">
+        </div>
+
+        <!-- Date / Time -->
+        <div class="col-md-4">
+          <label class="form-label-lms">Date <span class="text-danger">*</span></label>
+          <input type="date" class="form-control-lms" id="ses-date">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label-lms">Start Time <span class="text-danger">*</span></label>
+          <input type="time" class="form-control-lms">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label-lms">End Time <span class="text-danger">*</span></label>
+          <input type="time" class="form-control-lms">
+        </div>
+
+        <!-- Venue with Settings Icon -->
+        <div class="col-12">
+          <label class="form-label-lms">Venue <span class="text-danger">*</span></label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <select class="form-control-lms" style="flex:1" id="ses-venue" onchange="checkVenueCapacity(this)">
+              <option value="">-- Select venue --</option>
+              <option data-capacity="50">Conference Hall B</option>
+              <option data-capacity="25">Training Room A</option>
+              <option data-capacity="15">Board Room</option>
+              <option data-capacity="100">Main Auditorium</option>
+            </select>
+            <button class="btn-ghost-lms" style="padding:6px 10px;flex-shrink:0" title="Manage venue list" onclick="openVenuesModal()">
+              <i class="bi bi-gear-fill" style="color:var(--primary)"></i>
+            </button>
+          </div>
+          <div id="venue-capacity-warning" style="display:none;margin-top:5px;font-size:12px;color:var(--warning);background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;padding:6px 10px">
+            <i class="bi bi-exclamation-triangle-fill"></i> Max participants exceeds venue capacity. Verify room arrangement.
+          </div>
+        </div>
+
+        <!-- Teams Meeting Info -->
+        <div class="col-12">
+          <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#0369a1">
+            <i class="bi bi-microsoft-teams me-1" style="color:#5558af"></i>
+            <strong>Teams meeting will be auto-created</strong> when the session is saved. If creation fails, you can manually paste a Teams link after saving.
+          </div>
+        </div>
+
+        <!-- Nomination Window (Optional) -->
+        <div class="col-12">
+          <div style="border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <label class="form-label-lms" style="margin:0">
+                <i class="bi bi-calendar-range me-1" style="color:var(--primary)"></i> Nomination Window
+                <span style="font-size:11px;font-weight:400;color:var(--text-muted);margin-left:4px">(optional)</span>
+              </label>
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" id="nomination-toggle" onchange="toggleNominationWindow(this.checked)">
+              </div>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">
+              Allow Managers to nominate their direct reports within a defined period.
+            </div>
+            <div id="nomination-window-fields" style="display:none">
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <label class="form-label-lms" style="font-size:12px">Nominations Open</label>
+                  <input type="datetime-local" class="form-control-lms" id="nom-open">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label-lms" style="font-size:12px">Nominations Close</label>
+                  <input type="datetime-local" class="form-control-lms" id="nom-close">
+                </div>
+              </div>
+              <div style="font-size:11.5px;color:var(--text-muted);margin-top:6px">
+                <i class="bi bi-info-circle"></i> Both dates must be before the session start time.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="col-12">
+          <label class="form-label-lms">Description / Notes</label>
+          <textarea class="form-control-lms" rows="3" placeholder="Session agenda or notes..."></textarea>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline-lms" onclick="closeSessionModal()">Cancel</button>
+      <button class="btn-primary-lms" onclick="saveSession()"><i class="bi bi-check-lg"></i> Save Session</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Manage Facilitators Modal ===== -->
+<div class="modal-overlay" id="facilitators-modal" onclick="closeFacilitatorsModal(event)" style="display:none;position:fixed;inset:0;z-index:1060;background:rgba(15,23,42,0.55);align-items:center;justify-content:center">
+  <div class="modal-box" style="max-width:520px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title"><i class="bi bi-gear-fill me-2" style="color:var(--primary)"></i>Manage Facilitators</div>
+      <button class="modal-close" onclick="closeFacilitatorsModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:14px">
+        Add external or internal facilitators. Deactivated facilitators remain on existing sessions but cannot be selected for new ones.
+      </div>
+      <!-- Add New -->
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input type="text" class="form-control-lms" placeholder="Facilitator name..." id="new-facilitator-name" style="flex:1">
+        <button class="btn-primary-lms" style="font-size:12px;padding:6px 14px;white-space:nowrap" onclick="addFacilitator()">
+          <i class="bi bi-plus-lg"></i> Add
+        </button>
+      </div>
+      <!-- List -->
+      <table class="lms-table" style="font-size:12.5px">
+        <thead>
+          <tr><th>Name</th><th>Type</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="facilitators-list">
+          <tr>
+            <td><strong>Arun Kumar</strong></td>
+            <td><span style="font-size:11px;background:#dbeafe;color:#1e40af;border-radius:10px;padding:1px 7px">LMS User</span></td>
+            <td><span class="badge-lms badge-healthy" style="font-size:10px">Active</span></td>
+            <td><button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="showToast('Edit facilitator')">Edit</button></td>
+          </tr>
+          <tr>
+            <td><strong>Meena Joshi</strong></td>
+            <td><span style="font-size:11px;background:#dbeafe;color:#1e40af;border-radius:10px;padding:1px 7px">LMS User</span></td>
+            <td><span class="badge-lms badge-healthy" style="font-size:10px">Active</span></td>
+            <td><button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="showToast('Edit facilitator')">Edit</button></td>
+          </tr>
+          <tr>
+            <td><strong>Dr. Suresh Pillai</strong></td>
+            <td><span style="font-size:11px;background:#f3e8ff;color:#7c3aed;border-radius:10px;padding:1px 7px">External</span></td>
+            <td><span class="badge-lms badge-healthy" style="font-size:10px">Active</span></td>
+            <td><button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="showToast('Edit facilitator')">Edit</button></td>
+          </tr>
+          <tr style="opacity:0.5">
+            <td><strong>Vikram Das</strong></td>
+            <td><span style="font-size:11px;background:#f3e8ff;color:#7c3aed;border-radius:10px;padding:1px 7px">External</span></td>
+            <td><span style="font-size:10px;background:#f1f5f9;color:#64748b;border-radius:10px;padding:1px 7px">Inactive</span></td>
+            <td><button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="showToast('Facilitator reactivated')">Reactivate</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary-lms" onclick="closeFacilitatorsModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Manage Venues Modal ===== -->
+<div class="modal-overlay" id="venues-modal" onclick="closeVenuesModal(event)" style="display:none;position:fixed;inset:0;z-index:1060;background:rgba(15,23,42,0.55);align-items:center;justify-content:center">
+  <div class="modal-box" style="max-width:560px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title"><i class="bi bi-gear-fill me-2" style="color:var(--primary)"></i>Manage Venues</div>
+      <button class="modal-close" onclick="closeVenuesModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:14px">
+        Manage the list of physical venues available for selection when creating sessions.
+      </div>
+      <!-- Add New -->
+      <div class="row g-2 mb-16px" style="margin-bottom:16px">
+        <div class="col-md-5">
+          <input type="text" class="form-control-lms" placeholder="Venue name..." id="new-venue-name">
+        </div>
+        <div class="col-md-4">
+          <input type="text" class="form-control-lms" placeholder="Address (optional)">
+        </div>
+        <div class="col-md-2">
+          <input type="number" class="form-control-lms" placeholder="Cap." min="1" title="Capacity">
+        </div>
+        <div class="col-md-1">
+          <button class="btn-primary-lms" style="font-size:12px;padding:6px 10px;width:100%" onclick="addVenue()" title="Add venue">
+            <i class="bi bi-plus-lg"></i>
+          </button>
+        </div>
+      </div>
+      <!-- List -->
+      <table class="lms-table" style="font-size:12.5px">
+        <thead>
+          <tr><th>Name</th><th>Address</th><th>Cap.</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="venues-list">
+          <tr>
+            <td><strong>Conference Hall B</strong></td>
+            <td style="color:var(--text-muted)">Floor 2, Main Block</td>
+            <td>50</td>
+            <td><span class="badge-lms badge-healthy" style="font-size:10px">Active</span></td>
+            <td><button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="showToast('Edit venue')">Edit</button></td>
+          </tr>
+          <tr>
+            <td><strong>Training Room A</strong></td>
+            <td style="color:var(--text-muted)">Floor 1, East Wing</td>
+            <td>25</td>
+            <td><span class="badge-lms badge-healthy" style="font-size:10px">Active</span></td>
+            <td><button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="showToast('Edit venue')">Edit</button></td>
+          </tr>
+          <tr>
+            <td><strong>Board Room</strong></td>
+            <td style="color:var(--text-muted)">Floor 5, Executive Block</td>
+            <td>15</td>
+            <td><span class="badge-lms badge-healthy" style="font-size:10px">Active</span></td>
+            <td><button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="showToast('Edit venue')">Edit</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary-lms" onclick="closeVenuesModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Nominations Modal (Admin View) ===== -->
+<div class="modal-overlay" id="nominations-modal" onclick="closeNominationsModal(event)" style="display:none;position:fixed;inset:0;z-index:1050;background:rgba(15,23,42,0.55);align-items:center;justify-content:center">
+  <div class="modal-box" style="max-width:660px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="nom-modal-title">Nominations — Safety Compliance Workshop</div>
+      <button class="modal-close" onclick="closeNominationsModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Nomination Window Status -->
+      <div id="nom-window-status" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12.5px;color:#166534;display:flex;align-items:center;gap:8px">
+        <i class="bi bi-calendar-check-fill"></i>
+        <span>Nomination window is <strong>open</strong> until <strong>Apr 13, 2026 – 6:00 PM</strong></span>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs-lms" style="margin-bottom:12px">
+        <a class="tab-item active" onclick="switchNomTab('pending',this)">Pending <span class="tab-count" style="background:#fffbeb;color:#92400e">3</span></a>
+        <a class="tab-item" onclick="switchNomTab('confirmed',this)">Confirmed <span class="tab-count" style="background:#f0fdf4;color:#166534">2</span></a>
+        <a class="tab-item" onclick="switchNomTab('rejected',this)">Rejected <span class="tab-count">0</span></a>
+      </div>
+
+      <table class="lms-table" style="font-size:12.5px">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Nominated By</th>
+            <th>Nominated On</th>
+            <th>Decision</th>
+          </tr>
+        </thead>
+        <tbody id="nominations-list">
+          <tr data-nomtab="pending">
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="avatar" style="width:28px;height:28px;font-size:11px;background:#3b82f6">PN</div>
+                <div>
+                  <div style="font-weight:600">Priya Nair</div>
+                  <div style="font-size:11px;color:var(--text-muted)">Engineering</div>
+                </div>
+              </div>
+            </td>
+            <td style="font-size:12px">Rahul Sharma (Manager)</td>
+            <td style="font-size:12px;color:var(--text-muted)">Apr 8, 2026</td>
+            <td>
+              <div style="display:flex;gap:4px">
+                <button class="btn-primary-lms" style="font-size:11px;padding:3px 10px" onclick="decideNomination(this,'CONFIRMED','Priya Nair')"><i class="bi bi-check-lg"></i> Confirm</button>
+                <button class="btn-ghost-lms" style="font-size:11px;padding:3px 10px;color:var(--danger);border-color:var(--danger)" onclick="decideNomination(this,'REJECTED','Priya Nair')"><i class="bi bi-x-lg"></i> Reject</button>
+              </div>
+            </td>
+          </tr>
+          <tr data-nomtab="pending">
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="avatar" style="width:28px;height:28px;font-size:11px;background:#10b981">AK</div>
+                <div>
+                  <div style="font-weight:600">Amit Kumar</div>
+                  <div style="font-size:11px;color:var(--text-muted)">Finance</div>
+                </div>
+              </div>
+            </td>
+            <td style="font-size:12px">Sunita Rao (Manager)</td>
+            <td style="font-size:12px;color:var(--text-muted)">Apr 9, 2026</td>
+            <td>
+              <div style="display:flex;gap:4px">
+                <button class="btn-primary-lms" style="font-size:11px;padding:3px 10px" onclick="decideNomination(this,'CONFIRMED','Amit Kumar')"><i class="bi bi-check-lg"></i> Confirm</button>
+                <button class="btn-ghost-lms" style="font-size:11px;padding:3px 10px;color:var(--danger);border-color:var(--danger)" onclick="decideNomination(this,'REJECTED','Amit Kumar')"><i class="bi bi-x-lg"></i> Reject</button>
+              </div>
+            </td>
+          </tr>
+          <tr data-nomtab="pending">
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="avatar" style="width:28px;height:28px;font-size:11px;background:#f59e0b">SV</div>
+                <div>
+                  <div style="font-weight:600">Sneha Verma</div>
+                  <div style="font-size:11px;color:var(--text-muted)">Operations</div>
+                </div>
+              </div>
+            </td>
+            <td style="font-size:12px">Rahul Sharma (Manager)</td>
+            <td style="font-size:12px;color:var(--text-muted)">Apr 10, 2026</td>
+            <td>
+              <div style="display:flex;gap:4px">
+                <button class="btn-primary-lms" style="font-size:11px;padding:3px 10px" onclick="decideNomination(this,'CONFIRMED','Sneha Verma')"><i class="bi bi-check-lg"></i> Confirm</button>
+                <button class="btn-ghost-lms" style="font-size:11px;padding:3px 10px;color:var(--danger);border-color:var(--danger)" onclick="decideNomination(this,'REJECTED','Sneha Verma')"><i class="bi bi-x-lg"></i> Reject</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline-lms" onclick="closeNominationsModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Attendance Modal ===== -->
+<div class="modal-overlay" id="attendance-modal" onclick="closeAttendanceModal(event)" style="display:none;position:fixed;inset:0;z-index:1050;background:rgba(15,23,42,0.55);align-items:center;justify-content:center">
+  <div class="modal-box" style="max-width:620px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="attendance-modal-title">Manage Attendance</div>
+      <button class="modal-close" onclick="closeAttendanceModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <div class="search-bar" style="flex:1;min-width:160px">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Search attendees...">
+        </div>
+        <select class="form-select" style="width:140px;font-size:12.5px;padding:5px 10px;border:1px solid var(--border);border-radius:8px">
+          <option value="">All Departments</option>
+          <option>Engineering</option>
+          <option>HR</option>
+          <option>Finance</option>
+          <option>Operations</option>
+        </select>
+        <button class="btn-outline-lms" style="font-size:12px;padding:6px 10px" onclick="showToast('Pulling attendance from Teams...')">
+          <i class="bi bi-microsoft-teams"></i> Sync Teams
+        </button>
+        <button class="btn-outline-lms" style="font-size:12px;padding:6px 10px" onclick="openImportModal()">
+          <i class="bi bi-file-earmark-arrow-up"></i> Import Excel
+        </button>
+        <button class="btn-outline-lms" style="font-size:12px;padding:6px 10px" onclick="showToast('Attendance exported')">
+          <i class="bi bi-download"></i> Export
+        </button>
+      </div>
+
+      <!-- Info banner -->
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12.5px;color:#1e40af;display:flex;align-items:center;gap:8px">
+        <i class="bi bi-info-circle-fill" style="flex-shrink:0"></i>
+        <span>Online attendance is auto-fetched from Teams. For offline participants — use <strong>Import Excel</strong> or mark manually below. <a href="#" onclick="downloadTemplate();return false" style="color:#1e40af;font-weight:600;text-decoration:underline">Download template</a></span>
+      </div>
+
+      <div class="tabs-lms" style="margin-bottom:12px">
+        <a class="tab-item active">All (25)</a>
+        <a class="tab-item">Attended (21)</a>
+        <a class="tab-item">Absent (4)</a>
+        <a class="tab-item">Not Recorded (0)</a>
+      </div>
+
+      <table class="lms-table" style="font-size:12.5px">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Mode</th>
+            <th>Source</th>
+            <th>Attendance</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="avatar" style="width:28px;height:28px;font-size:11px">RS</div>
+                <div>
+                  <div style="font-weight:600">Rahul Sharma</div>
+                  <div style="font-size:11px;color:var(--text-muted)">Engineering</div>
+                </div>
+              </div>
+            </td>
+            <td><span style="font-size:11px;background:#dbeafe;color:#1e40af;border-radius:10px;padding:1px 7px">Online</span></td>
+            <td><span style="font-size:11px;color:var(--text-muted)">Teams Auto</span></td>
+            <td><span class="badge-lms badge-healthy" style="font-size:11px">Attended</span></td>
+            <td><button class="btn-ghost-lms" style="font-size:11px;padding:2px 6px" onclick="showToast('Override recorded')">Override</button></td>
+          </tr>
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="avatar" style="width:28px;height:28px;font-size:11px;background:var(--warning);color:#fff">AK</div>
+                <div>
+                  <div style="font-weight:600">Anjali Kapoor</div>
+                  <div style="font-size:11px;color:var(--text-muted)">HR</div>
+                </div>
+              </div>
+            </td>
+            <td><span style="font-size:11px;background:#f3e8ff;color:#7c3aed;border-radius:10px;padding:1px 7px">Offline</span></td>
+            <td><span style="font-size:11px;color:var(--text-muted)">Admin Manual</span></td>
+            <td><span class="badge-lms badge-healthy" style="font-size:11px">Attended</span></td>
+            <td><button class="btn-ghost-lms" style="font-size:11px;padding:2px 6px" onclick="showToast('Status updated')">Edit</button></td>
+          </tr>
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="avatar" style="width:28px;height:28px;font-size:11px;background:var(--danger);color:#fff">VR</div>
+                <div>
+                  <div style="font-weight:600">Vikram Reddy</div>
+                  <div style="font-size:11px;color:var(--text-muted)">Finance</div>
+                </div>
+              </div>
+            </td>
+            <td><span style="font-size:11px;background:#f3e8ff;color:#7c3aed;border-radius:10px;padding:1px 7px">Offline</span></td>
+            <td><span style="font-size:11px;color:var(--text-muted)">Not recorded</span></td>
+            <td><span class="badge-lms" style="background:#fee2e2;color:#991b1b;font-size:11px">Absent</span></td>
+            <td>
+              <button class="btn-ghost-lms" style="font-size:11px;padding:2px 6px" onclick="markAttended(this)">Mark Attended</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline-lms" onclick="closeAttendanceModal()">Close</button>
+      <button class="btn-primary-lms" onclick="saveAttendance()"><i class="bi bi-check-lg"></i> Save Attendance</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Import Attendance Modal ===== -->
+<div class="modal-overlay" id="import-modal" onclick="closeImportModal(event)" style="display:none;position:fixed;inset:0;z-index:1060;background:rgba(15,23,42,0.55);align-items:center;justify-content:center">
+  <div class="modal-box" style="max-width:600px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">Import Offline Attendance</div>
+      <button class="modal-close" onclick="closeImportModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+
+      <div style="display:flex;gap:0;margin-bottom:20px;border-radius:8px;overflow:hidden;border:1px solid var(--border)">
+        <div id="step-ind-1" style="flex:1;padding:8px 0;text-align:center;font-size:12px;font-weight:600;background:var(--primary);color:#fff">1 · Upload File</div>
+        <div id="step-ind-2" style="flex:1;padding:8px 0;text-align:center;font-size:12px;font-weight:600;background:#f1f5f9;color:var(--text-muted)">2 · Preview &amp; Confirm</div>
+      </div>
+
+      <div id="import-step-1">
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:16px">
+          <div style="font-size:12.5px;font-weight:600;margin-bottom:8px;color:var(--text-secondary)"><i class="bi bi-table"></i> Expected Excel Format</div>
+          <table style="width:100%;font-size:12px;border-collapse:collapse">
+            <thead><tr style="background:#e2e8f0">
+              <th style="padding:5px 10px;border:1px solid #cbd5e1;text-align:left">Column A</th>
+              <th style="padding:5px 10px;border:1px solid #cbd5e1;text-align:left">Column B</th>
+              <th style="padding:5px 10px;border:1px solid #cbd5e1;text-align:left">Column C</th>
+              <th style="padding:5px 10px;border:1px solid #cbd5e1;text-align:left">Column D</th>
+            </tr></thead>
+            <tbody>
+              <tr><td style="padding:5px 10px;border:1px solid #cbd5e1;font-weight:600">employee_id</td><td style="padding:5px 10px;border:1px solid #cbd5e1;font-weight:600">employee_name</td><td style="padding:5px 10px;border:1px solid #cbd5e1;font-weight:600">department</td><td style="padding:5px 10px;border:1px solid #cbd5e1;font-weight:600">attendance</td></tr>
+              <tr style="background:#f8fafc"><td style="padding:5px 10px;border:1px solid #cbd5e1;color:var(--text-muted)">EMP-001</td><td style="padding:5px 10px;border:1px solid #cbd5e1;color:var(--text-muted)">Rahul Sharma</td><td style="padding:5px 10px;border:1px solid #cbd5e1;color:var(--text-muted)">Engineering</td><td style="padding:5px 10px;border:1px solid #cbd5e1;color:var(--text-muted)">ATTENDED</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;margin-bottom:16px">
+          <div style="font-size:12.5px;color:#166534"><i class="bi bi-file-earmark-excel-fill" style="color:#16a34a"></i> <strong>attendance_template.xlsx</strong> — pre-filled with enrolled participant list</div>
+          <button class="btn-ghost-lms" style="font-size:12px;padding:4px 10px;color:#166534;border-color:#bbf7d0" onclick="downloadTemplate()"><i class="bi bi-download"></i> Download</button>
+        </div>
+
+        <div id="drop-zone" style="border:2px dashed var(--border);border-radius:10px;padding:32px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s"
+             onclick="document.getElementById('excel-file-input').click()"
+             ondragover="event.preventDefault();this.style.borderColor='var(--primary)';this.style.background='#eff6ff'"
+             ondragleave="this.style.borderColor='var(--border)';this.style.background=''"
+             ondrop="handleFileDrop(event)">
+          <i class="bi bi-file-earmark-arrow-up" style="font-size:32px;color:var(--text-muted);display:block;margin-bottom:10px"></i>
+          <div style="font-size:13.5px;font-weight:600;margin-bottom:4px">Drop your Excel file here</div>
+          <div style="font-size:12px;color:var(--text-muted)">or click to browse &nbsp;·&nbsp; .xlsx or .xls only &nbsp;·&nbsp; max 5 MB</div>
+        </div>
+        <input type="file" id="excel-file-input" accept=".xlsx,.xls" style="display:none" onchange="handleFileSelect(this)">
+
+        <div id="file-selected-bar" style="display:none;margin-top:10px;padding:10px 14px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;align-items:center;gap:10px">
+          <i class="bi bi-file-earmark-excel-fill" style="color:#16a34a;font-size:20px;flex-shrink:0"></i>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600" id="selected-file-name"></div><div style="font-size:11.5px;color:var(--text-muted)" id="selected-file-size"></div></div>
+          <button class="btn-ghost-lms" style="font-size:11px;padding:2px 8px;color:var(--danger)" onclick="clearFile()">Remove</button>
+        </div>
+      </div>
+
+      <div id="import-step-2" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:13px;font-weight:600">Preview — Parsed Records</div>
+          <div id="import-summary-badges" style="display:flex;gap:8px"></div>
+        </div>
+        <div style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
+          <table class="lms-table" style="font-size:12.5px" id="import-preview-table">
+            <thead><tr><th style="width:30px">#</th><th>Employee ID</th><th>Name</th><th>Department</th><th>Attendance</th><th>Status</th></tr></thead>
+            <tbody id="import-preview-tbody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px;padding:10px 14px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;font-size:12.5px;color:#92400e" id="import-warnings" style="display:none"></div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline-lms" id="import-back-btn" style="display:none" onclick="importGoBack()"><i class="bi bi-arrow-left"></i> Back</button>
+      <button class="btn-outline-lms" onclick="closeImportModal()">Cancel</button>
+      <button class="btn-primary-lms" id="import-next-btn" onclick="importNext()" disabled><i class="bi bi-arrow-right"></i> Preview Records</button>
+      <button class="btn-primary-lms" id="import-confirm-btn" style="display:none" onclick="confirmImport()"><i class="bi bi-check2"></i> Confirm Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div id="toast-container" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  function switchTab(status, el) {
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('#sessions-tbody tr').forEach(r => {
+      r.style.display = (status === 'all' || r.dataset.status === status) ? '' : 'none';
+    });
+  }
+
+  function filterSessions(q) {
+    document.querySelectorAll('#sessions-tbody tr').forEach(r => {
+      r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+    });
+  }
+
+  function toggleAll(cb) {
+    document.querySelectorAll('.row-check').forEach(c => c.checked = cb.checked);
+  }
+
+  /* ===== Session Modal ===== */
+  function openCreateModal() {
+    document.getElementById('session-modal-title').textContent = 'New Session';
+    document.getElementById('ses-title').value = '';
+    document.getElementById('session-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function openEditModal(name) {
+    document.getElementById('session-modal-title').textContent = 'Edit Session — ' + name;
+    document.getElementById('ses-title').value = name;
+    document.getElementById('session-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSessionModal(e) {
+    if (!e || e.target === document.getElementById('session-modal')) {
+      document.getElementById('session-modal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+
+  function saveSession() {
+    closeSessionModal();
+    showToast('Session saved successfully — Teams meeting auto-created');
+  }
+
+  function updateTrainingTypeBadge(sel) {
+    const opt = sel.options[sel.selectedIndex];
+    const badge = document.getElementById('training-type-badge');
+    const label = document.getElementById('training-type-label');
+    if (!opt.value) { badge.style.display = 'none'; return; }
+    const type = opt.dataset.type;
+    const colorMap = { Course: '#dbeafe;color:#1e40af', 'Learning Path': '#ede9fe;color:#5b21b6', Curriculum: '#dcfce7;color:#166534' };
+    label.style.cssText = `background:${colorMap[type]?.split(';')[0].split(':')[1] || '#f1f5f9'};color:${colorMap[type]?.split('color:')[1] || '#374151'}`;
+    label.textContent = '📚 ' + type;
+    badge.style.display = '';
+  }
+
+  function checkVenueCapacity(sel) {
+    const cap = parseInt(sel.options[sel.selectedIndex]?.dataset.capacity || 0);
+    const max = parseInt(document.getElementById('ses-capacity')?.value || 0);
+    const warn = document.getElementById('venue-capacity-warning');
+    warn.style.display = (cap && max && max > cap) ? 'block' : 'none';
+  }
+
+  function toggleNominationWindow(on) {
+    document.getElementById('nomination-window-fields').style.display = on ? '' : 'none';
+  }
+
+  /* ===== Facilitators Modal ===== */
+  function openFacilitatorsModal() {
+    document.getElementById('facilitators-modal').style.display = 'flex';
+  }
+  function closeFacilitatorsModal(e) {
+    if (!e || e.target === document.getElementById('facilitators-modal')) {
+      document.getElementById('facilitators-modal').style.display = 'none';
+    }
+  }
+  function addFacilitator() {
+    const name = document.getElementById('new-facilitator-name').value.trim();
+    if (!name) return;
+    const tbody = document.getElementById('facilitators-list');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><strong>${name}</strong></td><td><span style="font-size:11px;background:#f3e8ff;color:#7c3aed;border-radius:10px;padding:1px 7px">External</span></td><td><span class="badge-lms badge-healthy" style="font-size:10px">Active</span></td><td><button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="showToast('Edit facilitator')">Edit</button></td>`;
+    tbody.appendChild(tr);
+    document.getElementById('new-facilitator-name').value = '';
+    showToast('Facilitator "' + name + '" added');
+  }
+
+  /* ===== Venues Modal ===== */
+  function openVenuesModal() {
+    document.getElementById('venues-modal').style.display = 'flex';
+  }
+  function closeVenuesModal(e) {
+    if (!e || e.target === document.getElementById('venues-modal')) {
+      document.getElementById('venues-modal').style.display = 'none';
+    }
+  }
+  function addVenue() {
+    const name = document.getElementById('new-venue-name').value.trim();
+    if (!name) return;
+    showToast('Venue "' + name + '" added');
+    document.getElementById('new-venue-name').value = '';
+  }
+
+  /* ===== Nominations Modal ===== */
+  function openNominationsModal(name) {
+    document.getElementById('nom-modal-title').textContent = 'Nominations — ' + name;
+    document.getElementById('nominations-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+  function closeNominationsModal(e) {
+    if (!e || e.target === document.getElementById('nominations-modal')) {
+      document.getElementById('nominations-modal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+  function switchNomTab(tab, el) {
+    document.querySelectorAll('.tabs-lms .tab-item').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('#nominations-list tr').forEach(r => {
+      r.style.display = (tab === 'pending' || r.dataset.nomtab === tab) ? '' : 'none';
+    });
+  }
+  function decideNomination(btn, decision, name) {
+    const row = btn.closest('tr');
+    const cell = btn.closest('td');
+    if (decision === 'CONFIRMED') {
+      cell.innerHTML = '<span class="badge-lms badge-healthy" style="font-size:11px">✓ Confirmed</span>';
+      showToast(name + ' nomination confirmed');
+    } else {
+      cell.innerHTML = '<span style="background:#fee2e2;color:#991b1b;border-radius:10px;padding:2px 8px;font-size:11px">✗ Rejected</span>';
+      showToast(name + ' nomination rejected');
+    }
+    row.dataset.nomtab = decision === 'CONFIRMED' ? 'confirmed' : 'rejected';
+  }
+
+  /* ===== Attendance Modal ===== */
+  function openAttendanceModal(name) {
+    document.getElementById('attendance-modal-title').textContent = 'Attendance — ' + name;
+    document.getElementById('attendance-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+  function closeAttendanceModal(e) {
+    if (!e || e.target === document.getElementById('attendance-modal')) {
+      document.getElementById('attendance-modal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+  function saveAttendance() { closeAttendanceModal(); showToast('Attendance saved'); }
+  function markAttended(btn) {
+    const td = btn.closest('tr').querySelector('td:nth-child(4)');
+    td.innerHTML = '<span class="badge-lms badge-healthy" style="font-size:11px">Attended</span>';
+    btn.textContent = 'Edit'; btn.onclick = () => showToast('Status updated');
+    showToast('Marked as Attended');
+  }
+  function completeSession(btn, name) {
+    const row = btn.closest('tr');
+    row.querySelector('td:nth-child(7)').innerHTML = '<span class="badge-lms badge-healthy">Completed</span>';
+    row.dataset.status = 'completed';
+    btn.closest('div').innerHTML = '<button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="openAttendanceModal(\''+name+'\')" title="View Attendance"><i class="bi bi-people"></i></button><button class="btn-ghost-lms" style="font-size:11px;padding:3px 8px" onclick="showToast(\'Downloading report...\')" title="Export"><i class="bi bi-download"></i></button>';
+    showToast('Session marked as completed');
+  }
+  function rescheduleSession(name) { openEditModal(name); }
+
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast-lms show';
+    t.innerHTML = '<i class="bi bi-check-circle-fill" style="color:var(--success)"></i> ' + msg;
+    document.getElementById('toast-container').appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  /* ===== Import Attendance ===== */
+  let _importFile = null;
+  const MOCK_IMPORT_ROWS = [
+    { row:2, emp_id:'EMP-001', name:'Rahul Sharma',  dept:'Engineering', raw:'ATTENDED',     status:'ok' },
+    { row:3, emp_id:'EMP-012', name:'Anjali Kapoor', dept:'HR',          raw:'ATTENDED',     status:'ok' },
+    { row:4, emp_id:'EMP-042', name:'Vikram Reddy',  dept:'Finance',     raw:'NOT_ATTENDED', status:'ok' },
+    { row:5, emp_id:'EMP-058', name:'Sana Patel',    dept:'Operations',  raw:'ATTENDED',     status:'ok' },
+    { row:8, emp_id:'EMP-999', name:'Unknown User',  dept:'',            raw:'ATTENDED',     status:'warn', warn:'Employee ID not found in LMS' },
+    { row:9, emp_id:'EMP-007', name:'Priya Mehta',   dept:'Engineering', raw:'YES',          status:'warn', warn:'Invalid value "YES" — expected ATTENDED or NOT_ATTENDED' },
+  ];
+
+  function openImportModal() {
+    _importFile = null;
+    ['import-step-1'].forEach(id => document.getElementById(id).style.display = '');
+    document.getElementById('import-step-2').style.display = 'none';
+    document.getElementById('import-next-btn').style.display = '';
+    document.getElementById('import-confirm-btn').style.display = 'none';
+    document.getElementById('import-back-btn').style.display = 'none';
+    document.getElementById('import-next-btn').disabled = true;
+    document.getElementById('file-selected-bar').style.display = 'none';
+    document.getElementById('excel-file-input').value = '';
+    setStepIndicator(1);
+    document.getElementById('import-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+  function closeImportModal(e) {
+    if (!e || e.target === document.getElementById('import-modal')) {
+      document.getElementById('import-modal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+  function setStepIndicator(step) {
+    const s1 = document.getElementById('step-ind-1'), s2 = document.getElementById('step-ind-2');
+    s1.style.background = step === 1 ? 'var(--primary)' : '#f0fdf4'; s1.style.color = step === 1 ? '#fff' : '#166534';
+    s2.style.background = step === 2 ? 'var(--primary)' : '#f1f5f9'; s2.style.color = step === 2 ? '#fff' : 'var(--text-muted)';
+  }
+  function handleFileSelect(input) { if (input.files?.[0]) applyFile(input.files[0]); }
+  function handleFileDrop(e) { e.preventDefault(); document.getElementById('drop-zone').style.borderColor = ''; document.getElementById('drop-zone').style.background = ''; if (e.dataTransfer.files[0]) applyFile(e.dataTransfer.files[0]); }
+  function applyFile(file) {
+    if (!['xlsx','xls'].includes(file.name.split('.').pop().toLowerCase())) { showToast('Please upload an .xlsx or .xls file only'); return; }
+    if (file.size > 5*1024*1024) { showToast('File too large — maximum 5 MB'); return; }
+    _importFile = file;
+    document.getElementById('selected-file-name').textContent = file.name;
+    document.getElementById('selected-file-size').textContent = (file.size/1024).toFixed(1)+' KB';
+    document.getElementById('file-selected-bar').style.display = 'flex';
+    document.getElementById('drop-zone').style.borderColor = 'var(--success)';
+    document.getElementById('import-next-btn').disabled = false;
+  }
+  function clearFile() { _importFile = null; document.getElementById('file-selected-bar').style.display = 'none'; document.getElementById('excel-file-input').value = ''; document.getElementById('drop-zone').style.borderColor = ''; document.getElementById('import-next-btn').disabled = true; }
+  function importNext() {
+    if (!_importFile) return;
+    buildPreview(MOCK_IMPORT_ROWS);
+    document.getElementById('import-step-1').style.display = 'none';
+    document.getElementById('import-step-2').style.display = '';
+    document.getElementById('import-next-btn').style.display = 'none';
+    document.getElementById('import-confirm-btn').style.display = '';
+    document.getElementById('import-back-btn').style.display = '';
+    setStepIndicator(2);
+  }
+  function buildPreview(rows) {
+    const ok = rows.filter(r => r.status === 'ok'), warns = rows.filter(r => r.status === 'warn');
+    const attended = rows.filter(r => r.raw === 'ATTENDED' && r.status === 'ok').length;
+    const notAttended = rows.filter(r => r.raw === 'NOT_ATTENDED' && r.status === 'ok').length;
+    document.getElementById('import-summary-badges').innerHTML = `<span style="background:#f0fdf4;color:#166534;border-radius:20px;padding:2px 10px;font-size:11.5px;font-weight:600">${attended} Attended</span><span style="background:#fee2e2;color:#991b1b;border-radius:20px;padding:2px 10px;font-size:11.5px;font-weight:600">${notAttended} Absent</span>${warns.length>0?`<span style="background:#fffbeb;color:#92400e;border-radius:20px;padding:2px 10px;font-size:11.5px;font-weight:600">${warns.length} Warning${warns.length>1?'s':''}</span>`:''}`;
+    document.getElementById('import-preview-tbody').innerHTML = rows.map(r => `<tr><td style="color:var(--text-muted)">${r.row}</td><td style="font-size:12px;font-family:monospace">${r.emp_id}</td><td style="font-weight:500">${r.name}</td><td style="font-size:12px;color:var(--text-muted)">${r.dept}</td><td>${r.status==='ok'&&r.raw==='ATTENDED'?'<span style="background:#f0fdf4;color:#166534;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:600">ATTENDED</span>':r.status==='ok'&&r.raw==='NOT_ATTENDED'?'<span style="background:#fee2e2;color:#991b1b;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:600">NOT_ATTENDED</span>':`<span style="background:#fef3c7;color:#92400e;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:600">${r.raw}</span>`}</td><td>${r.status==='ok'?'<i class="bi bi-check-circle-fill" style="color:var(--success)"></i>':`<span title="${r.warn}" style="cursor:help"><i class="bi bi-exclamation-triangle-fill" style="color:var(--warning)"></i> <span style="font-size:11px;color:var(--warning)">${r.warn}</span></span>`}</td></tr>`).join('');
+    const warnDiv = document.getElementById('import-warnings');
+    if (warns.length>0) { warnDiv.style.display=''; warnDiv.innerHTML=`<i class="bi bi-exclamation-triangle-fill"></i> <strong>${warns.length} row(s) have warnings and will be skipped.</strong> Proceed to import ${ok.length} valid records.`; }
+    else warnDiv.style.display='none';
+  }
+  function importGoBack() {
+    document.getElementById('import-step-1').style.display = ''; document.getElementById('import-step-2').style.display = 'none';
+    document.getElementById('import-next-btn').style.display = ''; document.getElementById('import-confirm-btn').style.display = 'none';
+    document.getElementById('import-back-btn').style.display = 'none';
+    setStepIndicator(1);
+  }
+  function confirmImport() { closeImportModal(); closeAttendanceModal(); showToast('Attendance imported — 4 records updated successfully'); }
+  function downloadTemplate() { showToast('Template downloaded: attendance_template.xlsx'); }
+</script>
+</body>
+</html>

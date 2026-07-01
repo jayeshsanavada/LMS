@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-LMS — Session Detail</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .attendee-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .attendee-row:last-child { border-bottom: none; }
+    .attendee-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+      color: #fff;
+    }
+    .attendee-name { font-weight: 600; flex: 1; }
+    .attendee-dept { font-size: 11.5px; color: var(--text-muted); }
+    .info-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 16px; border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: var(--text-muted); }
+    .info-value { font-weight: 600; text-align: right; }
+  </style>
+</head>
+<body>
+<div class="lms-wrapper">
+
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title">Session Detail</div>
+      <div class="topbar-actions">
+        <div class="role-switcher" id="role-switcher"></div>
+        <div style="position:relative">
+          <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+            <i class="bi bi-bell"></i><span class="notif-badge">3</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown-header"><span>Notifications</span><a href="#">Mark all read</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- Breadcrumb -->
+      <div class="breadcrumb-lms">
+        <a href="sessions.html">Sessions</a>
+        <i class="bi bi-chevron-right"></i>
+        <span>Safety Compliance Workshop</span>
+      </div>
+
+      <div class="row g-4">
+
+        <!-- Left: Main Info -->
+        <div class="col-lg-8">
+
+          <!-- Session Header -->
+          <div class="card mb-3">
+            <div style="height:140px;background:linear-gradient(135deg,#dbeafe,#bfdbfe);display:flex;align-items:center;justify-content:center;font-size:56px">🦺</div>
+            <div class="card-body-lms">
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+                <span class="badge-lms badge-inprogress">Upcoming</span>
+                <span class="badge-lms badge-mandatory">Mandatory</span>
+                <span class="badge-lms badge-draft" style="background:#dbeafe;color:#1e40af">
+                  <i class="bi bi-microsoft-teams me-1"></i>Hybrid
+                </span>
+              </div>
+              <h4 style="font-size:20px;font-weight:700;margin-bottom:6px">Safety Compliance Workshop</h4>
+              <p style="font-size:13.5px;color:var(--text-muted);line-height:1.6;margin-bottom:14px">
+                A hands-on workshop covering all 2026 safety regulations and emergency procedures. This session combines in-person exercises with a live Teams stream for remote participants. All employees must attend before Apr 30, 2026.
+              </p>
+              <div style="display:flex;flex-wrap:wrap;gap:18px;font-size:13px;color:var(--text-muted)">
+                <span><i class="bi bi-hash me-1"></i><strong>SES-2026-042</strong></span>
+                <span><i class="bi bi-calendar3 me-1"></i><strong>Apr 8, 2026</strong></span>
+                <span><i class="bi bi-clock me-1"></i><strong>2:00 – 4:00 PM</strong></span>
+                <span><i class="bi bi-geo-alt me-1"></i><strong>Conference Hall B</strong></span>
+                <span><i class="bi bi-person me-1"></i>Facilitator: <strong>Rohan Gupta</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- My Attendance Status -->
+          <div class="card mb-3">
+            <div class="card-body-lms">
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+                <div>
+                  <div style="font-size:14px;font-weight:600;margin-bottom:4px">Your Attendance</div>
+                  <div style="font-size:12.5px;color:var(--text-muted)">You are enrolled. Attendance will be auto-confirmed via Microsoft Teams.</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span class="badge-lms badge-inprogress" style="font-size:12px;padding:5px 12px">
+                    <i class="bi bi-person-check me-1"></i>Enrolled
+                  </span>
+                  <button class="btn-primary-lms" style="padding:8px 16px"
+                    onclick="showToast('Opening Microsoft Teams meeting...')">
+                    <i class="bi bi-microsoft-teams"></i> Join Teams
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Attendees List -->
+          <div class="card">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-people me-2" style="color:var(--primary)"></i>Attendees <span style="font-size:12px;font-weight:400;color:var(--text-muted)">(30 enrolled · 30 / 30 seats)</span></h6>
+              <div class="search-bar" style="width:180px">
+                <i class="bi bi-search"></i>
+                <input type="text" placeholder="Search..." oninput="filterAttendees(this.value)">
+              </div>
+            </div>
+            <!-- Tabs: Enrolled / Attended / Absent -->
+            <div style="display:flex;border-bottom:1px solid var(--border);padding:0 16px">
+              <button class="tab-btn active" onclick="switchAttTab('enrolled',this)" style="padding:8px 14px;background:none;border:none;border-bottom:2px solid var(--primary);font-size:12.5px;font-weight:600;color:var(--primary);cursor:pointer;margin-bottom:-1px">
+                Enrolled <span style="background:#dbeafe;color:#1e40af;border-radius:20px;padding:1px 7px;font-size:11px;margin-left:4px">30</span>
+              </button>
+              <button class="tab-btn" onclick="switchAttTab('attended',this)" style="padding:8px 14px;background:none;border:none;border-bottom:2px solid transparent;font-size:12.5px;font-weight:500;color:var(--text-muted);cursor:pointer;margin-bottom:-1px">
+                Attended <span style="background:#f3f4f6;color:#374151;border-radius:20px;padding:1px 7px;font-size:11px;margin-left:4px">—</span>
+              </button>
+              <button class="tab-btn" onclick="switchAttTab('absent',this)" style="padding:8px 14px;background:none;border:none;border-bottom:2px solid transparent;font-size:12.5px;font-weight:500;color:var(--text-muted);cursor:pointer;margin-bottom:-1px">
+                Absent <span style="background:#f3f4f6;color:#374151;border-radius:20px;padding:1px 7px;font-size:11px;margin-left:4px">—</span>
+              </button>
+            </div>
+            <div id="attendee-list">
+              <div class="attendee-row" data-name="alex johnson">
+                <div class="attendee-avatar" style="background:#6366f1">AJ</div>
+                <div>
+                  <div class="attendee-name">Alex Johnson <span style="font-size:11px;background:#dbeafe;color:#1e40af;border-radius:10px;padding:1px 7px;font-weight:500;margin-left:4px">You</span></div>
+                  <div class="attendee-dept">Engineering · Employee</div>
+                </div>
+                <span class="badge-lms badge-inprogress" style="font-size:11px;margin-left:auto">Enrolled</span>
+              </div>
+              <div class="attendee-row" data-name="priya mehta">
+                <div class="attendee-avatar" style="background:#10b981">PM</div>
+                <div>
+                  <div class="attendee-name">Priya Mehta</div>
+                  <div class="attendee-dept">Engineering · Manager</div>
+                </div>
+                <span class="badge-lms badge-inprogress" style="font-size:11px;margin-left:auto">Enrolled</span>
+              </div>
+              <div class="attendee-row" data-name="rahul sharma">
+                <div class="attendee-avatar" style="background:#f59e0b">RS</div>
+                <div>
+                  <div class="attendee-name">Rahul Sharma</div>
+                  <div class="attendee-dept">Sales · Employee</div>
+                </div>
+                <span class="badge-lms badge-inprogress" style="font-size:11px;margin-left:auto">Enrolled</span>
+              </div>
+              <div class="attendee-row" data-name="sneha patel">
+                <div class="attendee-avatar" style="background:#ec4899">SP</div>
+                <div>
+                  <div class="attendee-name">Sneha Patel</div>
+                  <div class="attendee-dept">HR · HR Officer</div>
+                </div>
+                <span class="badge-lms badge-inprogress" style="font-size:11px;margin-left:auto">Enrolled</span>
+              </div>
+              <div class="attendee-row" data-name="vikram nair">
+                <div class="attendee-avatar" style="background:#3b82f6">VN</div>
+                <div>
+                  <div class="attendee-name">Vikram Nair</div>
+                  <div class="attendee-dept">Operations · Employee</div>
+                </div>
+                <span class="badge-lms badge-inprogress" style="font-size:11px;margin-left:auto">Enrolled</span>
+              </div>
+              <div class="attendee-row" data-name="anita kapoor">
+                <div class="attendee-avatar" style="background:#8b5cf6">AK</div>
+                <div>
+                  <div class="attendee-name">Anita Kapoor</div>
+                  <div class="attendee-dept">Design · Employee</div>
+                </div>
+                <span class="badge-lms badge-inprogress" style="font-size:11px;margin-left:auto">Enrolled</span>
+              </div>
+              <div style="padding:10px 16px;text-align:center;font-size:12px;color:var(--text-muted)">
+                + 24 more participants enrolled
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right: Details Sidebar -->
+        <div class="col-lg-4">
+
+          <!-- Quick Action -->
+          <div class="card mb-3">
+            <div class="card-body-lms">
+              <button class="btn-primary-lms w-100 justify-content-center mb-2" style="padding:11px"
+                onclick="showToast('Opening Microsoft Teams meeting...')">
+                <i class="bi bi-microsoft-teams"></i> Join Teams Meeting
+              </button>
+              <button class="btn-ghost-lms w-100 justify-content-center"
+                onclick="showToast('Session added to calendar!')">
+                <i class="bi bi-calendar-plus"></i> Add to Calendar
+              </button>
+            </div>
+          </div>
+
+          <!-- Session Info -->
+          <div class="card mb-3">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-info-circle me-2" style="color:var(--primary)"></i>Session Details</h6>
+            </div>
+            <div style="padding:0">
+              <div class="info-row">
+                <span class="info-label">Session ID</span>
+                <span class="info-value" style="font-family:monospace;font-size:12px">SES-2026-042</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Date</span>
+                <span class="info-value">Apr 8, 2026</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Time</span>
+                <span class="info-value">2:00 – 4:00 PM</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Duration</span>
+                <span class="info-value">2 hours</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Venue</span>
+                <span class="info-value">Conference Hall B</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Mode</span>
+                <span class="info-value"><i class="bi bi-microsoft-teams me-1" style="color:#5558af"></i>Hybrid</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Facilitator</span>
+                <span class="info-value">Rohan Gupta</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Capacity</span>
+                <span class="info-value">30 / 30 <span class="badge-lms badge-completed" style="font-size:10px;margin-left:4px">Full</span></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Status</span>
+                <span class="badge-lms badge-inprogress">Scheduled</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Linked Training -->
+          <div class="card mb-3">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-link-45deg me-2" style="color:var(--primary)"></i>Linked Training</h6>
+            </div>
+            <div style="padding:14px 16px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                <span style="font-size:11px;background:#ede9fe;color:#5b21b6;border-radius:10px;padding:2px 8px;font-weight:600">Learning Path</span>
+                <div style="font-weight:600;font-size:13px">React Mastery LP</div>
+              </div>
+              <div style="font-size:12px;color:var(--text-muted)">TRN-041 · Optional</div>
+              <div style="margin-top:10px">
+                <a href="course-detail.html" class="btn-outline-lms" style="font-size:11px;padding:5px 12px">
+                  <i class="bi bi-journal-bookmark"></i> View Training
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nomination Status (visible when user is NOMINATED) -->
+          <div class="card mb-3" style="border:1px solid #e9d5ff">
+            <div class="card-header-lms" style="background:#faf5ff">
+              <h6 style="color:#7c3aed"><i class="bi bi-person-raised-hand me-2"></i>Nomination Status</h6>
+            </div>
+            <div class="card-body-lms" style="font-size:12.5px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <span style="color:var(--text-muted)">You were nominated by</span>
+                <strong>Priya Mehta (Manager)</strong>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <span style="color:var(--text-muted)">Nominated on</span>
+                <strong>Apr 8, 2026</strong>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="color:var(--text-muted)">Status</span>
+                <span style="background:#f3e8ff;color:#7c3aed;border-radius:10px;padding:3px 10px;font-size:11.5px;font-weight:600">Pending Admin Review</span>
+              </div>
+              <div style="margin-top:10px;font-size:11.5px;color:var(--text-muted);border-top:1px solid #f3e4fa;padding-top:10px">
+                <i class="bi bi-info-circle me-1"></i> Your seat is reserved pending confirmation. You will be notified once the Admin approves or rejects this nomination.
+              </div>
+            </div>
+          </div>
+
+          <!-- Attendance Note -->
+          <div class="card">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-info-circle me-2" style="color:var(--primary)"></i>Attendance Info</h6>
+            </div>
+            <div class="card-body-lms" style="font-size:12.5px;color:var(--text-muted);line-height:1.7">
+              <div style="display:flex;gap:8px;margin-bottom:8px">
+                <i class="bi bi-microsoft-teams" style="color:#5558af;flex-shrink:0;margin-top:2px"></i>
+                <span>Online attendance is automatically tracked via Microsoft Teams. No manual check-in required.</span>
+              </div>
+              <div style="display:flex;gap:8px">
+                <i class="bi bi-geo-alt" style="color:var(--primary);flex-shrink:0;margin-top:2px"></i>
+                <span>In-person attendance is confirmed by the facilitator at the end of the session.</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:24px;right:24px;background:#1e2a3b;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:none;z-index:9999;align-items:center;gap:8px">
+  <i class="bi bi-check-circle-fill" style="color:var(--success)"></i>
+  <span id="toast-msg"></span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  function filterAttendees(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('.attendee-row').forEach(row => {
+      row.style.display = row.dataset.name.includes(q) ? '' : 'none';
+    });
+  }
+
+  function switchAttTab(tab, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.style.borderBottomColor = 'transparent';
+      b.style.color = 'var(--text-muted)';
+      b.style.fontWeight = '500';
+    });
+    btn.style.borderBottomColor = 'var(--primary)';
+    btn.style.color = 'var(--primary)';
+    btn.style.fontWeight = '600';
+
+    if (tab === 'attended' || tab === 'absent') {
+      showToast('Attendance data will be available after the session.');
+    }
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.style.display = 'flex';
+    setTimeout(() => t.style.display = 'none', 3000);
+  }
+</script>
+</body>
+</html>

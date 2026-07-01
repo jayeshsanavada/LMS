@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session State Machine — AZ-LMS</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{--bg:#0d1117;--card:#161b22;--border:#30363d;--accent:#58a6ff;--text:#c9d1d9;--muted:#8b949e}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif}
+  header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between}
+  .hl .label{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase}
+  .hl .title{font-size:18px;font-weight:600;margin-top:3px}
+  .hl .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  nav{background:var(--card);border-bottom:1px solid var(--border);padding:8px 28px;display:flex;gap:6px;flex-wrap:wrap}
+  nav a{font-size:11px;padding:4px 10px;border-radius:5px;color:var(--muted);text-decoration:none;border:1px solid var(--border);white-space:nowrap;transition:all .15s}
+  nav a:hover{color:var(--text);border-color:var(--muted)}
+  nav a.active{background:var(--accent);color:#0d1117;border-color:var(--accent);font-weight:600}
+  .tabs{padding:18px 28px 0;display:flex;gap:2px}
+  .tab{padding:8px 18px;background:var(--card);border:1px solid var(--border);border-radius:6px 6px 0 0;cursor:pointer;font-size:13px;color:var(--muted);border-bottom:none;transition:all .15s}
+  .tab.active{background:#1f2937;color:var(--text);border-color:var(--accent);border-bottom:1px solid #1f2937}
+  .section{display:none;padding:0 28px 40px}
+  .section.active{display:block}
+  .section-header{margin:16px 0;padding:10px 16px;background:#1f2937;border:1px solid var(--accent);border-radius:8px;font-size:13px;color:var(--accent);font-weight:600}
+  .wrap{overflow:auto;padding:0}
+  .dcard{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:28px 32px;display:inline-block;min-width:100%}
+  .mermaid svg{display:block;max-width:none !important;height:auto}
+  .info{margin:16px 0 0}
+  .info h3{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:20px 0 8px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:var(--card);color:var(--muted);font-weight:600;padding:8px 12px;text-align:left;border:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  td{padding:8px 12px;border:1px solid var(--border);color:var(--text);vertical-align:top}
+  tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+  code{background:rgba(88,166,255,.1);color:var(--accent);padding:1px 6px;border-radius:3px;font-size:12px;font-family:monospace}
+  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+  .b-blue{background:rgba(21,101,192,.4);color:#90caf9}
+  .b-green{background:rgba(27,94,32,.4);color:#a5d6a7}
+  .b-orange{background:rgba(230,81,0,.4);color:#ffcc80}
+  .b-red{background:rgba(183,28,28,.4);color:#ef9a9a}
+  .b-grey{background:rgba(66,66,66,.4);color:#bdbdbd}
+  .b-purple{background:rgba(74,20,140,.4);color:#ce93d8}
+  .desc{max-width:none;margin:24px 28px 40px;padding:12px 20px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;color:var(--muted)}
+  .desc strong{color:var(--text)}
+  .controls{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:100}
+  .cb{background:var(--card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:7px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .cb:hover{background:var(--accent);border-color:var(--accent);color:#0d1117}
+  #zoom-label{background:var(--card);border:1px solid var(--border);border-radius:7px;font-size:11px;color:var(--muted);text-align:center;padding:4px 0;min-width:36px}
+</style>
+</head>
+<body>
+<header>
+  <div class="hl">
+    <div class="label">AZ-LMS · State Machine Diagrams</div>
+    <div class="title">Diagram 11 — Session State Machine</div>
+    <div class="sub">Tab 1: session_status + Teams link states &nbsp;·&nbsp; Tab 2: participant enrollment + attendance states</div>
+  </div>
+  <div style="font-size:11px;color:var(--muted)">Last updated: 2026-04-15</div>
+</header>
+<nav>
+  <a href="index.html">Index</a>
+  <a href="01_system_architecture.html">1. System</a>
+  <a href="02_module_dependency.html">2. Modules</a>
+  <a href="03_database_er_diagram.html">3. ER Diagram</a>
+  <a href="04_auth_flow.html">4. Auth Flow</a>
+  <a href="05_integration_data_flow.html">5. Integrations</a>
+  <a href="06_background_jobs.html">6. Background Jobs</a>
+  <a href="07_apisix_route_map.html">7. APISIX Routes</a>
+  <a href="08_deployment_architecture.html">8. Deployment</a>
+  <a href="09_assignment_state_machine.html">9. Assignment</a>
+  <a href="10_compliance_state_machine.html">10. Compliance</a>
+  <a href="11_session_state_machine.html" class="active">11. Session</a>
+</nav>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab(0)">Tab 1 — Session Status + Teams Link</div>
+  <div class="tab" onclick="showTab(1)">Tab 2 — Participant Enrollment + Attendance</div>
+</div>
+
+<!-- TAB 1: Session Status -->
+<div class="section active" id="sec0">
+  <div class="section-header">sessions.status (3 states) + sessions.teams_link_status (3 sub-states within SCHEDULED)</div>
+  <div class="wrap">
+    <div class="dcard">
+      <div class="mermaid">
+stateDiagram-v2
+    direction LR
+
+    [*] --> SCHEDULED : Admin creates session
+
+    state SCHEDULED {
+        direction LR
+        [*] --> AUTO_CREATED : Teams meeting created successfully
+        [*] --> PENDING_MANUAL : Teams creation failed
+        PENDING_MANUAL --> MANUAL_PROVIDED : Admin provides link manually
+        AUTO_CREATED --> PENDING_MANUAL : Teams update fails on reschedule
+        MANUAL_PROVIDED --> AUTO_CREATED : Teams update succeeds on reschedule
+    }
+
+    SCHEDULED --> SCHEDULED : Rescheduled\n(date/time/venue updated,\nall participants re-notified)
+    SCHEDULED --> COMPLETED : Admin marks COMPLETED\n(attendance finalized)
+    SCHEDULED --> CANCELLED : Admin cancels session
+
+    COMPLETED --> [*]
+    CANCELLED --> [*]
+
+    note right of SCHEDULED
+        Only SCHEDULED sessions can be rescheduled.
+        COMPLETED and CANCELLED are both terminal.
+    end note
+
+    note right of COMPLETED
+        Triggers for each ATTENDED participant:
+        - resource_progress updated to COMPLETED
+        - assignment completion evaluated
+        - compliance_state recalculated
+    end note
+
+    note right of CANCELLED
+        No attendance records generated.
+        No completion triggered.
+        Training assignments remain incomplete.
+        All participants (INVITED, NOMINATED, CONFIRMED) notified.
+    end note
+      </div>
+    </div>
+  </div>
+  <div class="info">
+    <h3>Session Status Definitions</h3>
+    <table>
+      <tr><th>State</th><th>Meaning</th><th>Who Sets It</th><th>Allowed Changes</th></tr>
+      <tr>
+        <td><span class="badge b-blue">SCHEDULED</span></td>
+        <td>Session is created and upcoming. Participants can be added. Nominations can be submitted and reviewed.</td>
+        <td>System (on Admin creates session)</td>
+        <td>Can be rescheduled (date/time/venue), cancelled, or completed. Participants can be added or removed.</td>
+      </tr>
+      <tr>
+        <td><span class="badge b-green">COMPLETED</span></td>
+        <td>Session occurred. Attendance has been finalized. Completion events fired for all ATTENDED participants. Terminal — locked.</td>
+        <td>Admin (manual action)</td>
+        <td>None. No structural changes allowed. Attendance records are permanent.</td>
+      </tr>
+      <tr>
+        <td><span class="badge b-grey">CANCELLED</span></td>
+        <td>Session did not occur. No completion generated. All participants notified. Retained in history permanently. Terminal.</td>
+        <td>Admin</td>
+        <td>None. Cannot be rescheduled or completed after cancellation.</td>
+      </tr>
+    </table>
+
+    <h3>Teams Link Status (Sub-state Within SCHEDULED)</h3>
+    <table>
+      <tr><th>teams_link_status</th><th>Meaning</th><th>How It Gets Set</th><th>Action Required?</th></tr>
+      <tr>
+        <td><span class="badge b-green">AUTO_CREATED</span></td>
+        <td>Teams meeting was created successfully via Graph API. Link stored in sessions table. All participants can join from LMS.</td>
+        <td>System (on session create or reschedule success)</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><span class="badge b-orange">PENDING_MANUAL</span></td>
+        <td>Teams meeting creation or update failed. No meeting link available yet. Session is valid — meetings are not required for sessions to exist.</td>
+        <td>System (on Teams API failure)</td>
+        <td>Admin must provide manual link before session goes live</td>
+      </tr>
+      <tr>
+        <td><span class="badge b-blue">MANUAL_PROVIDED</span></td>
+        <td>Admin has manually entered a Teams/meeting link. Participants can use it to join.</td>
+        <td>Admin (manual form update)</td>
+        <td>None — but Admin should verify link is correct</td>
+      </tr>
+    </table>
+
+    <h3>Rescheduling Rules</h3>
+    <table>
+      <tr><th>Rule</th><th>Detail</th></tr>
+      <tr><td>Only SCHEDULED sessions can be rescheduled</td><td>COMPLETED and CANCELLED sessions cannot be rescheduled. System returns 409 if attempted.</td></tr>
+      <tr><td>What can be changed on reschedule</td><td>date/time (start + end), venue. Facilitator can also be updated. Max participants can be updated.</td></tr>
+      <tr><td>Teams update on reschedule</td><td>System attempts to update the Teams meeting via Graph API. If it fails: teams_link_status = PENDING_MANUAL. Admin must update the link manually.</td></tr>
+      <tr><td>Re-notification</td><td>All INVITED and CONFIRMED participants receive a reschedule notification. NOMINATED (pending review) participants do NOT receive re-notification.</td></tr>
+      <tr><td>Audit event</td><td>SESSION_RESCHEDULED audit event emitted with old/new datetime, old/new venue_id, updated_by.</td></tr>
+    </table>
+
+    <h3>COMPLETED Transition — What It Triggers</h3>
+    <table>
+      <tr><th>For Each ATTENDED Participant</th><th>Detail</th></tr>
+      <tr><td>resource_progress updated</td><td>The session training resource's progress_status → COMPLETED</td></tr>
+      <tr><td>Assignment completion evaluated</td><td>If all required resources for the training are now done → assignment_status → COMPLETED</td></tr>
+      <tr><td>compliance_state recalculated</td><td>compliance_status row updated. COMPLIANT if completed on time. NON_COMPLIANT if completed after due_date.</td></tr>
+      <tr><td>Training completion record created</td><td>training_completions row created with completed_at and optional expires_at</td></tr>
+      <tr><td>Certificate generated</td><td>If training has certificate enabled — certificate record created</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- TAB 2: Participant Status -->
+<div class="section" id="sec1">
+  <div class="section-header">session_participants.participant_status (4 enrollment states) + session_attendance.attendance_status (2 states)</div>
+  <div class="wrap">
+    <div class="dcard">
+      <div class="mermaid">
+stateDiagram-v2
+    direction LR
+
+    state "ENROLLMENT PHASE" as EP {
+        direction LR
+        [*] --> INVITED : Admin directly adds participant
+        [*] --> NOMINATED : Manager nominates direct report
+
+        NOMINATED --> CONFIRMED : Admin confirms nomination
+        NOMINATED --> REJECTED_NOMINATION : Admin rejects nomination
+        NOMINATED --> [*] : Manager withdraws nomination\n(while window still open)
+    }
+
+    state "ATTENDANCE PHASE (on session COMPLETED)" as AP {
+        direction LR
+        [*] --> ATTENDED : Attended (Teams auto or Admin/HR manual)
+        [*] --> NOT_ATTENDED : Not attended
+    }
+
+    INVITED --> AP : Session COMPLETED
+    CONFIRMED --> AP : Session COMPLETED
+    REJECTED_NOMINATION --> [*]
+
+    note right of NOMINATED
+        nomination_window must be configured.
+        Managers can only nominate direct reports (depth = 1).
+        Admin can confirm/reject at any time before COMPLETED.
+        Manager can only cancel while nomination_close_at has not passed.
+    end note
+
+    note right of AP
+        ATTENDED drives training completion.
+        NOT_ATTENDED — assignment remains incomplete.
+        Admin can override any attendance record.
+        attendance_source tracks who recorded it.
+    end note
+      </div>
+    </div>
+  </div>
+  <div class="info">
+    <h3>Participant Enrollment Status Definitions</h3>
+    <table>
+      <tr><th>Status</th><th>Meaning</th><th>Who Sets It</th><th>Counts Against max_participants?</th></tr>
+      <tr>
+        <td><span class="badge b-blue">INVITED</span></td>
+        <td>Admin directly added this participant. Considered fully enrolled. Receives session notifications.</td>
+        <td>Admin</td>
+        <td>Yes</td>
+      </tr>
+      <tr>
+        <td><span class="badge b-purple">NOMINATED</span></td>
+        <td>Manager has nominated this participant. Awaiting Admin review. Employee is notified of nomination.</td>
+        <td>Manager (within nomination window)</td>
+        <td>Yes — counted to prevent over-booking during review</td>
+      </tr>
+      <tr>
+        <td><span class="badge b-green">CONFIRMED</span></td>
+        <td>Admin has confirmed the manager's nomination. Participant is fully enrolled. Same as INVITED.</td>
+        <td>Admin (confirms nomination)</td>
+        <td>Yes</td>
+      </tr>
+      <tr>
+        <td><span class="badge b-red">REJECTED_NOMINATION</span></td>
+        <td>Admin rejected the manager's nomination. Employee not enrolled. Both Manager and Employee notified with reason.</td>
+        <td>Admin (rejects nomination)</td>
+        <td>No — removed from count on rejection</td>
+      </tr>
+    </table>
+
+    <h3>Attendance Status Definitions</h3>
+    <table>
+      <tr><th>Status</th><th>Meaning</th><th>Who/What Sets It</th><th>Drives Completion?</th></tr>
+      <tr>
+        <td><span class="badge b-green">ATTENDED</span></td>
+        <td>Participant attended the session (online via Teams or offline in-person). Only ATTENDED drives training resource completion.</td>
+        <td>Teams auto-fetch (TEAMS_AUTO), Admin/HR manual (ADMIN_MANUAL), or Admin override (ADMIN_OVERRIDE)</td>
+        <td>Yes — triggers resource_progress → COMPLETED</td>
+      </tr>
+      <tr>
+        <td><span class="badge b-grey">NOT_ATTENDED</span></td>
+        <td>Participant did not attend. No completion triggered. Assignment for session resource remains incomplete.</td>
+        <td>Teams auto-fetch, Admin/HR manual, or default for unmarked participants</td>
+        <td>No — assignment remains ASSIGNED or IN_PROGRESS</td>
+      </tr>
+    </table>
+
+    <h3>attendance_source Values</h3>
+    <table>
+      <tr><th>source</th><th>How</th><th>Who</th></tr>
+      <tr><td><code>TEAMS_AUTO</code></td><td>Auto-fetched from Teams attendance report after session ends</td><td>System (background task)</td></tr>
+      <tr><td><code>ADMIN_MANUAL</code></td><td>Admin or HR manually marks attendance (individual or bulk, or Excel import)</td><td>Admin or HR</td></tr>
+      <tr><td><code>ADMIN_OVERRIDE</code></td><td>Admin explicitly overrides a previously recorded attendance (e.g. correcting a Teams auto-record)</td><td>Admin</td></tr>
+    </table>
+
+    <h3>Nomination Window Rules</h3>
+    <table>
+      <tr><th>Rule</th><th>Detail</th></tr>
+      <tr><td>Nomination window is optional</td><td>If not configured, only Admin can add participants directly. No nomination flow available.</td></tr>
+      <tr><td>nomination_open_at and nomination_close_at must both be before start_time</td><td>Ensures nominations are reviewed before the session begins.</td></tr>
+      <tr><td>Manager can only cancel while window is open</td><td>Once nomination_close_at passes, the Manager cannot withdraw. Admin must reject it.</td></tr>
+      <tr><td>Admin can add participants directly even when nomination window is active</td><td>Direct adds bypass the nomination flow entirely.</td></tr>
+      <tr><td>Duplicate enrollment blocked</td><td>Same user cannot be both INVITED and NOMINATED. Returns 409 DUPLICATE_ENROLLMENT.</td></tr>
+      <tr><td>Capacity cap applies to NOMINATED + CONFIRMED + INVITED combined</td><td>If max_participants is reached, further direct adds and nomination confirmations are blocked. SESSION_AT_CAPACITY error.</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="desc">
+  <strong>Source:</strong> docs/requirements/02_features/05_sessions.md + 05_engineering/features/05_sessions/schema.md &nbsp;|&nbsp;
+  <strong>Type:</strong> State Machine — stateDiagram-v2 &nbsp;|&nbsp;
+  Tab 1: <code>sessions.status</code> + <code>sessions.teams_link_status</code>. Tab 2: <code>session_participants.participant_status</code> + <code>session_attendance.attendance_status</code>. All sessions are hybrid — every session has both Teams (online) and in-person attendance. There is no session type selector.
+</div>
+
+<div class="controls">
+  <button class="cb" onclick="zi()" title="Zoom in">+</button>
+  <div id="zoom-label">100%</div>
+  <button class="cb" onclick="zo()" title="Zoom out">−</button>
+  <button class="cb" onclick="zr()" title="Reset (fit to screen)" style="font-size:13px">↺</button>
+</div>
+<script>
+  mermaid.initialize({startOnLoad:false,theme:'dark',securityLevel:'loose',
+    stateDiagram:{useMaxWidth:false}});
+
+  let scale=1,origW=null,origH=null;
+  function getSvg(){return document.querySelector('.section.active .wrap .mermaid svg');}
+
+  function captureOriginal(){
+    const svg=getSvg();if(!svg)return false;
+    const vb=svg.viewBox&&svg.viewBox.baseVal;
+    if(vb&&vb.width>0){origW=vb.width;origH=vb.height;}
+    else{origW=svg.getBoundingClientRect().width||900;origH=svg.getBoundingClientRect().height||500;}
+    svg.setAttribute('width',origW);svg.setAttribute('height',origH);
+    svg.style.maxWidth='none';return true;
+  }
+
+  function fitToScreen(){
+    const svg=getSvg();if(!svg||!origW)return;
+    const headerH=(document.querySelector('header')||{}).offsetHeight||60;
+    const navH=(document.querySelector('nav')||{}).offsetHeight||40;
+    const tabsH=(document.querySelector('.tabs')||{}).offsetHeight||40;
+    const wrap=document.querySelector('.section.active .wrap');
+    const availW=(wrap?wrap.clientWidth:window.innerWidth)-80;
+    const availH=window.innerHeight-headerH-navH-tabsH-80;
+    scale=Math.min(availW/origW,availH/origH);
+    scale=Math.max(scale,0.1);
+    svg.setAttribute('width',origW*scale);svg.setAttribute('height',origH*scale);
+    document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%';
+  }
+
+  function applyScale(){
+    const svg=getSvg();if(!svg)return;
+    if(!origW&&!captureOriginal())return;
+    svg.setAttribute('width',origW*scale);svg.setAttribute('height',origH*scale);
+    document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%';
+  }
+
+  function zi(){scale=Math.min(scale*1.25,8);applyScale();}
+  function zo(){scale=Math.max(scale*0.8,0.1);applyScale();}
+  function zr(){fitToScreen();}
+
+  function showTab(idx){
+    scale=1;origW=null;origH=null;
+    document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===idx));
+    document.querySelectorAll('.section[id^="sec"]').forEach((s,i)=>s.classList.toggle('active',i===idx));
+    document.getElementById('zoom-label').textContent='100%';
+    setTimeout(()=>{if(captureOriginal())fitToScreen();},100);
+  }
+
+  window.addEventListener('load',()=>{
+    // Show all sections off-screen so Mermaid renders every diagram with proper dimensions
+    const secs=document.querySelectorAll('.section[id^="sec"]');
+    secs.forEach(s=>{s.style.cssText+='display:block!important;visibility:hidden!important;position:absolute!important;pointer-events:none!important;';});
+    mermaid.run({querySelector:'.mermaid'}).then(()=>{
+      secs.forEach(s=>{s.style.cssText=s.style.cssText.replace(/display:[^;]+!important;|visibility:[^;]+!important;|position:[^;]+!important;|pointer-events:[^;]+!important;/g,'');});
+      setTimeout(()=>{if(captureOriginal())fitToScreen();},200);
+    });
+  });
+</script>
+</body>
+</html>

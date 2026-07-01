@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-LMS — User Detail</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .user-header-card {
+      background:#fff;border:1px solid var(--border);border-radius:12px;
+      padding:24px 28px;display:flex;align-items:flex-start;gap:20px;
+    }
+    .user-avatar-lg {
+      width:64px;height:64px;border-radius:14px;background:var(--primary);
+      color:#fff;font-size:22px;font-weight:700;display:flex;align-items:center;
+      justify-content:center;flex-shrink:0;
+    }
+    .user-meta-grid {
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px 24px;
+      margin-top:16px;
+    }
+    .user-meta-item .meta-label { font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:.04em; }
+    .user-meta-item .meta-value { font-size:13px;font-weight:600;margin-top:2px; }
+    .training-item {
+      background:#fff;border:1px solid var(--border);border-radius:10px;
+      padding:14px 16px;margin-bottom:10px;
+    }
+    .cert-card {
+      background:linear-gradient(135deg,#1e40af,#3b82f6);
+      border-radius:10px;padding:16px;color:#fff;position:relative;overflow:hidden;
+    }
+    .cert-card::before {
+      content:'';position:absolute;right:-20px;top:-20px;width:80px;height:80px;
+      border-radius:50%;background:rgba(255,255,255,.08);
+    }
+    .activity-row {
+      display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);
+      align-items:flex-start;
+    }
+    .activity-row:last-child { border-bottom:none; }
+    .activity-icon {
+      width:30px;height:30px;border-radius:50%;display:flex;align-items:center;
+      justify-content:center;font-size:13px;flex-shrink:0;
+    }
+  </style>
+</head>
+<body>
+<script>
+  const _r = localStorage.getItem('lms_role');
+  if (!_r || (_r !== 'admin' && _r !== 'hr')) { localStorage.setItem('lms_role', 'admin'); }
+</script>
+<div class="lms-wrapper">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title">
+        <a href="admin-users.html" style="color:var(--text-muted);text-decoration:none;font-size:13px">Users</a>
+        <span style="color:var(--text-muted);margin:0 6px">/</span>
+        Rahul Sharma
+      </div>
+      <div class="topbar-actions">
+        <div class="role-switcher" id="role-switcher"></div>
+        <button class="btn-outline-lms" style="font-size:12px;padding:6px 12px" onclick="showToast('Opening edit user...')">
+          <i class="bi bi-pencil"></i> Edit User
+        </button>
+        <div style="position:relative">
+          <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+            <i class="bi bi-bell"></i><span class="notif-badge">1</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown-header"><span>Notifications</span><a href="#">Mark all read</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- User Header -->
+      <div class="user-header-card mb-4">
+        <div class="user-avatar-lg">RS</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div style="font-size:20px;font-weight:700">Rahul Sharma</div>
+            <span class="badge-lms badge-healthy">Active</span>
+            <span class="badge-lms" style="background:#eff6ff;color:#1e40af;font-size:11.5px">Employee</span>
+          </div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:4px">rahul.sharma@azilen.com</div>
+          <div class="user-meta-grid">
+            <div class="user-meta-item"><div class="meta-label">EMPLOYEE ID</div><div class="meta-value">EMP-001</div></div>
+            <div class="user-meta-item"><div class="meta-label">DEPARTMENT</div><div class="meta-value">Engineering</div></div>
+            <div class="user-meta-item"><div class="meta-label">DESIGNATION</div><div class="meta-value">Senior Developer</div></div>
+            <div class="user-meta-item"><div class="meta-label">MANAGER</div><div class="meta-value">Priya Mehta</div></div>
+            <div class="user-meta-item"><div class="meta-label">HIRE DATE</div><div class="meta-value">Mar 15, 2022</div></div>
+            <div class="user-meta-item"><div class="meta-label">LAST LOGIN</div><div class="meta-value">Apr 7, 2026</div></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0;text-align:right">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted)">COMPLIANCE STATUS</div>
+            <span class="badge-lms" style="background:#f0fdf4;color:#166534;font-size:12px;margin-top:3px;display:inline-block">
+              <i class="bi bi-shield-check"></i> Compliant
+            </span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-muted)">OVERALL PROGRESS</div>
+            <div style="font-size:18px;font-weight:700;color:var(--success)">78%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs-lms">
+        <a class="tab-item active" onclick="switchTab('training',this)">Training</a>
+        <a class="tab-item" onclick="switchTab('compliance',this)">Compliance</a>
+        <a class="tab-item" onclick="switchTab('certificates',this)">Certificates <span class="tab-count">4</span></a>
+        <a class="tab-item" onclick="switchTab('activity',this)">Activity Log</a>
+      </div>
+
+      <!-- ===== TRAINING TAB ===== -->
+      <div id="tab-training">
+
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+          <select class="form-control-lms" style="width:140px;padding:6px 10px;font-size:12.5px" onchange="filterTraining(this.value)">
+            <option>All Statuses</option>
+            <option>Completed</option>
+            <option>In Progress</option>
+            <option>Not Started</option>
+            <option>Overdue</option>
+          </select>
+          <button class="btn-outline-lms" style="font-size:12px;padding:6px 12px" onclick="openAssignModal()">
+            <i class="bi bi-plus"></i> Assign Training
+          </button>
+        </div>
+
+        <div class="training-item">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+            <div>
+              <div style="font-weight:600;font-size:13.5px">Safety Compliance 2026</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:2px">TRN-001 · Course · Safety · Mandatory</div>
+            </div>
+            <span class="badge-lms badge-healthy">Completed</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+            <div class="progress-lms" style="width:160px"><div class="bar green" style="width:100%"></div></div>
+            <span style="font-size:12.5px;color:var(--success)">100%</span>
+            <span style="font-size:12px;color:var(--text-muted)">Completed Apr 6, 2026</span>
+            <span style="font-size:12px;color:var(--text-muted)">· Score: 85%</span>
+            <span style="font-size:12px;color:var(--text-muted)">· Version 2</span>
+          </div>
+        </div>
+
+        <div class="training-item">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+            <div>
+              <div style="font-weight:600;font-size:13.5px">Data Privacy Training</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:2px">TRN-003 · Course · Compliance · Mandatory</div>
+            </div>
+            <span class="badge-lms badge-healthy">Completed</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+            <div class="progress-lms" style="width:160px"><div class="bar green" style="width:100%"></div></div>
+            <span style="font-size:12.5px;color:var(--success)">100%</span>
+            <span style="font-size:12px;color:var(--text-muted)">Completed Mar 1, 2026</span>
+            <span style="font-size:12px;color:var(--text-muted)">· Score: 91%</span>
+          </div>
+        </div>
+
+        <div class="training-item">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+            <div>
+              <div style="font-weight:600;font-size:13.5px">React Advanced Patterns</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:2px">TRN-007 · Learning Path · Technical · Optional</div>
+            </div>
+            <span class="badge-lms badge-pending">In Progress</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+            <div class="progress-lms" style="width:160px"><div class="bar amber" style="width:60%"></div></div>
+            <span style="font-size:12.5px;color:var(--warning)">60%</span>
+            <span style="font-size:12px;color:var(--text-muted)">Due May 30, 2026</span>
+            <span style="font-size:12px;color:var(--text-muted)">· 3 of 5 courses done</span>
+          </div>
+        </div>
+
+        <div class="training-item">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+            <div>
+              <div style="font-weight:600;font-size:13.5px">Leadership Essentials</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:2px">TRN-006 · Course · Leadership · Optional</div>
+            </div>
+            <span class="badge-lms badge-healthy">Completed</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+            <div class="progress-lms" style="width:160px"><div class="bar green" style="width:100%"></div></div>
+            <span style="font-size:12.5px;color:var(--success)">100%</span>
+            <span style="font-size:12px;color:var(--text-muted)">Completed Feb 18, 2026</span>
+          </div>
+        </div>
+
+        <div class="training-item" style="border-color:var(--danger)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+            <div>
+              <div style="font-weight:600;font-size:13.5px">Anti-Harassment Policy</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:2px">TRN-005 · Course · Compliance · Mandatory</div>
+            </div>
+            <span class="badge-lms" style="background:#fee2e2;color:#991b1b">Overdue</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+            <div class="progress-lms" style="width:160px"><div class="bar red" style="width:0%"></div></div>
+            <span style="font-size:12.5px;color:var(--danger)">0%</span>
+            <span style="font-size:12px;color:var(--danger)">Due Apr 1, 2026 — 6 days overdue</span>
+          </div>
+          <div style="margin-top:8px">
+            <button class="btn-outline-lms" style="font-size:11.5px;padding:4px 10px" onclick="showToast('Reminder sent to Rahul Sharma')">
+              <i class="bi bi-envelope"></i> Send Reminder
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===== COMPLIANCE TAB ===== -->
+      <div id="tab-compliance" style="display:none">
+        <div class="card">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:13.5px;font-weight:600">Mandatory Training Compliance</div>
+            <span class="badge-lms" style="background:#f0fdf4;color:#166534;font-size:12px">
+              <i class="bi bi-shield-check"></i> Overall: Compliant
+            </span>
+          </div>
+          <table class="lms-table">
+            <thead>
+              <tr><th>Training</th><th>Category</th><th>Completed On</th><th>Expires On</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:600;font-size:13px">Safety Compliance 2026</td>
+                <td style="font-size:12.5px">Safety</td>
+                <td style="font-size:12.5px">Apr 6, 2026</td>
+                <td style="font-size:12.5px">Apr 6, 2027</td>
+                <td><span class="badge-lms badge-healthy" style="font-size:11px">Valid</span></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600;font-size:13px">Data Privacy Training</td>
+                <td style="font-size:12.5px">Compliance</td>
+                <td style="font-size:12.5px">Mar 1, 2026</td>
+                <td style="font-size:12.5px">Mar 1, 2027</td>
+                <td><span class="badge-lms badge-healthy" style="font-size:11px">Valid</span></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600;font-size:13px">Code of Conduct</td>
+                <td style="font-size:12.5px">Compliance</td>
+                <td style="font-size:12.5px">Feb 15, 2026</td>
+                <td style="font-size:12.5px;color:var(--text-muted)">Permanent</td>
+                <td><span class="badge-lms badge-healthy" style="font-size:11px">Valid</span></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600;font-size:13px">Anti-Harassment Policy</td>
+                <td style="font-size:12.5px">Compliance</td>
+                <td style="font-size:12.5px;color:var(--text-muted)">—</td>
+                <td style="font-size:12.5px;color:var(--text-muted)">—</td>
+                <td><span class="badge-lms" style="background:#fee2e2;color:#991b1b;font-size:11px">Overdue</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="padding:14px 20px;background:#fffbeb;border-top:1px solid #fcd34d;font-size:12.5px;color:#92400e;border-radius:0 0 10px 10px">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <strong>1 mandatory training overdue.</strong> Compliance status will show as non-compliant if not completed within 7 days.
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CERTIFICATES TAB ===== -->
+      <div id="tab-certificates" style="display:none">
+        <div class="row g-3">
+
+          <div class="col-12 col-md-6">
+            <div class="cert-card">
+              <div style="font-size:11px;opacity:.7;letter-spacing:.06em">CERTIFICATE OF COMPLETION</div>
+              <div style="font-size:15px;font-weight:700;margin:6px 0 2px">Safety Compliance 2026</div>
+              <div style="font-size:12px;opacity:.8">Issued Apr 6, 2026 · Expires Apr 6, 2027</div>
+              <div style="font-size:11px;opacity:.6;margin-top:4px">CERT-20260406-0091</div>
+              <div style="margin-top:12px;display:flex;gap:8px">
+                <button style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer" onclick="showToast('Downloading certificate...')">
+                  <i class="bi bi-download"></i> Download
+                </button>
+                <button style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer" onclick="showToast('Certificate link copied')">
+                  <i class="bi bi-share"></i> Share
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <div class="cert-card" style="background:linear-gradient(135deg,#065f46,#10b981)">
+              <div style="font-size:11px;opacity:.7;letter-spacing:.06em">CERTIFICATE OF COMPLETION</div>
+              <div style="font-size:15px;font-weight:700;margin:6px 0 2px">Data Privacy Training</div>
+              <div style="font-size:12px;opacity:.8">Issued Mar 1, 2026 · Expires Mar 1, 2027</div>
+              <div style="font-size:11px;opacity:.6;margin-top:4px">CERT-20260301-0078</div>
+              <div style="margin-top:12px;display:flex;gap:8px">
+                <button style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer" onclick="showToast('Downloading certificate...')">
+                  <i class="bi bi-download"></i> Download
+                </button>
+                <button style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer" onclick="showToast('Certificate link copied')">
+                  <i class="bi bi-share"></i> Share
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <div class="cert-card" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">
+              <div style="font-size:11px;opacity:.7;letter-spacing:.06em">CERTIFICATE OF COMPLETION</div>
+              <div style="font-size:15px;font-weight:700;margin:6px 0 2px">Code of Conduct</div>
+              <div style="font-size:12px;opacity:.8">Issued Feb 15, 2026 · Permanent</div>
+              <div style="font-size:11px;opacity:.6;margin-top:4px">CERT-20260215-0064</div>
+              <div style="margin-top:12px;display:flex;gap:8px">
+                <button style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer" onclick="showToast('Downloading certificate...')">
+                  <i class="bi bi-download"></i> Download
+                </button>
+                <button style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer" onclick="showToast('Certificate link copied')">
+                  <i class="bi bi-share"></i> Share
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <div class="cert-card" style="background:linear-gradient(135deg,#b45309,#fbbf24)">
+              <div style="font-size:11px;opacity:.7;letter-spacing:.06em">CERTIFICATE OF COMPLETION</div>
+              <div style="font-size:15px;font-weight:700;margin:6px 0 2px">Leadership Essentials</div>
+              <div style="font-size:12px;opacity:.8">Issued Feb 18, 2026 · Permanent</div>
+              <div style="font-size:11px;opacity:.6;margin-top:4px">CERT-20260218-0067</div>
+              <div style="margin-top:12px;display:flex;gap:8px">
+                <button style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer" onclick="showToast('Downloading certificate...')">
+                  <i class="bi bi-download"></i> Download
+                </button>
+                <button style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer" onclick="showToast('Certificate link copied')">
+                  <i class="bi bi-share"></i> Share
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===== ACTIVITY TAB ===== -->
+      <div id="tab-activity" style="display:none">
+        <div class="card">
+          <div style="padding:14px 20px;border-bottom:1px solid var(--border);font-size:13.5px;font-weight:600">Activity Log</div>
+          <div style="padding:8px 20px">
+
+            <div class="activity-row">
+              <div class="activity-icon" style="background:#f0fdf4;color:var(--success)"><i class="bi bi-check2-circle"></i></div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600">Completed Safety Compliance 2026</div>
+                <div style="font-size:12px;color:var(--text-muted)">Score: 85% · Certificate CERT-20260406-0091 issued</div>
+              </div>
+              <div style="font-size:11.5px;color:var(--text-muted);white-space:nowrap">Apr 6, 2026 09:12</div>
+            </div>
+
+            <div class="activity-row">
+              <div class="activity-icon" style="background:#fffbeb;color:var(--warning)"><i class="bi bi-clipboard-check"></i></div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600">Submitted assessment attempt — Safety Quiz</div>
+                <div style="font-size:12px;color:var(--text-muted)">Attempt 2 · Score: 85% · PASS</div>
+              </div>
+              <div style="font-size:11.5px;color:var(--text-muted);white-space:nowrap">Apr 6, 2026 08:55</div>
+            </div>
+
+            <div class="activity-row">
+              <div class="activity-icon" style="background:#fee2e2;color:var(--danger)"><i class="bi bi-clipboard-x"></i></div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600">Submitted assessment attempt — Safety Quiz</div>
+                <div style="font-size:12px;color:var(--text-muted)">Attempt 1 · Score: 62% · FAIL</div>
+              </div>
+              <div style="font-size:11.5px;color:var(--text-muted);white-space:nowrap">Apr 5, 2026 16:40</div>
+            </div>
+
+            <div class="activity-row">
+              <div class="activity-icon" style="background:#eff6ff;color:var(--primary)"><i class="bi bi-play-circle"></i></div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600">Started Safety Compliance 2026</div>
+                <div style="font-size:12px;color:var(--text-muted)">Opened first resource: Safety Overview Video</div>
+              </div>
+              <div style="font-size:11.5px;color:var(--text-muted);white-space:nowrap">Apr 5, 2026 14:10</div>
+            </div>
+
+            <div class="activity-row">
+              <div class="activity-icon" style="background:#f0fdf4;color:var(--success)"><i class="bi bi-person-plus"></i></div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600">Assigned to Safety Compliance 2026</div>
+                <div style="font-size:12px;color:var(--text-muted)">Assigned by Priya Mehta · Due May 6, 2026</div>
+              </div>
+              <div style="font-size:11.5px;color:var(--text-muted);white-space:nowrap">Apr 4, 2026 10:30</div>
+            </div>
+
+            <div class="activity-row">
+              <div class="activity-icon" style="background:#f0fdf4;color:var(--success)"><i class="bi bi-check2-circle"></i></div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600">Completed Leadership Essentials</div>
+                <div style="font-size:12px;color:var(--text-muted)">Certificate CERT-20260218-0067 issued</div>
+              </div>
+              <div style="font-size:11.5px;color:var(--text-muted);white-space:nowrap">Feb 18, 2026 11:05</div>
+            </div>
+
+            <div class="activity-row">
+              <div class="activity-icon" style="background:#f0fdf4;color:var(--success)"><i class="bi bi-check2-circle"></i></div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600">Completed Data Privacy Training</div>
+                <div style="font-size:12px;color:var(--text-muted)">Score: 91% · Certificate CERT-20260301-0078 issued</div>
+              </div>
+              <div style="font-size:11.5px;color:var(--text-muted);white-space:nowrap">Mar 1, 2026 09:22</div>
+            </div>
+
+            <div class="activity-row">
+              <div class="activity-icon" style="background:#eff6ff;color:var(--primary)"><i class="bi bi-box-arrow-in-right"></i></div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600">Login via Keycloak SSO</div>
+                <div style="font-size:12px;color:var(--text-muted)">IP: 10.0.1.42</div>
+              </div>
+              <div style="font-size:11.5px;color:var(--text-muted);white-space:nowrap">Apr 7, 2026 08:02</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast-container" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  function switchTab(id, el) {
+    ['training','compliance','certificates','activity'].forEach(t => {
+      document.getElementById('tab-'+t).style.display = 'none';
+    });
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-'+id).style.display = 'block';
+    if (el) el.classList.add('active');
+  }
+
+  function filterTraining(v) {
+    showToast('Filter: ' + (v || 'All'));
+  }
+
+  function openAssignModal() {
+    showToast('Opening assign training...');
+  }
+
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast-lms show';
+    t.innerHTML = '<i class="bi bi-check-circle-fill" style="color:var(--success)"></i> ' + msg;
+    document.getElementById('toast-container').appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+</script>
+</body>
+</html>

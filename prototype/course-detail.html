@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-LMS — Course Detail</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .resource-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .resource-item:last-child { border-bottom: none; }
+    .resource-item:hover { background: #f9fafb; }
+    .resource-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .resource-item.done .resource-icon { background: #d1fae5; }
+    .resource-item.active .resource-icon { background: #dbeafe; }
+    .resource-item.locked .resource-icon { background: #f3f4f6; opacity: 0.5; }
+    .resource-check {
+      margin-left: auto; flex-shrink: 0;
+      font-size: 16px;
+    }
+    .resource-check.done  { color: var(--success); }
+    .resource-check.active{ color: var(--primary); }
+    .resource-check.locked{ color: #d1d5db; }
+  </style>
+</head>
+<body>
+<div class="lms-wrapper">
+
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title">Course Detail</div>
+      <div class="topbar-actions">
+        <div class="role-switcher" id="role-switcher"></div>
+        <div style="position:relative">
+          <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+            <i class="bi bi-bell"></i><span class="notif-badge">3</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown-header"><span>Notifications</span><a href="#">Mark all read</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- Breadcrumb -->
+      <div class="breadcrumb-lms">
+        <a href="catalog.html">Training Catalog</a>
+        <i class="bi bi-chevron-right"></i>
+        <span>Safety Compliance 2026</span>
+      </div>
+
+      <div class="row g-4">
+
+        <!-- Left: Course Info + Resources -->
+        <div class="col-lg-8">
+
+          <!-- Course Header Card -->
+          <div class="card mb-3">
+            <div style="height:180px;background:linear-gradient(135deg,#fee2e2,#fecaca);display:flex;align-items:center;justify-content:center;font-size:64px">🦺</div>
+            <div class="card-body-lms">
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+                <span class="badge-lms badge-mandatory">Mandatory</span>
+                <span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">Course</span>
+                <span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">
+                  <i class="bi bi-bar-chart-fill me-1"></i>Intermediate
+                </span>
+                <span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">
+                  <i class="bi bi-tag me-1"></i>Compliance
+                </span>
+              </div>
+              <h4 style="font-size:20px;font-weight:700;margin-bottom:6px">Safety Compliance 2026</h4>
+              <p style="font-size:13.5px;color:var(--text-muted);line-height:1.6;margin-bottom:16px">
+                This mandatory course covers all safety regulations, emergency procedures, and workplace compliance requirements for 2026. All employees must complete this before April 30, 2026.
+              </p>
+              <div style="display:flex;flex-wrap:wrap;gap:20px;font-size:13px;color:var(--text-muted)">
+                <span><i class="bi bi-collection me-1"></i><strong>5</strong> Resources</span>
+                <span><i class="bi bi-clock me-1"></i><strong>2h 30m</strong> Duration</span>
+                <span><i class="bi bi-person me-1"></i>Created by <strong>Admin</strong></span>
+                <span><i class="bi bi-calendar3 me-1"></i>Updated <strong>Jan 15, 2026</strong></span>
+                <span><i class="bi bi-hash me-1"></i><strong>TRN-001</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Card -->
+          <div class="card mb-3">
+            <div class="card-body-lms">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                <div>
+                  <div style="font-size:14px;font-weight:600">Your Progress</div>
+                  <div style="font-size:12px;color:var(--text-muted);margin-top:2px">3 of 5 resources completed</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:24px;font-weight:700;color:var(--primary)">70%</div>
+                  <span class="badge-lms badge-inprogress">In Progress</span>
+                </div>
+              </div>
+              <div class="progress-lms" style="height:10px">
+                <div class="bar" style="width:70%"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--text-muted)">
+                <span>Started: Mar 10, 2026</span>
+                <span style="color:var(--danger);font-weight:600">Due: Apr 30, 2026 · 23 days left</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resources List -->
+          <div class="card">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-collection me-2" style="color:var(--primary)"></i>Course Resources</h6>
+            </div>
+            <div>
+              <!-- Done -->
+              <div class="resource-item done" onclick="openResource(this,'Introduction to Safety Regulations')">
+                <div class="resource-icon"><i class="bi bi-play-circle-fill" style="color:var(--success)"></i></div>
+                <div>
+                  <div style="font-size:13.5px;font-weight:600">Introduction to Safety Regulations</div>
+                  <div style="font-size:11.5px;color:var(--text-muted)">Video · 25 min</div>
+                </div>
+                <div class="resource-check done"><i class="bi bi-check-circle-fill"></i></div>
+              </div>
+              <!-- Done -->
+              <div class="resource-item done" onclick="openResource(this,'Workplace Hazard Identification')">
+                <div class="resource-icon"><i class="bi bi-file-earmark-pdf-fill" style="color:var(--success)"></i></div>
+                <div>
+                  <div style="font-size:13.5px;font-weight:600">Workplace Hazard Identification</div>
+                  <div style="font-size:11.5px;color:var(--text-muted)">Document · 15 min</div>
+                </div>
+                <div class="resource-check done"><i class="bi bi-check-circle-fill"></i></div>
+              </div>
+              <!-- Done -->
+              <div class="resource-item done" onclick="openResource(this,'Emergency Procedures')">
+                <div class="resource-icon"><i class="bi bi-play-circle-fill" style="color:var(--success)"></i></div>
+                <div>
+                  <div style="font-size:13.5px;font-weight:600">Emergency Procedures</div>
+                  <div style="font-size:11.5px;color:var(--text-muted)">Video · 30 min</div>
+                </div>
+                <div class="resource-check done"><i class="bi bi-check-circle-fill"></i></div>
+              </div>
+              <!-- Active (current) -->
+              <div class="resource-item active" style="background:var(--primary-light)" onclick="markComplete(this,'Compliance Assessment Quiz')">
+                <div class="resource-icon"><i class="bi bi-file-earmark-text-fill" style="color:var(--primary)"></i></div>
+                <div>
+                  <div style="font-size:13.5px;font-weight:600;color:var(--primary)">Compliance Assessment Quiz</div>
+                  <div style="font-size:11.5px;color:var(--text-muted)">Assessment · 20 min &nbsp;<span style="background:var(--primary);color:#fff;padding:1px 6px;border-radius:10px;font-size:10px">Current</span></div>
+                </div>
+                <div class="resource-check active"><i class="bi bi-play-circle"></i></div>
+              </div>
+              <!-- Locked -->
+              <div class="resource-item locked">
+                <div class="resource-icon"><i class="bi bi-camera-video-fill" style="color:#9ca3af"></i></div>
+                <div style="opacity:0.5">
+                  <div style="font-size:13.5px;font-weight:600">Classroom Safety Session</div>
+                  <div style="font-size:11.5px;color:var(--text-muted)">Session · Apr 8, 2026</div>
+                </div>
+                <div class="resource-check locked"><i class="bi bi-lock-fill"></i></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right: Assignment Info + Actions -->
+        <div class="col-lg-4">
+
+          <!-- Action Card -->
+          <div class="card mb-3">
+            <div class="card-body-lms">
+              <button class="btn-primary-lms w-100 justify-content-center mb-2" style="padding:11px"
+                onclick="showToast('Resuming: Compliance Assessment Quiz...')">
+                <i class="bi bi-play-fill"></i> Continue Training
+              </button>
+              <a href="sessions.html" class="btn-ghost-lms w-100 justify-content-center">
+                <i class="bi bi-camera-video"></i> View Session
+              </a>
+            </div>
+          </div>
+
+          <!-- Assignment Info -->
+          <div class="card mb-3">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-info-circle me-2" style="color:var(--primary)"></i>Assignment Details</h6>
+            </div>
+            <div style="padding:0">
+              <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between">
+                <span style="font-size:12.5px;color:var(--text-muted)">Assigned By</span>
+                <span style="font-size:12.5px;font-weight:600">System (Mandatory)</span>
+              </div>
+              <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between">
+                <span style="font-size:12.5px;color:var(--text-muted)">Assigned On</span>
+                <span style="font-size:12.5px;font-weight:600">Jan 15, 2026</span>
+              </div>
+              <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between">
+                <span style="font-size:12.5px;color:var(--text-muted)">Due Date</span>
+                <span style="font-size:12.5px;font-weight:600;color:var(--danger)">Apr 30, 2026</span>
+              </div>
+              <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between">
+                <span style="font-size:12.5px;color:var(--text-muted)">Status</span>
+                <span class="badge-lms badge-inprogress">In Progress</span>
+              </div>
+              <div style="padding:10px 16px;display:flex;justify-content:space-between">
+                <span style="font-size:12.5px;color:var(--text-muted)">Completion Rule</span>
+                <span style="font-size:12.5px;font-weight:600">All resources</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Certificate Info -->
+          <div class="card mb-3">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-award me-2" style="color:var(--primary)"></i>Certificate</h6>
+            </div>
+            <div class="card-body-lms" style="text-align:center;padding:20px">
+              <div style="font-size:40px;margin-bottom:10px;opacity:0.3">🏆</div>
+              <div style="font-size:13px;color:var(--text-muted)">Complete all 5 resources to earn your certificate.</div>
+              <div style="margin-top:10px">
+                <div class="progress-lms"><div class="bar" style="width:70%"></div></div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px">3 / 5 completed</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Related Sessions -->
+          <div class="card">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-camera-video me-2" style="color:var(--primary)"></i>Related Session</h6>
+            </div>
+            <div style="padding:14px 16px">
+              <div style="font-weight:600;font-size:13px">Classroom Safety Session</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
+                <i class="bi bi-calendar3 me-1"></i>Apr 8, 2026 · 10:00–12:00 AM
+              </div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:2px">
+                <i class="bi bi-geo-alt me-1"></i>Training Room A + Teams
+              </div>
+              <div style="margin-top:10px;display:flex;gap:6px">
+                <a href="session-detail.html" class="btn-outline-lms" style="font-size:11px;padding:4px 10px">
+                  <i class="bi bi-info-circle"></i> Details
+                </a>
+                <a href="#" class="btn-primary-lms" style="font-size:11px;padding:4px 10px">
+                  <i class="bi bi-microsoft-teams"></i> Join Teams
+                </a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:24px;right:24px;background:#1e2a3b;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:none;z-index:9999;align-items:center;gap:8px">
+  <i class="bi bi-check-circle-fill" style="color:var(--success)"></i>
+  <span id="toast-msg"></span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  function markComplete(el, title) {
+    el.classList.remove('active');
+    el.style.background = '';
+    el.classList.add('done');
+    el.querySelector('.resource-icon').innerHTML = '<i class="bi bi-check-circle-fill" style="color:var(--success)"></i>';
+    el.querySelector('.resource-check').className = 'resource-check done';
+    el.querySelector('.resource-check').innerHTML = '<i class="bi bi-check-circle-fill"></i>';
+    el.querySelector('[style*="Current"]')?.remove();
+    showToast(title + ' marked as complete.');
+  }
+  function openResource(el, title) {
+    showToast('Opening: ' + title);
+  }
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.style.display = 'flex';
+    setTimeout(() => t.style.display = 'none', 3000);
+  }
+</script>
+</body>
+</html>

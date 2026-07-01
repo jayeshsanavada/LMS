@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compliance State Machine — AZ-LMS</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{--bg:#0d1117;--card:#161b22;--border:#30363d;--accent:#58a6ff;--text:#c9d1d9;--muted:#8b949e}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif}
+  header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between}
+  .hl .label{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase}
+  .hl .title{font-size:18px;font-weight:600;margin-top:3px}
+  .hl .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  nav{background:var(--card);border-bottom:1px solid var(--border);padding:8px 28px;display:flex;gap:6px;flex-wrap:wrap}
+  nav a{font-size:11px;padding:4px 10px;border-radius:5px;color:var(--muted);text-decoration:none;border:1px solid var(--border);white-space:nowrap;transition:all .15s}
+  nav a:hover{color:var(--text);border-color:var(--muted)}
+  nav a.active{background:var(--accent);color:#0d1117;border-color:var(--accent);font-weight:600}
+  .wrap{padding:24px 28px 20px;overflow:auto}
+  .dcard{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:28px 32px;display:inline-block;min-width:100%}
+  .mermaid svg{display:block;max-width:none !important;height:auto}
+  .info{max-width:1100px;margin:0 auto 0;padding:0 28px}
+  .info h3{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:24px 0 10px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:var(--card);color:var(--muted);font-weight:600;padding:8px 12px;text-align:left;border:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  td{padding:8px 12px;border:1px solid var(--border);color:var(--text);vertical-align:top}
+  tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+  code{background:rgba(88,166,255,.1);color:var(--accent);padding:1px 6px;border-radius:3px;font-size:12px;font-family:monospace}
+  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+  .b-blue{background:rgba(21,101,192,.4);color:#90caf9}
+  .b-green{background:rgba(27,94,32,.4);color:#a5d6a7}
+  .b-red{background:rgba(183,28,28,.4);color:#ef9a9a}
+  .b-grey{background:rgba(66,66,66,.4);color:#bdbdbd}
+  .alert-box{background:#1a0d00;border:1px solid #e65100;border-radius:8px;padding:12px 16px;font-size:13px;color:#ffcc80;margin:16px 0}
+  .alert-box strong{color:#ff9800}
+  .desc{max-width:1100px;margin:24px auto 40px;padding:12px 20px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;color:var(--muted)}
+  .desc strong{color:var(--text)}
+  .controls{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:100}
+  .cb{background:var(--card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:7px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .cb:hover{background:var(--accent);border-color:var(--accent);color:#0d1117}
+  #zoom-label{background:var(--card);border:1px solid var(--border);border-radius:7px;font-size:11px;color:var(--muted);text-align:center;padding:4px 0;min-width:36px}
+</style>
+</head>
+<body>
+<header>
+  <div class="hl">
+    <div class="label">AZ-LMS · State Machine Diagrams</div>
+    <div class="title">Diagram 10 — Compliance State Machine</div>
+    <div class="sub">compliance_status.compliance_state — 3 states · Recertification cycle · Probation gate</div>
+  </div>
+  <div style="font-size:11px;color:var(--muted)">Last updated: 2026-04-15</div>
+</header>
+<nav>
+  <a href="index.html">Index</a>
+  <a href="01_system_architecture.html">1. System</a>
+  <a href="02_module_dependency.html">2. Modules</a>
+  <a href="03_database_er_diagram.html">3. ER Diagram</a>
+  <a href="04_auth_flow.html">4. Auth Flow</a>
+  <a href="05_integration_data_flow.html">5. Integrations</a>
+  <a href="06_background_jobs.html">6. Background Jobs</a>
+  <a href="07_apisix_route_map.html">7. APISIX Routes</a>
+  <a href="08_deployment_architecture.html">8. Deployment</a>
+  <a href="09_assignment_state_machine.html">9. Assignment</a>
+  <a href="10_compliance_state_machine.html" class="active">10. Compliance</a>
+  <a href="11_session_state_machine.html">11. Session</a>
+</nav>
+<div class="wrap">
+  <div class="dcard">
+    <div class="mermaid">
+stateDiagram-v2
+    direction LR
+
+    [*] --> PENDING : Assignment created
+    note left of PENDING
+        One row per (user_id, assignment_id).
+        Re-evaluated by BG job on:
+        - assignment status change
+        - completion event
+        - due_date update
+    end note
+
+    PENDING --> COMPLIANT : Completed on or before due_date
+    PENDING --> COMPLIANT : Completed with no due_date set
+    PENDING --> NON_COMPLIANT : assignment_status becomes OVERDUE (due_date passed)
+    PENDING --> NON_COMPLIANT : Completed after due_date
+
+    COMPLIANT --> PENDING : Completion expires (validity_period_days passed)\nRecertification assignment auto-created
+    COMPLIANT --> [*] : validity_period_days = null\nPermanent — no expiry
+
+    NON_COMPLIANT --> [*] : Assignment CANCELLED\nor no further action taken
+
+    note right of COMPLIANT
+        Probation gate: HR can confirm probation only
+        when ALL is_probation_gate=true assignments
+        for the user are COMPLIANT.
+    end note
+
+    note right of NON_COMPLIANT
+        Completing late (OVERDUE then COMPLETED)
+        does NOT change this to COMPLIANT.
+        NON_COMPLIANT is permanent for that assignment.
+        A new recertification assignment starts fresh as PENDING.
+    end note
+    </div>
+  </div>
+</div>
+
+<div class="info">
+  <div class="alert-box" style="margin:0 0 0 0">
+    <strong>Critical Rule:</strong> Completing an OVERDUE assignment late sets compliance_state = NON_COMPLIANT permanently. The only way to become COMPLIANT again for that training is through a new assignment (recertification), which starts as PENDING.
+  </div>
+
+  <h3>State Definitions</h3>
+  <table>
+    <tr><th>State</th><th>Definition</th><th>DB Condition</th><th>PES API Returns</th></tr>
+    <tr>
+      <td><span class="badge b-blue">PENDING</span></td>
+      <td>Assignment exists and is active. Employee has not yet completed, and due_date has not passed.</td>
+      <td>assignment_status IN (ASSIGNED, IN_PROGRESS) AND due_date >= today OR due_date IS NULL</td>
+      <td>compliance_state = PENDING</td>
+    </tr>
+    <tr>
+      <td><span class="badge b-green">COMPLIANT</span></td>
+      <td>Assignment completed on time. Or completed with no due date (no deadline = always compliant on completion).</td>
+      <td>assignment_status = COMPLETED AND (completed_at &lt;= due_date OR due_date IS NULL)</td>
+      <td>compliance_state = COMPLIANT</td>
+    </tr>
+    <tr>
+      <td><span class="badge b-red">NON_COMPLIANT</span></td>
+      <td>Assignment overdue (due date passed without completion) OR completed after the due date. Once NON_COMPLIANT, this assignment record cannot become COMPLIANT.</td>
+      <td>assignment_status = OVERDUE, OR (assignment_status = COMPLETED AND completed_at > due_date)</td>
+      <td>compliance_state = NON_COMPLIANT</td>
+    </tr>
+  </table>
+
+  <h3>When Compliance Is Re-Evaluated</h3>
+  <table>
+    <tr><th>Trigger</th><th>Who/What Triggers</th><th>Expected Transition</th></tr>
+    <tr><td>Assignment status changes to OVERDUE</td><td>Daily background job (overdue detection)</td><td>PENDING → NON_COMPLIANT</td></tr>
+    <tr><td>Assignment completed (COMPLETED event)</td><td>System (on last resource completion or session attendance)</td><td>PENDING → COMPLIANT (on time) or PENDING/NON_COMPLIANT → NON_COMPLIANT (late)</td></tr>
+    <tr><td>due_date updated</td><td>Admin or Manager updates due date</td><td>May move NON_COMPLIANT back to PENDING if new due_date is in the future</td></tr>
+    <tr><td>Nightly compliance eval job (03:00)</td><td>APScheduler background job</td><td>Full recalculation for all users. Catches any missed transitions.</td></tr>
+    <tr><td>training_completions.expires_at passed</td><td>Daily background job</td><td>COMPLIANT → creates new recertification assignment → new PENDING row</td></tr>
+  </table>
+
+  <h3>Recertification Cycle</h3>
+  <table>
+    <tr><th>Step</th><th>What Happens</th></tr>
+    <tr><td>1. COMPLIANT reached</td><td>training_completions row created with completed_at and expires_at (= completed_at + validity_period_days)</td></tr>
+    <tr><td>2. Completion expires</td><td>Daily BG job detects training_completions.expires_at &lt; today</td></tr>
+    <tr><td>3. New assignment created</td><td>Assignment Engine creates new assignment (source = RECERTIFICATION or MANDATORY). compliance_state of OLD assignment stays COMPLIANT.</td></tr>
+    <tr><td>4. New PENDING row</td><td>New compliance_status row created for the new assignment with state = PENDING</td></tr>
+    <tr><td>5. Cycle repeats</td><td>Employee must complete the training again. If they do so on time → COMPLIANT again. If not → NON_COMPLIANT.</td></tr>
+  </table>
+  <p style="font-size:12px;color:var(--muted);margin-top:8px">Note: The OLD compliance_status row (COMPLIANT) is retained. Only the NEW recertification assignment creates a new PENDING row. Both rows exist simultaneously — reporting distinguishes them by assignment_id.</p>
+
+  <h3>Probation Gate — How Compliance Is Used</h3>
+  <table>
+    <tr><th>Rule</th><th>Detail</th></tr>
+    <tr><td>Gate training assignments have <code>is_probation_gate = true</code></td><td>Set when assignment is created from a mandatory_assignment_rule with is_probation_gate = true and rule_scope = EMPLOYMENT_PHASE</td></tr>
+    <tr><td>HR can confirm probation only when ALL gate assignments are COMPLIANT</td><td>System validates: SELECT count(*) WHERE user_id = ? AND is_probation_gate = true AND compliance_state != COMPLIANT must be 0</td></tr>
+    <tr><td>PENDING gate assignment blocks probation confirmation</td><td>Employee must complete all gate trainings before HR can confirm. "Confirm Probation" button disabled until all COMPLIANT.</td></tr>
+    <tr><td>NON_COMPLIANT gate assignment also blocks confirmation</td><td>A missed deadline does not allow probation bypass. HR must extend the probation deadline for the employee to re-attempt.</td></tr>
+  </table>
+
+  <h3>PES Integration — What Is Exposed</h3>
+  <table>
+    <tr><th>Endpoint</th><th>Returns</th><th>Reads From</th></tr>
+    <tr><td>GET /api/v1/integrations/pes/compliance/{employee_id}</td><td>Latest compliance_state per training for one employee. All 3 states are exposed as-is.</td><td>compliance_status table — SELECT WHERE user_id = employee_id AND assignment_id IN (latest active assignment per training)</td></tr>
+    <tr><td>POST /api/v1/integrations/pes/compliance/bulk</td><td>Same as above for up to 100 employees in one call</td><td>Same table, multiple user_ids</td></tr>
+  </table>
+</div>
+
+<div class="desc" style="margin-left:28px;margin-right:28px">
+  <strong>Source:</strong> docs/requirements/02_features/04_assignment_engine.md + 12_probation_management.md + 05_engineering/features/04_assignment_engine/schema.md &nbsp;|&nbsp;
+  <strong>Type:</strong> State Machine — stateDiagram-v2 &nbsp;|&nbsp;
+  <code>compliance_status</code> is a <strong>derived/calculated table</strong> — it has no UI write operations. All transitions are computed by background jobs or event handlers. One row per (user_id, assignment_id).
+</div>
+
+<div class="controls">
+  <button class="cb" onclick="zi()" title="Zoom in">+</button>
+  <div id="zoom-label">100%</div>
+  <button class="cb" onclick="zo()" title="Zoom out">−</button>
+  <button class="cb" onclick="zr()" title="Reset (fit to screen)" style="font-size:13px">↺</button>
+</div>
+<script>
+  mermaid.initialize({startOnLoad:true,theme:'dark',securityLevel:'loose',
+    stateDiagram:{useMaxWidth:false}});
+
+  let scale=1,origW=null,origH=null;
+  function getSvg(){return document.querySelector('.mermaid svg');}
+
+  function captureOriginal(){
+    const svg=getSvg();if(!svg)return false;
+    const vb=svg.viewBox&&svg.viewBox.baseVal;
+    if(vb&&vb.width>0){origW=vb.width;origH=vb.height;}
+    else{origW=svg.getBoundingClientRect().width||900;origH=svg.getBoundingClientRect().height||500;}
+    svg.setAttribute('width',origW);svg.setAttribute('height',origH);
+    svg.style.maxWidth='none';return true;
+  }
+
+  function fitToScreen(){
+    const svg=getSvg();if(!svg||!origW)return;
+    const headerH=(document.querySelector('header')||{}).offsetHeight||60;
+    const navH=(document.querySelector('nav')||{}).offsetHeight||40;
+    const availW=document.querySelector('.wrap').clientWidth-80;
+    const availH=window.innerHeight-headerH-navH-80;
+    scale=Math.min(availW/origW,availH/origH);
+    scale=Math.max(scale,0.1);
+    svg.setAttribute('width',origW*scale);svg.setAttribute('height',origH*scale);
+    document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%';
+  }
+
+  function applyScale(){
+    const svg=getSvg();if(!svg)return;
+    if(!origW&&!captureOriginal())return;
+    svg.setAttribute('width',origW*scale);svg.setAttribute('height',origH*scale);
+    document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%';
+  }
+
+  function zi(){scale=Math.min(scale*1.25,8);applyScale();}
+  function zo(){scale=Math.max(scale*0.8,0.1);applyScale();}
+  function zr(){fitToScreen();}
+
+  window.addEventListener('load',()=>{setTimeout(()=>{if(captureOriginal())fitToScreen();},600);});
+</script>
+</body>
+</html>

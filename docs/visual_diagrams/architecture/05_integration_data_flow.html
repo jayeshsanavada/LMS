@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Integration Data Flow — AZ-LMS</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{--bg:#0d1117;--card:#161b22;--border:#30363d;--accent:#58a6ff;--text:#c9d1d9;--muted:#8b949e}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif}
+  header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between}
+  .hl .label{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase}
+  .hl .title{font-size:18px;font-weight:600;margin-top:3px}
+  .hl .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  nav{background:var(--card);border-bottom:1px solid var(--border);padding:8px 28px;display:flex;gap:6px;flex-wrap:wrap}
+  nav a{font-size:11px;padding:4px 10px;border-radius:5px;color:var(--muted);text-decoration:none;border:1px solid var(--border);white-space:nowrap;transition:all .15s}
+  nav a:hover{color:var(--text);border-color:var(--muted)}
+  nav a.active{background:var(--accent);color:#0d1117;border-color:var(--accent);font-weight:600}
+  .wrap{padding:24px 28px 20px;overflow:auto}
+  .dcard{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:28px 32px;display:inline-block;min-width:100%}
+  .mermaid svg{display:block;max-width:none !important;height:auto}
+  #diagram .edgeLabel rect{fill:#1e2530 !important;opacity:1 !important}
+  #diagram .edgeLabel text,#diagram .edgeLabel tspan{fill:#c9d1d9 !important}
+  .info{max-width:1100px;margin:0 auto 0;padding:0 28px}
+  .info h3{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:24px 0 10px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:var(--card);color:var(--muted);font-weight:600;padding:8px 12px;text-align:left;border:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  td{padding:8px 12px;border:1px solid var(--border);color:var(--text);vertical-align:top}
+  tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+  .desc{max-width:1100px;margin:24px auto 40px;padding:12px 20px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;color:var(--muted)}
+  .desc strong{color:var(--text)}
+  .controls{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:100}
+  .cb{background:var(--card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:7px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .cb:hover{background:var(--accent);border-color:var(--accent);color:#0d1117}
+  #zoom-label{background:var(--card);border:1px solid var(--border);border-radius:7px;font-size:11px;color:var(--muted);text-align:center;padding:4px 0;min-width:36px}
+</style>
+</head>
+<body>
+<header>
+  <div class="hl">
+    <div class="label">AZ-LMS · Architecture Diagrams</div>
+    <div class="title">Diagram 05 — Integration Data Flow</div>
+    <div class="sub">6 external integrations — direction, mechanism, trigger, and failure behavior</div>
+  </div>
+  <div style="font-size:11px;color:var(--muted)">Last updated: 2026-04-14</div>
+</header>
+<nav>
+  <a href="index.html">Index</a>
+  <a href="01_system_architecture.html">1. System</a>
+  <a href="02_module_dependency.html">2. Modules</a>
+  <a href="03_database_er_diagram.html">3. ER Diagram</a>
+  <a href="04_auth_flow.html">4. Auth Flow</a>
+  <a href="05_integration_data_flow.html" class="active">5. Integrations</a>
+  <a href="06_background_jobs.html">6. Background Jobs</a>
+  <a href="07_apisix_route_map.html">7. APISIX Routes</a>
+  <a href="08_deployment_architecture.html">8. Deployment</a>
+  <a href="09_assignment_state_machine.html">9. Assignment</a>
+  <a href="10_compliance_state_machine.html">10. Compliance</a>
+  <a href="11_session_state_machine.html">11. Session</a>
+</nav>
+<div class="wrap">
+  <div class="dcard">
+    <div class="mermaid" id="diagram">
+flowchart LR
+    classDef lms fill:#1565c0,color:#fff,stroke:#0d47a1,font-weight:bold
+    classDef ext_in fill:#1b5e20,color:#fff,stroke:#003300
+    classDef ext_bidi fill:#4a148c,color:#fff,stroke:#2a004a
+    classDef lms_out fill:#e65100,color:#fff,stroke:#bf360c
+
+    LMS["AZ-LMS\nFastAPI + PostgreSQL\nIntegration Module"]:::lms
+
+    subgraph INBOUND["External Systems that push data to LMS  (Green)"]
+        ZOHO["Zoho HR\nSource of truth: HR data"]:::ext_in
+        EDB["Employee DB\nSource of truth: hierarchy + caps"]:::ext_in
+        PES["PES\nM2M 100 req/min\nClient Credentials"]:::ext_in
+    end
+
+    subgraph BIDIRECTIONAL["Bidirectional  (Purple)"]
+        KC["Keycloak + Azure AD\nIdentity Provider"]:::ext_bidi
+    end
+
+    subgraph OUTBOUND["LMS calls these systems  (Orange)"]
+        TEAMS["Microsoft Teams\nGraph API"]:::lms_out
+        OD["OneDrive\nGraph API"]:::lms_out
+    end
+
+    ZOHO -->|"Scheduled pull daily 02:00\nHR: name, dept, status, joining date"| LMS
+    EDB -->|"Scheduled pull daily 02:30\nhierarchy + capabilities + project allocs"| LMS
+    PES -->|"On-demand REST\nM2M JWT — reads compliance_status"| LMS
+    KC -->|"OIDC per-request JWT read"| LMS
+    LMS -->|"Keycloak Admin API write"| KC
+    LMS -->|"Graph API per session event\ncreate / update / cancel meeting"| TEAMS
+    LMS -->|"Graph API per resource event\nupload / delete / streaming URL"| OD
+    </div>
+  </div>
+</div>
+
+<div class="info">
+  <h3>Integration Summary</h3>
+  <table>
+    <tr><th>#</th><th>System</th><th>Direction</th><th>Mechanism</th><th>Trigger</th><th>LMS Stores</th><th>Failure Behavior</th></tr>
+    <tr>
+      <td>1</td><td><strong>Zoho HR</strong></td><td>Zoho → LMS</td><td>REST API, scheduled pull</td><td>Daily 02:00 + Admin manual trigger</td>
+      <td>users (HR fields)</td><td>3 retries, Admin alert on 3rd failure; last-known data used until next sync</td>
+    </tr>
+    <tr>
+      <td>2</td><td><strong>Employee DB</strong></td><td>Employee DB → LMS</td><td>REST API, scheduled pull</td><td>Daily 02:30 + Admin manual trigger</td>
+      <td>user_hierarchy, user_project_allocations</td><td>Uses last-known data; hierarchy ops deferred until next sync</td>
+    </tr>
+    <tr>
+      <td>3</td><td><strong>Keycloak + Azure AD</strong></td><td>Bidirectional</td><td>OIDC/PKCE (read) + Keycloak Admin API (write)</td><td>Per-request (JWT read) / On Admin action (write)</td>
+      <td>Nothing — tokens in memory only</td><td>Login blocked if Keycloak down; existing sessions last ~30 min (token expiry)</td>
+    </tr>
+    <tr>
+      <td>4</td><td><strong>PES</strong></td><td>PES → LMS</td><td>REST, M2M Client Credentials</td><td>On-demand per PES request</td>
+      <td>Nothing new — reads compliance_status only</td><td>PES calls fail on PES side; no LMS impact; every call audited regardless</td>
+    </tr>
+    <tr>
+      <td>5</td><td><strong>Microsoft Teams</strong></td><td>LMS → Teams</td><td>Graph API, per session event</td><td>Session create / reschedule / cancel / end</td>
+      <td>teams_meeting_id, teams_meeting_link, teams_link_status</td><td>teams_link_status = PENDING_MANUAL; Admin provides manual link; attendance entered manually</td>
+    </tr>
+    <tr>
+      <td>6</td><td><strong>OneDrive</strong></td><td>LMS → OneDrive</td><td>Graph API, per resource event</td><td>Resource upload / delete / access</td>
+      <td>external_file_id, reference_url in resource_files (never stores file bytes)</td><td>File access blocked; training metadata still accessible; 3 auto-retries then Admin alerted</td>
+    </tr>
+  </table>
+
+  <h3>Source of Truth Rules</h3>
+  <table>
+    <tr><th>Field Group</th><th>Source of Truth</th><th>Override?</th></tr>
+    <tr><td>HR fields (name, dept, status, joining_date)</td><td>Zoho HR always wins</td><td>Admin can override individual fields via user_field_overrides</td></tr>
+    <tr><td>Manager / hierarchy / capabilities</td><td>Employee DB always wins</td><td>No — full replace per sync cycle</td></tr>
+    <tr><td>Roles (ADMIN / HR / EMPLOYEE)</td><td>Keycloak realm_access.roles</td><td>Admin assigns via Keycloak Admin API</td></tr>
+    <tr><td>Manager scope (who reports to whom)</td><td>user_hierarchy table (from Employee DB sync)</td><td>No — derived from Employee DB only</td></tr>
+  </table>
+
+  <h3>Failure Isolation Rule</h3>
+  <table>
+    <tr><th>Principle</th><th>Detail</th></tr>
+    <tr><td>No integration failure blocks a core user operation</td><td>All 6 integrations are asynchronous or non-blocking. A Teams API failure does not stop session creation — it sets teams_link_status = PENDING_MANUAL. A Zoho failure does not stop user login — last-known data is used.</td></tr>
+    <tr><td>Retry policy for outbound calls</td><td>3 automatic retries with 5-minute intervals before marking the job as FAILED and alerting Admin. Failed jobs recorded in integration_jobs table.</td></tr>
+    <tr><td>PES is read-only from LMS perspective</td><td>PES reads compliance_status. LMS does not write to PES. Every PES call is audited in audit_logs regardless of result.</td></tr>
+  </table>
+</div>
+
+<div class="desc" style="margin-left:28px;margin-right:28px">
+  <strong>Source:</strong> docs/requirements/04_architecture/04_integrations.md &nbsp;|&nbsp;
+  <strong>Type:</strong> Flowchart LR — LMS as hub, 6 external systems &nbsp;|&nbsp;
+  <strong>Green</strong> = External pushes data to LMS (scheduled pull). <strong>Orange</strong> = LMS initiates to external (push/event). <strong>Purple</strong> = Bidirectional. No integration failure may block a core LMS user operation.
+</div>
+
+<div class="controls">
+  <button class="cb" onclick="zi()" title="Zoom in">+</button>
+  <div id="zoom-label">100%</div>
+  <button class="cb" onclick="zo()" title="Zoom out">−</button>
+  <button class="cb" onclick="zr()" title="Reset (fit to screen)" style="font-size:13px">↺</button>
+</div>
+<script>
+  mermaid.initialize({startOnLoad:true,theme:'dark',securityLevel:'loose',
+    themeVariables:{edgeLabelBackground:'#1e2530'},
+    flowchart:{useMaxWidth:false,htmlLabels:false,curve:'basis',padding:24}});
+
+  let scale=1,origW=null,origH=null;
+  function getSvg(){return document.querySelector('.mermaid svg');}
+
+  function fixEdgeLabels(){
+    const svg=getSvg();if(!svg)return;
+    svg.querySelectorAll('.edgeLabel rect').forEach(r=>{
+      r.setAttribute('fill','#1e2530');r.setAttribute('rx','3');r.setAttribute('ry','3');
+      r.style.fill='#1e2530';r.style.opacity='1';
+      r.style.stroke='#444c56';r.style.strokeWidth='0.5px';
+    });
+    svg.querySelectorAll('.edgeLabel text,.edgeLabel tspan').forEach(t=>{t.style.fill='#c9d1d9';});
+  }
+
+  function moveSubgraphLabelsToBottom(){
+    const svg=getSvg();if(!svg)return;
+    svg.querySelectorAll('g.cluster').forEach(cluster=>{
+      const rectEl=cluster.querySelector('rect');
+      const labelEl=cluster.querySelector('.cluster-label');
+      if(!rectEl||!labelEl)return;
+      let rBox,lBox;
+      try{rBox=rectEl.getBBox();lBox=labelEl.getBBox();}catch(e){return;}
+      const targetY=rBox.y+rBox.height-lBox.height-6;
+      const dy=targetY-lBox.y;
+      const t=labelEl.getAttribute('transform')||'';
+      const m=t.match(/translate\(\s*([-\d.]+)[,\s]+([-\d.]+)\s*\)/);
+      const tx=m?parseFloat(m[1]):0;
+      const ty=m?parseFloat(m[2]):0;
+      labelEl.setAttribute('transform',`translate(${tx},${ty+dy})`);
+    });
+  }
+
+  function captureOriginal(){
+    const svg=getSvg();if(!svg)return false;
+    const vb=svg.viewBox&&svg.viewBox.baseVal;
+    if(vb&&vb.width>0){origW=vb.width;origH=vb.height;}
+    else{origW=svg.getBoundingClientRect().width||1000;origH=svg.getBoundingClientRect().height||700;}
+    svg.setAttribute('width',origW);svg.setAttribute('height',origH);
+    svg.style.maxWidth='none';return true;
+  }
+
+  function fitToScreen(){
+    const svg=getSvg();if(!svg||!origW)return;
+    const headerH=(document.querySelector('header')||{}).offsetHeight||60;
+    const navH=(document.querySelector('nav')||{}).offsetHeight||40;
+    const availW=document.querySelector('.wrap').clientWidth-80;
+    const availH=window.innerHeight-headerH-navH-80;
+    scale=Math.min(availW/origW,availH/origH);
+    scale=Math.max(scale,0.1);
+    svg.setAttribute('width',origW*scale);svg.setAttribute('height',origH*scale);
+    document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%';
+  }
+
+  function applyScale(){
+    const svg=getSvg();if(!svg)return;
+    if(!origW&&!captureOriginal())return;
+    svg.setAttribute('width',origW*scale);svg.setAttribute('height',origH*scale);
+    document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%';
+  }
+
+  function zi(){scale=Math.min(scale*1.25,8);applyScale();}
+  function zo(){scale=Math.max(scale*0.8,0.1);applyScale();}
+  function zr(){fitToScreen();}
+
+  window.addEventListener('load',()=>{
+    setTimeout(()=>{
+      if(captureOriginal()){fixEdgeLabels();moveSubgraphLabelsToBottom();fitToScreen();}
+    },500);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-LMS — Integrations</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .integration-card {
+      background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px 24px;
+      transition:box-shadow .15s;
+    }
+    .integration-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.08); }
+    .integration-logo {
+      width:48px;height:48px;border-radius:10px;display:flex;align-items:center;
+      justify-content:center;font-size:22px;font-weight:700;flex-shrink:0;
+    }
+    .health-indicator {
+      display:inline-flex;align-items:center;gap:6px;
+      font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:20px;
+    }
+    .health-indicator.healthy { background:#f0fdf4;color:#166534; }
+    .health-indicator.degraded { background:#fffbeb;color:#92400e; }
+    .health-indicator.down { background:#fee2e2;color:#991b1b; }
+    .health-indicator .dot {
+      width:7px;height:7px;border-radius:50%;
+    }
+    .health-indicator.healthy .dot { background:#22c55e; }
+    .health-indicator.degraded .dot { background:#f59e0b; }
+    .health-indicator.down .dot { background:var(--danger); }
+    .metric-row { display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:12.5px; }
+    .metric-row:last-child { border-bottom:none; }
+    .metric-label { color:var(--text-muted); }
+    .metric-value { font-weight:600; }
+    .log-entry {
+      padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:4px;
+      display:flex;align-items:flex-start;gap:8px;
+    }
+    .log-entry.ok { background:#f0fdf4;color:#166534; }
+    .log-entry.warn { background:#fffbeb;color:#92400e; }
+    .log-entry.err { background:#fee2e2;color:#991b1b; }
+    .log-time { flex-shrink:0;color:var(--text-muted);font-size:11px;padding-top:1px; }
+  </style>
+</head>
+<body>
+<script>
+  if (!localStorage.getItem('lms_role') || localStorage.getItem('lms_role') !== 'admin') {
+    localStorage.setItem('lms_role', 'admin');
+  }
+</script>
+<div class="lms-wrapper">
+
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title">Integrations</div>
+      <div class="topbar-actions">
+        <div class="role-switcher" id="role-switcher"></div>
+        <button class="btn-outline-lms" style="font-size:12px;padding:6px 12px" onclick="refreshAll()">
+          <i class="bi bi-arrow-clockwise"></i> Refresh All
+        </button>
+        <div style="position:relative">
+          <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+            <i class="bi bi-bell"></i><span class="notif-badge">1</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown-header"><span>Notifications</span><a href="#">Mark all read</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- Summary Bar -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-plug-fill"></i></div>
+            <div class="stat-info"><div class="stat-value">4</div><div class="stat-label">Healthy</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon amber"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="stat-info"><div class="stat-value">1</div><div class="stat-label">Degraded</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon red"><i class="bi bi-x-circle"></i></div>
+            <div class="stat-info"><div class="stat-value">0</div><div class="stat-label">Down</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-clock-history"></i></div>
+            <div class="stat-info"><div class="stat-value">2m ago</div><div class="stat-label">Last Check</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Integration Cards Grid -->
+      <div class="row g-3 mb-4">
+
+        <!-- Keycloak -->
+        <div class="col-12 col-md-6">
+          <div class="integration-card">
+            <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px">
+              <div class="integration-logo" style="background:#e8f4fd;color:#1a56db">KC</div>
+              <div style="flex:1">
+                <div style="font-size:14px;font-weight:700">Keycloak</div>
+                <div style="font-size:12px;color:var(--text-muted)">Identity & Access Management — Auth tokens, SSO</div>
+              </div>
+              <div class="health-indicator healthy"><div class="dot"></div> Healthy</div>
+            </div>
+            <div style="background:#f8fafc;border-radius:8px;padding:4px 12px;margin-bottom:12px">
+              <div class="metric-row"><span class="metric-label">Realm</span><span class="metric-value">az-lms</span></div>
+              <div class="metric-row"><span class="metric-label">Client ID</span><span class="metric-value">lms-api</span></div>
+              <div class="metric-row"><span class="metric-label">Token Endpoint</span><span class="metric-value" style="font-size:11px;font-family:monospace">/realms/az-lms/protocol/openid-connect/token</span></div>
+              <div class="metric-row"><span class="metric-label">Last successful auth</span><span class="metric-value">2 min ago</span></div>
+              <div class="metric-row"><span class="metric-label">Uptime (30d)</span><span class="metric-value" style="color:var(--success)">99.98%</span></div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-ghost-lms" style="font-size:12px;flex:1" onclick="testConnection('Keycloak')"><i class="bi bi-activity"></i> Test</button>
+              <button class="btn-ghost-lms" style="font-size:12px;flex:1" onclick="openConfig('Keycloak')"><i class="bi bi-gear"></i> Configure</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Microsoft Teams -->
+        <div class="col-12 col-md-6">
+          <div class="integration-card">
+            <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px">
+              <div class="integration-logo" style="background:#e8f0fe;color:#5059c9">
+                <i class="bi bi-microsoft-teams" style="font-size:24px"></i>
+              </div>
+              <div style="flex:1">
+                <div style="font-size:14px;font-weight:700">Microsoft Teams</div>
+                <div style="font-size:12px;color:var(--text-muted)">Virtual session delivery, attendance auto-pull</div>
+              </div>
+              <div class="health-indicator healthy"><div class="dot"></div> Healthy</div>
+            </div>
+            <div style="background:#f8fafc;border-radius:8px;padding:4px 12px;margin-bottom:12px">
+              <div class="metric-row"><span class="metric-label">Tenant ID</span><span class="metric-value" style="font-size:11px;font-family:monospace">azilen.onmicrosoft.com</span></div>
+              <div class="metric-row"><span class="metric-label">Graph API version</span><span class="metric-value">v1.0</span></div>
+              <div class="metric-row"><span class="metric-label">Scopes</span><span class="metric-value" style="font-size:11px">OnlineMeetings.ReadWrite, Presence.Read</span></div>
+              <div class="metric-row"><span class="metric-label">Sessions synced (this month)</span><span class="metric-value">12</span></div>
+              <div class="metric-row"><span class="metric-label">Attendance records pulled</span><span class="metric-value">287</span></div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-ghost-lms" style="font-size:12px;flex:1" onclick="testConnection('Microsoft Teams')"><i class="bi bi-activity"></i> Test</button>
+              <button class="btn-ghost-lms" style="font-size:12px;flex:1" onclick="openConfig('Microsoft Teams')"><i class="bi bi-gear"></i> Configure</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- OneDrive -->
+        <div class="col-12 col-md-6">
+          <div class="integration-card">
+            <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px">
+              <div class="integration-logo" style="background:#fff3e0;color:#e65100">
+                <i class="bi bi-cloud-fill" style="font-size:22px"></i>
+              </div>
+              <div style="flex:1">
+                <div style="font-size:14px;font-weight:700">Microsoft OneDrive</div>
+                <div style="font-size:12px;color:var(--text-muted)">File storage for Videos, PDFs, SCORM packages</div>
+              </div>
+              <div class="health-indicator degraded"><div class="dot"></div> Degraded</div>
+            </div>
+            <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#92400e">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <strong>Warning:</strong> Upload latency elevated (avg 4.2s, threshold 2s). Files still accessible. Monitor ongoing.
+            </div>
+            <div style="background:#f8fafc;border-radius:8px;padding:4px 12px;margin-bottom:12px">
+              <div class="metric-row"><span class="metric-label">Drive ID</span><span class="metric-value" style="font-size:11px;font-family:monospace">b!AzilenTraining...</span></div>
+              <div class="metric-row"><span class="metric-label">Storage used</span><span class="metric-value">18.4 GB / 1 TB</span></div>
+              <div class="metric-row"><span class="metric-label">Files managed</span><span class="metric-value">1,204</span></div>
+              <div class="metric-row"><span class="metric-label">Upload latency (avg)</span><span class="metric-value" style="color:var(--warning)">4.2s</span></div>
+              <div class="metric-row"><span class="metric-label">Download latency (avg)</span><span class="metric-value" style="color:var(--success)">0.8s</span></div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-ghost-lms" style="font-size:12px;flex:1" onclick="testConnection('OneDrive')"><i class="bi bi-activity"></i> Test</button>
+              <button class="btn-ghost-lms" style="font-size:12px;flex:1" onclick="openConfig('OneDrive')"><i class="bi bi-gear"></i> Configure</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Employee DB -->
+        <div class="col-12 col-md-6">
+          <div class="integration-card">
+            <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px">
+              <div class="integration-logo" style="background:#fff8e1;color:#e65100">EDB</div>
+              <div style="flex:1">
+                <div style="font-size:14px;font-weight:700">Employee DB</div>
+                <div style="font-size:12px;color:var(--text-muted)">Hierarchy sync — reporting manager, capability, designation, project allocations</div>
+              </div>
+              <div class="health-indicator healthy"><div class="dot"></div> Healthy</div>
+            </div>
+            <div style="background:#f8fafc;border-radius:8px;padding:4px 12px;margin-bottom:12px">
+              <div class="metric-row"><span class="metric-label">Sync mode</span><span class="metric-value">Inbound (Employee DB → LMS)</span></div>
+              <div class="metric-row"><span class="metric-label">Sync frequency</span><span class="metric-value">Daily at 02:30 IST</span></div>
+              <div class="metric-row"><span class="metric-label">Last sync</span><span class="metric-value">Today, 02:31 IST</span></div>
+              <div class="metric-row"><span class="metric-label">Records synced</span><span class="metric-value">312</span></div>
+              <div class="metric-row"><span class="metric-label">Sync errors (last run)</span><span class="metric-value" style="color:var(--success)">0</span></div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-ghost-lms" style="font-size:12px;flex:1" onclick="triggerSync('Employee DB')"><i class="bi bi-arrow-repeat"></i> Sync Now</button>
+              <button class="btn-ghost-lms" style="font-size:12px;flex:1" onclick="openConfig('Employee DB')"><i class="bi bi-gear"></i> Configure</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Zoho HR -->
+        <div class="col-12 col-md-6">
+          <div class="integration-card">
+            <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px">
+              <div class="integration-logo" style="background:#e8f5e9;color:#2e7d32">ZH</div>
+              <div style="flex:1">
+                <div style="font-size:14px;font-weight:700">Zoho HR</div>
+                <div style="font-size:12px;color:var(--text-muted)">User sync — employee records, department, designation, probation phase</div>
+              </div>
+              <div class="health-indicator healthy"><div class="dot"></div> Healthy</div>
+            </div>
+            <div style="background:#f8fafc;border-radius:8px;padding:4px 12px;margin-bottom:12px">
+              <div class="metric-row"><span class="metric-label">Sync mode</span><span class="metric-value">Inbound (Zoho → LMS)</span></div>
+              <div class="metric-row"><span class="metric-label">Sync frequency</span><span class="metric-value">Every 6 hours</span></div>
+              <div class="metric-row"><span class="metric-label">Last sync</span><span class="metric-value">Today, 06:00 IST</span></div>
+              <div class="metric-row"><span class="metric-label">Records synced</span><span class="metric-value">247</span></div>
+              <div class="metric-row"><span class="metric-label">New joiners (probation)</span><span class="metric-value" style="color:#7c3aed;font-weight:600">3 this sync</span></div>
+              <div class="metric-row"><span class="metric-label">Sync errors (last run)</span><span class="metric-value" style="color:var(--success)">0</span></div>
+            </div>
+            <!-- Field mapping summary -->
+            <div style="border:1px solid #e5e7eb;border-radius:8px;margin-bottom:12px;overflow:hidden">
+              <div style="padding:7px 12px;background:#f0fdf4;border-bottom:1px solid #d1fae5;font-size:11.5px;font-weight:600;color:#166534;display:flex;justify-content:space-between;align-items:center">
+                <span><i class="bi bi-arrow-left-right me-1"></i>Field Mapping</span>
+                <a href="#" onclick="openZohoFieldMapping();return false" style="font-size:11px;color:var(--primary)">Edit mapping</a>
+              </div>
+              <div style="padding:6px 12px">
+                <div class="metric-row" style="padding:3px 0"><span class="metric-label" style="font-family:monospace;font-size:11px;color:#7c3aed">employee_status</span><span class="metric-value" style="font-size:11px">→ <code>employment_phase</code> <span style="color:#7c3aed;font-weight:600">(probation gate)</span></span></div>
+                <div class="metric-row" style="padding:3px 0"><span class="metric-label" style="font-family:monospace;font-size:11px">first_name / last_name</span><span class="metric-value" style="font-size:11px">→ <code>full_name</code></span></div>
+                <div class="metric-row" style="padding:3px 0"><span class="metric-label" style="font-family:monospace;font-size:11px">department</span><span class="metric-value" style="font-size:11px">→ <code>department</code></span></div>
+                <div class="metric-row" style="padding:3px 0"><span class="metric-label" style="font-family:monospace;font-size:11px">designation</span><span class="metric-value" style="font-size:11px">→ <code>designation</code></span></div>
+                <div class="metric-row" style="padding:3px 0"><span class="metric-label" style="font-family:monospace;font-size:11px">date_of_joining</span><span class="metric-value" style="font-size:11px">→ <code>joining_date</code></span></div>
+                <div class="metric-row" style="padding:3px 0"><span class="metric-label" style="font-family:monospace;font-size:11px">reporting_manager</span><span class="metric-value" style="font-size:11px">→ <code>manager_id</code> (resolved by email)</span></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-ghost-lms" style="font-size:12px;flex:1" onclick="triggerSync('Zoho HR')"><i class="bi bi-arrow-repeat"></i> Sync Now</button>
+              <button class="btn-ghost-lms" style="font-size:12px;flex:1" onclick="openConfig('Zoho HR')"><i class="bi bi-gear"></i> Configure</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PES -->
+        <div class="col-12 col-md-6">
+          <div class="integration-card">
+            <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px">
+              <div class="integration-logo" style="background:#f3e8ff;color:#7c3aed">PES</div>
+              <div style="flex:1">
+                <div style="font-size:14px;font-weight:700">PES — Performance Evaluation System</div>
+                <div style="font-size:12px;color:var(--text-muted)">Compliance data consumer — pull model (PES reads LMS, no push)</div>
+              </div>
+              <div class="health-indicator healthy"><div class="dot"></div> Healthy</div>
+            </div>
+            <div style="background:#f8fafc;border-radius:8px;padding:4px 12px;margin-bottom:12px">
+              <div class="metric-row"><span class="metric-label">Integration type</span><span class="metric-value">API pull (read-only)</span></div>
+              <div class="metric-row"><span class="metric-label">Endpoint exposed</span><span class="metric-value" style="font-size:11px;font-family:monospace">POST /api/v1/integrations/pes/compliance/bulk</span></div>
+              <div class="metric-row"><span class="metric-label">Auth</span><span class="metric-value">Bearer token (service account)</span></div>
+              <div class="metric-row"><span class="metric-label">Last PES pull</span><span class="metric-value">Today, 08:32 IST</span></div>
+              <div class="metric-row"><span class="metric-label">Records served (today)</span><span class="metric-value">247</span></div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-ghost-lms" style="font-size:12px;flex:1" onclick="testConnection('PES')"><i class="bi bi-activity"></i> Test</button>
+              <button class="btn-ghost-lms" style="font-size:12px;flex:1" onclick="openConfig('PES')"><i class="bi bi-gear"></i> Configure</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /row -->
+
+      <!-- Event Log -->
+      <div class="card">
+        <div class="card-header-lms" style="justify-content:space-between">
+          <div style="font-size:14px;font-weight:600">Integration Event Log</div>
+          <div style="display:flex;gap:8px">
+            <select class="form-control-lms" style="width:140px;font-size:12px;padding:5px 8px">
+              <option>All Systems</option>
+              <option>Keycloak</option>
+              <option>Teams</option>
+              <option>OneDrive</option>
+              <option>Zoho HR</option>
+              <option>PES</option>
+            </select>
+            <select class="form-control-lms" style="width:110px;font-size:12px;padding:5px 8px">
+              <option>All Levels</option>
+              <option>INFO</option>
+              <option>WARN</option>
+              <option>ERROR</option>
+            </select>
+            <button class="btn-ghost-lms" style="font-size:12px;padding:5px 10px" onclick="showToast('Log exported')">
+              <i class="bi bi-download"></i>
+            </button>
+          </div>
+        </div>
+        <div style="padding:16px 20px">
+          <div class="log-entry ok"><i class="bi bi-check-circle-fill"></i><span class="log-time">08:32</span><span><strong>PES</strong> — POST /api/v1/integrations/pes/compliance/bulk — 247 records — 142ms</span></div>
+          <div class="log-entry ok"><i class="bi bi-check-circle-fill"></i><span class="log-time">08:00</span><span><strong>ZohoHR</strong> — User sync completed — 247 records — 0 errors</span></div>
+          <div class="log-entry warn"><i class="bi bi-exclamation-triangle-fill"></i><span class="log-time">07:45</span><span><strong>OneDrive</strong> — Upload latency spike detected — avg 4.2s (threshold 2s) — monitoring</span></div>
+          <div class="log-entry ok"><i class="bi bi-check-circle-fill"></i><span class="log-time">07:30</span><span><strong>Teams</strong> — Attendance pull for SES-010 — 27 records — success</span></div>
+          <div class="log-entry ok"><i class="bi bi-check-circle-fill"></i><span class="log-time">07:15</span><span><strong>Keycloak</strong> — Token validation — 18 active sessions — healthy</span></div>
+          <div class="log-entry ok"><i class="bi bi-check-circle-fill"></i><span class="log-time">06:00</span><span><strong>ZohoHR</strong> — Scheduled sync triggered — 247 records processed</span></div>
+          <div class="log-entry warn"><i class="bi bi-exclamation-triangle-fill"></i><span class="log-time">05:12</span><span><strong>OneDrive</strong> — Retry on file metadata fetch for resource RES-044 — recovered on attempt 2</span></div>
+          <div class="log-entry ok"><i class="bi bi-check-circle-fill"></i><span class="log-time">04:30</span><span><strong>PES</strong> — POST /api/v1/integrations/pes/compliance/bulk — 247 records — 138ms</span></div>
+          <div class="log-entry ok"><i class="bi bi-check-circle-fill"></i><span class="log-time">02:00</span><span><strong>ZohoHR</strong> — Scheduled sync — no new records — skipped write</span></div>
+          <div class="log-entry ok"><i class="bi bi-check-circle-fill"></i><span class="log-time">01:00</span><span><strong>System</strong> — Completion expiry background job — 3 completions checked — 0 expired</span></div>
+          <div style="text-align:center;padding:12px 0;font-size:12px;color:var(--text-muted)">
+            <a href="#" onclick="showToast('Loading more logs...');return false">Load more logs</a>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-body -->
+  </div><!-- /main-content -->
+</div><!-- /lms-wrapper -->
+
+<!-- ===== Configure Modal ===== -->
+<div class="modal-overlay" id="config-modal" onclick="closeConfigModal(event)" style="display:none">
+  <div class="modal-box" style="max-width:520px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="config-modal-title">Configure Integration</div>
+      <button class="modal-close" onclick="closeConfigModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#92400e;margin-bottom:16px">
+        <i class="bi bi-lock"></i> Integration credentials are managed via environment variables and deployment configuration. Changes here update the runtime config only.
+      </div>
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label-lms">Base URL / Endpoint</label>
+          <input type="url" class="form-control-lms" placeholder="https://...">
+        </div>
+        <div class="col-12">
+          <label class="form-label-lms">Client ID / API Key</label>
+          <input type="text" class="form-control-lms" placeholder="••••••••">
+        </div>
+        <div class="col-12">
+          <label class="form-label-lms">Client Secret / Token</label>
+          <input type="password" class="form-control-lms" placeholder="••••••••">
+        </div>
+        <div class="col-12">
+          <label class="form-label-lms">Timeout (ms)</label>
+          <input type="number" class="form-control-lms" value="5000">
+        </div>
+        <div class="col-12">
+          <label class="form-label-lms">Health Check Interval</label>
+          <select class="form-control-lms">
+            <option>Every 1 minute</option>
+            <option selected>Every 5 minutes</option>
+            <option>Every 15 minutes</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline-lms" onclick="closeConfigModal()">Cancel</button>
+      <button class="btn-primary-lms" onclick="saveConfig()"><i class="bi bi-check-lg"></i> Save Configuration</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Zoho Field Mapping Modal ===== -->
+<div class="modal-overlay" id="field-mapping-modal" onclick="closeFieldMapping(event)" style="display:none">
+  <div class="modal-box" style="max-width:620px;max-height:90vh;overflow-y:auto" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">Zoho HR — Field Mapping</div>
+      <button class="modal-close" onclick="closeFieldMapping()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#4c1d95;margin-bottom:16px">
+        <i class="bi bi-hourglass-split me-2"></i>
+        <strong>Probation gate relies on <code>employee_status</code> mapping.</strong> When Zoho sends <code>employee_status = "Probation"</code> or <code>"New Joiner"</code>, the LMS sets <code>employment_phase = PROBATION</code> and auto-triggers gate training assignment.
+      </div>
+
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text-primary)">Employee Phase Mapping</div>
+      <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px">
+        <table style="width:100%;font-size:12.5px;border-collapse:collapse">
+          <thead style="background:#f9fafb">
+            <tr>
+              <th style="padding:8px 12px;font-weight:600;text-align:left;border-bottom:1px solid var(--border)">Zoho <code>employee_status</code> value</th>
+              <th style="padding:8px 12px;font-weight:600;text-align:left;border-bottom:1px solid var(--border)">LMS <code>employment_phase</code></th>
+              <th style="padding:8px 12px;font-weight:600;text-align:left;border-bottom:1px solid var(--border)">Action triggered</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="background:#f5f3ff">
+              <td style="padding:8px 12px;border-bottom:1px solid var(--border);font-family:monospace;color:#7c3aed">"Probation"</td>
+              <td style="padding:8px 12px;border-bottom:1px solid var(--border)"><span style="background:#ede9fe;color:#5b21b6;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">PROBATION</span></td>
+              <td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:11.5px;color:#7c3aed">Create <code>user_probation</code> record + auto-assign gate trainings</td>
+            </tr>
+            <tr style="background:#f5f3ff">
+              <td style="padding:8px 12px;border-bottom:1px solid var(--border);font-family:monospace;color:#7c3aed">"New Joiner"</td>
+              <td style="padding:8px 12px;border-bottom:1px solid var(--border)"><span style="background:#ede9fe;color:#5b21b6;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">PROBATION</span></td>
+              <td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:11.5px;color:#7c3aed">Create <code>user_probation</code> record + auto-assign gate trainings</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 12px;border-bottom:1px solid var(--border);font-family:monospace">"Active"</td>
+              <td style="padding:8px 12px;border-bottom:1px solid var(--border)"><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">CONFIRMED</span></td>
+              <td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:11.5px;color:var(--text-muted)">Normal user creation — standard training assignment rules apply</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 12px;border-bottom:1px solid var(--border);font-family:monospace">"Intern"</td>
+              <td style="padding:8px 12px;border-bottom:1px solid var(--border)"><span style="background:#fffbeb;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">INTERN</span></td>
+              <td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:11.5px;color:var(--text-muted)">User created — no probation gate triggered</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 12px;font-family:monospace">"Resigned" / "Terminated"</td>
+              <td style="padding:8px 12px"><span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">EXITED</span></td>
+              <td style="padding:8px 12px;font-size:11.5px;color:var(--text-muted)">User deactivated — if in probation, <code>probation_status = TERMINATED</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text-primary)">All Field Mappings</div>
+      <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <thead style="background:#f9fafb">
+            <tr>
+              <th style="padding:7px 12px;font-weight:600;text-align:left;border-bottom:1px solid var(--border)">Zoho Field</th>
+              <th style="padding:7px 12px;font-weight:600;text-align:left;border-bottom:1px solid var(--border)">LMS Field</th>
+              <th style="padding:7px 12px;font-weight:600;text-align:left;border-bottom:1px solid var(--border)">Override allowed?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding:6px 12px;border-bottom:1px solid var(--border);font-family:monospace">employee_id</td><td style="padding:6px 12px;border-bottom:1px solid var(--border);font-family:monospace">employee_id</td><td style="padding:6px 12px;border-bottom:1px solid var(--border)"><span style="color:var(--danger);font-size:11px">No — identity key</span></td></tr>
+            <tr><td style="padding:6px 12px;border-bottom:1px solid var(--border);font-family:monospace">work_email</td><td style="padding:6px 12px;border-bottom:1px solid var(--border);font-family:monospace">email</td><td style="padding:6px 12px;border-bottom:1px solid var(--border)"><span style="color:var(--danger);font-size:11px">No — identity key</span></td></tr>
+            <tr><td style="padding:6px 12px;border-bottom:1px solid var(--border);font-family:monospace">first_name / last_name</td><td style="padding:6px 12px;border-bottom:1px solid var(--border);font-family:monospace">full_name</td><td style="padding:6px 12px;border-bottom:1px solid var(--border)"><span style="color:var(--success);font-size:11px">Yes (Admin)</span></td></tr>
+            <tr><td style="padding:6px 12px;border-bottom:1px solid var(--border);font-family:monospace">department</td><td style="padding:6px 12px;border-bottom:1px solid var(--border);font-family:monospace">department</td><td style="padding:6px 12px;border-bottom:1px solid var(--border)"><span style="color:var(--success);font-size:11px">Yes (Admin)</span></td></tr>
+            <tr><td style="padding:6px 12px;border-bottom:1px solid var(--border);font-family:monospace">designation</td><td style="padding:6px 12px;border-bottom:1px solid var(--border);font-family:monospace">designation</td><td style="padding:6px 12px;border-bottom:1px solid var(--border)"><span style="color:var(--success);font-size:11px">Yes (Admin)</span></td></tr>
+            <tr><td style="padding:6px 12px;border-bottom:1px solid var(--border);font-family:monospace">capability / skill_set</td><td style="padding:6px 12px;border-bottom:1px solid var(--border);font-family:monospace">capability</td><td style="padding:6px 12px;border-bottom:1px solid var(--border)"><span style="color:var(--success);font-size:11px">Yes (Admin)</span></td></tr>
+            <tr><td style="padding:6px 12px;border-bottom:1px solid var(--border);font-family:monospace;color:#7c3aed;font-weight:600">employee_status</td><td style="padding:6px 12px;border-bottom:1px solid var(--border);font-family:monospace;color:#7c3aed;font-weight:600">employment_phase</td><td style="padding:6px 12px;border-bottom:1px solid var(--border)"><span style="color:var(--danger);font-size:11px">No — system-managed</span></td></tr>
+            <tr><td style="padding:6px 12px;border-bottom:1px solid var(--border);font-family:monospace">date_of_joining</td><td style="padding:6px 12px;border-bottom:1px solid var(--border);font-family:monospace">joining_date</td><td style="padding:6px 12px;border-bottom:1px solid var(--border)"><span style="color:var(--danger);font-size:11px">No — system-managed</span></td></tr>
+            <tr><td style="padding:6px 12px;font-family:monospace">reporting_manager (email)</td><td style="padding:6px 12px;font-family:monospace">manager_id (resolved by email)</td><td style="padding:6px 12px"><span style="color:var(--success);font-size:11px">Yes (Admin)</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline-lms" onclick="closeFieldMapping()">Close</button>
+      <button class="btn-primary-lms" onclick="showToast('Field mapping saved');closeFieldMapping()"><i class="bi bi-check-lg"></i> Save Mapping</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast-container" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  function testConnection(name) {
+    showToast('Testing ' + name + ' connection...');
+    setTimeout(() => showToast(name + ' — Connection OK'), 1200);
+  }
+
+  function triggerSync(name) {
+    showToast('Syncing ' + name + '...');
+    setTimeout(() => showToast(name + ' sync completed — 0 errors'), 1800);
+  }
+
+  function refreshAll() {
+    showToast('Refreshing all integration health checks...');
+  }
+
+  function openConfig(name) {
+    document.getElementById('config-modal-title').textContent = 'Configure — ' + name;
+    document.getElementById('config-modal').style.cssText = 'display:flex;align-items:center;justify-content:center';
+  }
+
+  function closeConfigModal(e) {
+    if (!e || e.target === document.getElementById('config-modal')) {
+      document.getElementById('config-modal').style.display = 'none';
+    }
+  }
+
+  function saveConfig() {
+    closeConfigModal();
+    showToast('Configuration saved');
+  }
+
+  function openZohoFieldMapping() {
+    document.getElementById('field-mapping-modal').style.cssText = 'display:flex;align-items:center;justify-content:center';
+  }
+
+  function closeFieldMapping(e) {
+    if (!e || e.target === document.getElementById('field-mapping-modal')) {
+      document.getElementById('field-mapping-modal').style.display = 'none';
+    }
+  }
+
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast-lms show';
+    t.innerHTML = '<i class="bi bi-check-circle-fill" style="color:var(--success)"></i> ' + msg;
+    document.getElementById('toast-container').appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+</script>
+</body>
+</html>

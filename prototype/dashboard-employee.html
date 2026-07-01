@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-LMS — Employee Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="lms-wrapper">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <!-- Main -->
+  <div class="main-content">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-title">Dashboard <small>Good morning, Rahul 👋</small></div>
+      <div class="topbar-actions">
+        <div class="role-switcher" id="role-switcher"></div>
+        <div style="position:relative">
+          <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+            <i class="bi bi-bell"></i>
+            <span class="notif-badge">3</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown-header">
+              <span>Notifications</span>
+              <a href="#">Mark all read</a>
+            </div>
+            <div class="notif-item unread">
+              <div class="notif-item-icon" style="background:#fee2e2;color:#991b1b"><i class="bi bi-exclamation-circle"></i></div>
+              <div class="notif-item-text">
+                <div class="notif-item-title">Data Privacy Training is overdue by 3 days</div>
+                <div class="notif-item-time">2 hours ago</div>
+              </div>
+            </div>
+            <div class="notif-item unread">
+              <div class="notif-item-icon" style="background:#d1fae5;color:#065f46"><i class="bi bi-check-circle"></i></div>
+              <div class="notif-item-text">
+                <div class="notif-item-title">Safety Compliance 2026 assigned to you</div>
+                <div class="notif-item-time">Yesterday</div>
+              </div>
+            </div>
+            <div class="notif-item unread">
+              <div class="notif-item-icon" style="background:#dbeafe;color:#1e40af"><i class="bi bi-camera-video"></i></div>
+              <div class="notif-item-text">
+                <div class="notif-item-title">Session reminder: React Advanced — tomorrow at 10:00 AM</div>
+                <div class="notif-item-time">1 day ago</div>
+              </div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-item-icon" style="background:#ede9fe;color:#5b21b6"><i class="bi bi-award"></i></div>
+              <div class="notif-item-text">
+                <div class="notif-item-title">Certificate issued: Leadership Essentials</div>
+                <div class="notif-item-time">3 days ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page Body -->
+    <div class="page-body">
+
+      <!-- Probation Banner — shown when employment_phase = PROBATION -->
+      <div id="probation-banner" style="display:none;background:linear-gradient(135deg,#ede9fe,#f5f3ff);border:1px solid #c4b5fd;border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:flex-start;gap:14px">
+        <div style="width:40px;height:40px;border-radius:10px;background:#7c3aed20;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">
+          <i class="bi bi-hourglass-split" style="color:#7c3aed;font-size:18px"></i>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700;color:#4c1d95;margin-bottom:2px">You are currently in probation</div>
+          <div style="font-size:12.5px;color:#6d28d9;margin-bottom:10px">
+            Probation ends <strong>Apr 10, 2026</strong> · Complete all required gate trainings to become eligible for confirmation.
+          </div>
+          <!-- Gate training progress -->
+          <div style="background:#fff;border:1px solid #ddd6fe;border-radius:8px;padding:10px 14px;margin-bottom:10px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <div style="font-size:12px;font-weight:600;color:#4c1d95">Gate Training Progress</div>
+              <div style="font-size:12px;color:#7c3aed;font-weight:600">1 / 3 complete</div>
+            </div>
+            <div style="height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-bottom:10px">
+              <div style="width:33%;height:100%;background:#7c3aed;border-radius:4px;transition:width 0.4s"></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px">
+                <i class="bi bi-check-circle-fill" style="color:var(--success);font-size:14px;flex-shrink:0"></i>
+                <span>New Employee Orientation</span>
+                <span style="margin-left:auto;font-size:11.5px;color:var(--text-muted)">Completed Mar 5, 2026</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px">
+                <i class="bi bi-hourglass-split" style="color:#f59e0b;font-size:14px;flex-shrink:0"></i>
+                <span>Data Privacy & Security Basics</span>
+                <span style="margin-left:auto;font-size:11.5px;color:#f59e0b;font-weight:500">In Progress · Due Apr 10</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px">
+                <i class="bi bi-circle" style="color:#d1d5db;font-size:14px;flex-shrink:0"></i>
+                <span style="color:var(--text-muted)">Code of Conduct & Ethics</span>
+                <span style="margin-left:auto;font-size:11.5px;color:var(--text-muted)">Not started · Due Apr 10</span>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <a href="my-training.html" class="btn-primary-lms" style="font-size:12px;padding:6px 14px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;background:#7c3aed;border-color:#7c3aed">
+              <i class="bi bi-journal-bookmark"></i> View Gate Trainings
+            </a>
+            <span style="font-size:11.5px;color:#7c3aed"><i class="bi bi-info-circle me-1"></i>Your manager and HR can view your progress. Dismiss is session-only.</span>
+          </div>
+        </div>
+        <button onclick="dismissProbationBanner()" style="background:none;border:none;color:#7c3aed;cursor:pointer;font-size:16px;padding:0;flex-shrink:0" title="Dismiss for this session"><i class="bi bi-x-lg"></i></button>
+      </div>
+
+      <!-- Overdue Alert -->
+      <div class="alert-lms danger mb-3">
+        <i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;margin-top:1px"></i>
+        <div>
+          <strong>1 training is overdue.</strong> Data Privacy Training was due on Apr 1, 2026.
+          <a href="my-training.html" style="color:inherit;font-weight:600;margin-left:6px">View →</a>
+        </div>
+      </div>
+
+      <!-- Stat Row -->
+      <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-journal-bookmark"></i></div>
+            <div class="stat-info">
+              <div class="stat-value">7</div>
+              <div class="stat-label">Assigned Trainings</div>
+              <div class="stat-change neutral">3 in progress</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-info">
+              <div class="stat-value">4</div>
+              <div class="stat-label">Completed</div>
+              <div class="stat-change up"><i class="bi bi-arrow-up"></i> 2 this month</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon red"><i class="bi bi-clock-history"></i></div>
+            <div class="stat-info">
+              <div class="stat-value">1</div>
+              <div class="stat-label">Overdue</div>
+              <div class="stat-change down">Needs attention</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <a href="certificate.html" style="text-decoration:none">
+            <div class="stat-card">
+              <div class="stat-icon purple"><i class="bi bi-award"></i></div>
+              <div class="stat-info">
+                <div class="stat-value">3</div>
+                <div class="stat-label">Certificates</div>
+                <div class="stat-change neutral" style="color:var(--primary);font-weight:500">View certificates →</div>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <div class="row g-3">
+
+        <!-- My Assignments -->
+        <div class="col-lg-7">
+          <div class="card">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-journal-bookmark me-2" style="color:var(--primary)"></i>My Training</h6>
+              <a href="my-training.html" class="btn-outline-lms" style="font-size:12px;padding:5px 10px">View All</a>
+            </div>
+            <table class="lms-table">
+              <thead>
+                <tr>
+                  <th>Training</th>
+                  <th>Progress</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div style="font-weight:600;font-size:13px">Data Privacy Training</div>
+                    <div style="font-size:11px;color:var(--text-muted)">Mandatory · Course</div>
+                  </td>
+                  <td style="min-width:120px">
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div class="progress-lms" style="flex:1"><div class="bar red" style="width:40%"></div></div>
+                      <span style="font-size:12px;color:var(--text-muted)">40%</span>
+                    </div>
+                  </td>
+                  <td><span style="color:var(--danger);font-size:12px;font-weight:600">Apr 1, 2026</span></td>
+                  <td><span class="badge-lms badge-overdue">Overdue</span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="font-weight:600;font-size:13px">Safety Compliance 2026</div>
+                    <div style="font-size:11px;color:var(--text-muted)">Mandatory · Course</div>
+                  </td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div class="progress-lms" style="flex:1"><div class="bar" style="width:70%"></div></div>
+                      <span style="font-size:12px;color:var(--text-muted)">70%</span>
+                    </div>
+                  </td>
+                  <td><span style="font-size:12px">Apr 30, 2026</span></td>
+                  <td><span class="badge-lms badge-inprogress">In Progress</span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="font-weight:600;font-size:13px">React Advanced Patterns</div>
+                    <div style="font-size:11px;color:var(--text-muted)">Optional · Learning Path</div>
+                  </td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div class="progress-lms" style="flex:1"><div class="bar" style="width:20%"></div></div>
+                      <span style="font-size:12px;color:var(--text-muted)">20%</span>
+                    </div>
+                  </td>
+                  <td><span style="font-size:12px">May 15, 2026</span></td>
+                  <td><span class="badge-lms badge-inprogress">In Progress</span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="font-weight:600;font-size:13px">Leadership Essentials</div>
+                    <div style="font-size:11px;color:var(--text-muted)">Optional · Course</div>
+                  </td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div class="progress-lms" style="flex:1"><div class="bar green" style="width:100%"></div></div>
+                      <span style="font-size:12px;color:var(--success)">100%</span>
+                    </div>
+                  </td>
+                  <td><span style="font-size:12px">Mar 20, 2026</span></td>
+                  <td><span class="badge-lms badge-completed">Completed</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-5">
+
+          <!-- Upcoming Sessions -->
+          <div class="card mb-3">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-camera-video me-2" style="color:var(--primary)"></i>Upcoming Sessions</h6>
+              <a href="sessions.html" style="font-size:12px;color:var(--primary);text-decoration:none">View All</a>
+            </div>
+            <div class="card-body-lms" style="padding:0">
+              <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                  <div>
+                    <div style="font-weight:600;font-size:13px">React Advanced Patterns</div>
+                    <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">
+                      <i class="bi bi-calendar3" style="margin-right:4px"></i>Apr 8, 2026 · 10:00–12:00 AM
+                    </div>
+                    <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">
+                      <i class="bi bi-geo-alt" style="margin-right:4px"></i>Training Room A + Teams
+                    </div>
+                  </div>
+                  <span class="badge-lms badge-inprogress" style="margin-top:2px">Tomorrow</span>
+                </div>
+                <div style="margin-top:8px;display:flex;gap:6px">
+                  <a href="#" class="btn-primary-lms" style="font-size:11px;padding:4px 10px">
+                    <i class="bi bi-microsoft-teams"></i> Join Teams
+                  </a>
+                  <a href="session-detail.html" class="btn-ghost-lms" style="font-size:11px;padding:4px 10px">Details</a>
+                </div>
+              </div>
+              <div style="padding:14px 16px">
+                <div style="font-weight:600;font-size:13px">Data Privacy Workshop</div>
+                <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">
+                  <i class="bi bi-calendar3" style="margin-right:4px"></i>Apr 15, 2026 · 2:00–4:00 PM
+                </div>
+                <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">
+                  <i class="bi bi-geo-alt" style="margin-right:4px"></i>Conference Hall B + Teams
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="card">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-activity me-2" style="color:var(--primary)"></i>Recent Activity</h6>
+            </div>
+            <div class="card-body-lms" style="padding:12px 16px">
+              <ul class="activity-list">
+                <li class="activity-item">
+                  <div class="activity-dot green"></div>
+                  <div>
+                    <div class="activity-text">Completed <strong>Leadership Essentials</strong></div>
+                    <div class="activity-time">2 days ago</div>
+                  </div>
+                </li>
+                <li class="activity-item">
+                  <div class="activity-dot purple"></div>
+                  <div>
+                    <div class="activity-text">Certificate issued for <strong>Leadership Essentials</strong></div>
+                    <div class="activity-time">2 days ago</div>
+                  </div>
+                </li>
+                <li class="activity-item">
+                  <div class="activity-dot blue"></div>
+                  <div>
+                    <div class="activity-text">Enrolled in <strong>React Advanced Patterns</strong></div>
+                    <div class="activity-time">5 days ago</div>
+                  </div>
+                </li>
+                <li class="activity-item">
+                  <div class="activity-dot amber"></div>
+                  <div>
+                    <div class="activity-text">Attended session: <strong>Safety Induction</strong></div>
+                    <div class="activity-time">1 week ago</div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Browse Catalog CTA -->
+      <div class="card mt-3" style="background:linear-gradient(135deg,#1a56db,#1447c0);border:none;color:#fff">
+        <div class="card-body-lms" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="font-size:16px;font-weight:700">Explore the Training Catalog</div>
+            <div style="font-size:13px;opacity:0.85;margin-top:4px">Browse 40+ courses, learning paths, and curricula available to you.</div>
+          </div>
+          <a href="catalog.html" style="background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.4);padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:6px;transition:background 0.15s"
+             onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+            <i class="bi bi-grid"></i> Browse Catalog
+          </a>
+        </div>
+      </div>
+
+    </div><!-- /page-body -->
+  </div><!-- /main-content -->
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  function dismissProbationBanner() {
+    sessionStorage.setItem('probation_banner_dismissed', '1');
+    const banner = document.getElementById('probation-banner');
+    if (banner) banner.style.display = 'none';
+  }
+
+  /* Show probation banner when localStorage flag is set (demo toggle) */
+  document.addEventListener('DOMContentLoaded', function () {
+    const phase = localStorage.getItem('lms_emp_phase') || 'CONFIRMED';
+    const dismissed = sessionStorage.getItem('probation_banner_dismissed') === '1';
+    if (phase === 'PROBATION' && !dismissed) {
+      const banner = document.getElementById('probation-banner');
+      if (banner) banner.style.display = 'flex';
+    }
+  });
+</script>
+</body>
+</html>

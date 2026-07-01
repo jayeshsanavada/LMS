@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-LMS — System Settings</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .settings-nav { display:flex;flex-direction:column;gap:2px; }
+    .settings-nav-item {
+      display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;
+      font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;
+      transition:background .15s;text-decoration:none;border:none;background:none;width:100%;text-align:left;
+    }
+    .settings-nav-item:hover { background:#f1f5f9; }
+    .settings-nav-item.active { background:var(--primary-light);color:var(--primary); }
+    .settings-nav-item i { font-size:15px;width:20px;text-align:center; }
+    .settings-section { display:none; }
+    .settings-section.active { display:block; }
+    .setting-row {
+      display:flex;justify-content:space-between;align-items:flex-start;
+      padding:16px 0;border-bottom:1px solid var(--border);gap:24px;
+    }
+    .setting-row:last-child { border-bottom:none; }
+    .setting-info { flex:1; }
+    .setting-label { font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:3px; }
+    .setting-desc { font-size:12px;color:var(--text-muted);line-height:1.5; }
+    .setting-control { flex-shrink:0; }
+    .toggle-switch {
+      position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;
+    }
+    .toggle-switch input { opacity:0;width:0;height:0; }
+    .toggle-slider {
+      position:absolute;inset:0;border-radius:24px;background:#cbd5e1;
+      transition:.2s;
+    }
+    .toggle-slider::before {
+      content:'';position:absolute;height:18px;width:18px;border-radius:50%;
+      left:3px;top:3px;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);
+    }
+    .toggle-switch input:checked + .toggle-slider { background:var(--primary); }
+    .toggle-switch input:checked + .toggle-slider::before { transform:translateX(20px); }
+    .role-badge-item {
+      display:flex;align-items:center;gap:8px;padding:10px 14px;
+      border:1px solid var(--border);border-radius:8px;background:#fff;margin-bottom:8px;
+    }
+  </style>
+</head>
+<body>
+<script>
+  if (!localStorage.getItem('lms_role') || localStorage.getItem('lms_role') !== 'admin') {
+    localStorage.setItem('lms_role', 'admin');
+  }
+</script>
+<div class="lms-wrapper">
+
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title">System Settings</div>
+      <div class="topbar-actions">
+        <div class="role-switcher" id="role-switcher"></div>
+        <div style="position:relative">
+          <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+            <i class="bi bi-bell"></i><span class="notif-badge">1</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown-header"><span>Notifications</span><a href="#">Mark all read</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <div class="row g-4">
+
+        <!-- Left Nav -->
+        <div class="col-12 col-lg-3">
+          <div class="card" style="padding:12px">
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.05em;padding:4px 14px 8px">SETTINGS</div>
+            <div class="settings-nav">
+              <button class="settings-nav-item active" onclick="showSection('general',this)">
+                <i class="bi bi-sliders"></i> General
+              </button>
+              <button class="settings-nav-item" onclick="showSection('roles',this)">
+                <i class="bi bi-shield-check"></i> Roles & Permissions
+              </button>
+              <button class="settings-nav-item" onclick="showSection('notifications',this)">
+                <i class="bi bi-bell"></i> Notifications
+              </button>
+              <button class="settings-nav-item" onclick="showSection('training',this)">
+                <i class="bi bi-mortarboard"></i> Training Defaults
+              </button>
+              <button class="settings-nav-item" onclick="showSection('compliance',this)">
+                <i class="bi bi-shield-lock"></i> Compliance
+              </button>
+              <button class="settings-nav-item" onclick="showSection('mandatory-rules',this)">
+                <i class="bi bi-list-check"></i> Mandatory Rules
+              </button>
+              <button class="settings-nav-item" onclick="showSection('certificates',this)">
+                <i class="bi bi-award"></i> Certificates
+              </button>
+              <button class="settings-nav-item" onclick="showSection('integrations',this)">
+                <i class="bi bi-plug"></i> Integrations
+              </button>
+              <button class="settings-nav-item" onclick="showSection('audit',this)">
+                <i class="bi bi-clock-history"></i> Audit & Retention
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Content -->
+        <div class="col-12 col-lg-9">
+
+          <!-- General -->
+          <div class="card settings-section active" id="section-general">
+            <div style="padding:20px 24px;border-bottom:1px solid var(--border)">
+              <div style="font-size:15px;font-weight:700">General</div>
+              <div style="font-size:12.5px;color:var(--text-muted)">Organisation-wide settings</div>
+            </div>
+            <div style="padding:8px 24px 20px">
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Organisation Name</div>
+                  <div class="setting-desc">Displayed in certificate headers and system emails</div>
+                </div>
+                <div class="setting-control" style="width:240px">
+                  <input type="text" class="form-control-lms" value="Azilen Technologies Pvt. Ltd.">
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Default Language</div>
+                  <div class="setting-desc">System UI language (Phase 1: English only)</div>
+                </div>
+                <div class="setting-control" style="width:160px">
+                  <select class="form-control-lms">
+                    <option selected>English</option>
+                    <option disabled>Hindi (Phase 2)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Timezone</div>
+                  <div class="setting-desc">Used for scheduling sessions and sending notifications</div>
+                </div>
+                <div class="setting-control" style="width:200px">
+                  <select class="form-control-lms">
+                    <option selected>Asia/Kolkata (IST +5:30)</option>
+                    <option>UTC</option>
+                    <option>America/New_York (EST)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Date Format</div>
+                  <div class="setting-desc">How dates are displayed across the system</div>
+                </div>
+                <div class="setting-control" style="width:160px">
+                  <select class="form-control-lms">
+                    <option selected>DD/MM/YYYY</option>
+                    <option>MM/DD/YYYY</option>
+                    <option>YYYY-MM-DD</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Allow Self-Enrollment</div>
+                  <div class="setting-desc">Employees can enroll in elective training from the catalog without manager approval</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch">
+                    <input type="checkbox" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Self-Enrollment Requires Approval</div>
+                  <div class="setting-desc">When enabled, self-enrollment requests go to the employee's manager for approval</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch">
+                    <input type="checkbox">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div style="padding-top:12px;display:flex;justify-content:flex-end">
+                <button class="btn-primary-lms" onclick="showToast('General settings saved')">Save Changes</button>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Roles & Permissions -->
+          <div class="card settings-section" id="section-roles">
+            <div style="padding:20px 24px;border-bottom:1px solid var(--border)">
+              <div style="font-size:15px;font-weight:700">Roles & Permissions</div>
+              <div style="font-size:12.5px;color:var(--text-muted)">System roles are defined by Keycloak. Permissions per role shown below.</div>
+            </div>
+            <div style="padding:20px 24px">
+
+              <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12.5px;color:var(--text-muted)">
+                <i class="bi bi-info-circle" style="color:var(--primary)"></i>
+                Roles are assigned via <strong>Keycloak</strong>. Manager is derived from the <code>user_hierarchy</code> table — not a Keycloak role.
+                Editing role-capability mapping requires a deployment configuration change.
+              </div>
+
+              <div class="role-badge-item">
+                <div class="avatar" style="width:32px;height:32px;font-size:12px;background:#6366f1;color:#fff">E</div>
+                <div style="flex:1">
+                  <div style="font-weight:600;font-size:13px">Employee</div>
+                  <div style="font-size:11.5px;color:var(--text-muted)">Access own training, catalog, certificates, sessions</div>
+                </div>
+                <span class="badge-lms" style="background:#f0fdf4;color:#166534">Active</span>
+              </div>
+
+              <div class="role-badge-item">
+                <div class="avatar" style="width:32px;height:32px;font-size:12px;background:#0891b2;color:#fff">M</div>
+                <div style="flex:1">
+                  <div style="font-weight:600;font-size:13px">Manager <span style="font-size:11px;color:var(--text-muted)">(derived from hierarchy)</span></div>
+                  <div style="font-size:11.5px;color:var(--text-muted)">All Employee + assign to team, view team progress, approve enrollments</div>
+                </div>
+                <span class="badge-lms" style="background:#f0fdf4;color:#166534">Active</span>
+              </div>
+
+              <div class="role-badge-item">
+                <div class="avatar" style="width:32px;height:32px;font-size:12px;background:#0d9488;color:#fff">H</div>
+                <div style="flex:1">
+                  <div style="font-weight:600;font-size:13px">HR</div>
+                  <div style="font-size:11.5px;color:var(--text-muted)">All Employee + user management, compliance, org-wide reports</div>
+                </div>
+                <span class="badge-lms" style="background:#f0fdf4;color:#166534">Active</span>
+              </div>
+
+              <div class="role-badge-item">
+                <div class="avatar" style="width:32px;height:32px;font-size:12px">A</div>
+                <div style="flex:1">
+                  <div style="font-weight:600;font-size:13px">Admin</div>
+                  <div style="font-size:11.5px;color:var(--text-muted)">Full system access: training, sessions, users, settings, integrations, audit</div>
+                </div>
+                <span class="badge-lms" style="background:#f0fdf4;color:#166534">Active</span>
+              </div>
+
+              <div style="margin-top:16px;padding:12px 16px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;font-size:12px;color:#92400e">
+                <i class="bi bi-lock"></i> Role capability changes require a configuration update. Contact your system administrator or refer to the Keycloak admin console.
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="card settings-section" id="section-notifications">
+            <div style="padding:20px 24px;border-bottom:1px solid var(--border)">
+              <div style="font-size:15px;font-weight:700">Notification Settings</div>
+              <div style="font-size:12.5px;color:var(--text-muted)">Control when and how the system sends automated notifications</div>
+            </div>
+            <div style="padding:8px 24px 20px">
+
+              <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.05em;padding:12px 0 8px">ASSIGNMENT NOTIFICATIONS</div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Training Assigned</div>
+                  <div class="setting-desc">Notify employee when a new training is assigned to them</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Due Date Reminder</div>
+                  <div class="setting-desc">Send reminder N days before training due date</div>
+                </div>
+                <div class="setting-control" style="display:flex;align-items:center;gap:8px">
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                  <select class="form-control-lms" style="width:90px;font-size:12px;padding:5px 8px">
+                    <option>3 days</option>
+                    <option selected>7 days</option>
+                    <option>14 days</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Overdue Reminder</div>
+                  <div class="setting-desc">Notify employee and manager when training is overdue</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+
+              <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.05em;padding:16px 0 8px">COMPLETION NOTIFICATIONS</div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Training Completed</div>
+                  <div class="setting-desc">Notify manager when team member completes a training</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Certificate Issued</div>
+                  <div class="setting-desc">Notify employee when a certificate is available for download</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Completion Expiry Warning</div>
+                  <div class="setting-desc">Warn employee N days before their completion expires</div>
+                </div>
+                <div class="setting-control" style="display:flex;align-items:center;gap:8px">
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                  <select class="form-control-lms" style="width:90px;font-size:12px;padding:5px 8px">
+                    <option>7 days</option>
+                    <option selected>14 days</option>
+                    <option>30 days</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.05em;padding:16px 0 8px">SESSION NOTIFICATIONS</div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Session Enrolled</div>
+                  <div class="setting-desc">Notify employee when enrolled in a classroom/virtual session</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Session Reminder</div>
+                  <div class="setting-desc">Send reminder 24 hours before session start</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Session Cancelled</div>
+                  <div class="setting-desc">Notify enrolled employees when a session is cancelled</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+
+              <div style="padding-top:12px;display:flex;justify-content:flex-end">
+                <button class="btn-primary-lms" onclick="showToast('Notification settings saved')">Save Changes</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Training Defaults -->
+          <div class="card settings-section" id="section-training">
+            <div style="padding:20px 24px;border-bottom:1px solid var(--border)">
+              <div style="font-size:15px;font-weight:700">Training Defaults</div>
+              <div style="font-size:12.5px;color:var(--text-muted)">Default values applied when creating new training items</div>
+            </div>
+            <div style="padding:8px 24px 20px">
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Default Assignment Due Days</div>
+                  <div class="setting-desc">Default number of days from assignment date to due date</div>
+                </div>
+                <div class="setting-control" style="width:120px">
+                  <input type="number" class="form-control-lms" value="30" min="1">
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Default Video Completion Threshold</div>
+                  <div class="setting-desc">Minimum watch percentage to mark a video resource as complete (default 90%)</div>
+                </div>
+                <div class="setting-control" style="width:120px">
+                  <input type="number" class="form-control-lms" value="90" min="50" max="100">
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Certificate at Course Level</div>
+                  <div class="setting-desc">Generate certificate when a Course is completed (default: on)</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Certificate at Learning Path Level</div>
+                  <div class="setting-desc">Generate certificate when a Learning Path is completed</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Certificate at Curriculum Level</div>
+                  <div class="setting-desc">Generate certificate when a Curriculum is completed</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Default Sequential Resource Lock</div>
+                  <div class="setting-desc">New resources are locked by default (require previous resources to be completed first)</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+
+              <div style="padding-top:12px;display:flex;justify-content:flex-end">
+                <button class="btn-primary-lms" onclick="showToast('Training defaults saved')">Save Changes</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Compliance -->
+          <div class="card settings-section" id="section-compliance">
+            <div style="padding:20px 24px;border-bottom:1px solid var(--border)">
+              <div style="font-size:15px;font-weight:700">Compliance Settings</div>
+              <div style="font-size:12.5px;color:var(--text-muted)">Rules governing mandatory training and compliance status</div>
+            </div>
+            <div style="padding:8px 24px 20px">
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Compliance Calculation Method</div>
+                  <div class="setting-desc">How employee compliance status is determined</div>
+                </div>
+                <div class="setting-control" style="width:200px">
+                  <select class="form-control-lms">
+                    <option selected>All mandatory training complete</option>
+                    <option>% threshold (configurable)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">PES Data Exposure</div>
+                  <div class="setting-desc">Allow PES (Performance Evaluation System) to read compliance data via API (pull model — LMS does not push)</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+
+              <div style="padding-top:12px;display:flex;justify-content:flex-end">
+                <button class="btn-primary-lms" onclick="showToast('Compliance settings saved')">Save Changes</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mandatory Rules -->
+          <div class="card settings-section" id="section-mandatory-rules">
+            <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div style="font-size:15px;font-weight:700">Mandatory Assignment Rules</div>
+                <div style="font-size:12.5px;color:var(--text-muted)">Read-only audit view — rules are configured on each training</div>
+              </div>
+              <span style="font-size:12px;color:var(--text-muted);background:#f1f5f9;border:1px solid var(--border);border-radius:6px;padding:5px 12px"><i class="bi bi-eye me-1"></i>Read-only</span>
+            </div>
+
+            <!-- Info banner -->
+            <div style="padding:12px 24px;border-bottom:1px solid var(--border)">
+              <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#1e40af;display:flex;gap:10px;align-items:flex-start">
+                <i class="bi bi-info-circle-fill" style="flex-shrink:0;margin-top:1px"></i>
+                <span>Mandatory rules are created and managed on each training — toggle <strong>"Mandatory Training"</strong> in the training wizard, or use the <strong>"Auto-assign to future employees"</strong> option in Assign Training. To modify a rule, open the training directly. Deactivating a rule does <strong>not cancel</strong> in-progress assignments.</span>
+              </div>
+            </div>
+
+            <!-- Rules Table -->
+            <div style="padding:16px 24px">
+
+              <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+                <select class="form-control-lms" style="width:160px;font-size:12.5px;padding:6px 10px" onchange="filterRules()">
+                  <option value="">All Scopes</option>
+                  <option>GLOBAL</option>
+                  <option>DEPARTMENT</option>
+                  <option>DESIGNATION</option>
+                  <option>CAPABILITY</option>
+                  <option>PROJECT</option>
+                  <option>EMPLOYMENT_PHASE</option>
+                </select>
+                <select class="form-control-lms" style="width:140px;font-size:12.5px;padding:6px 10px">
+                  <option value="">All Status</option>
+                  <option>Active</option>
+                  <option>Inactive</option>
+                </select>
+              </div>
+
+              <table class="lms-table" id="rules-table">
+                <thead>
+                  <tr>
+                    <th>Training</th>
+                    <th>Scope</th>
+                    <th>Target</th>
+                    <th>Due (days)</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="rules-tbody">
+
+                  <tr data-rule-id="1" data-status="active">
+                    <td>
+                      <div style="font-weight:600;font-size:13px">Safety Compliance 2026</div>
+                      <div style="font-size:11px;color:var(--text-muted)">Course · TRN-001</div>
+                    </td>
+                    <td><span style="font-size:11.5px;background:#dbeafe;color:#1e40af;border-radius:10px;padding:2px 8px;font-weight:600">GLOBAL</span></td>
+                    <td style="font-size:12.5px;color:var(--text-muted)">All active employees</td>
+                    <td style="font-size:13px;font-weight:600">30</td>
+                    <td style="font-size:13px;color:var(--text-muted)">1</td>
+                    <td><span class="badge-lms badge-healthy" style="font-size:11px">Active</span></td>
+                    <td>
+                      <a href="admin-training.html" style="font-size:12px;color:var(--primary);text-decoration:none"><i class="bi bi-box-arrow-up-right me-1"></i>Open Training</a>
+                    </td>
+                  </tr>
+
+                  <tr data-rule-id="2" data-status="active">
+                    <td>
+                      <div style="font-weight:600;font-size:13px">Data Privacy Awareness</div>
+                      <div style="font-size:11px;color:var(--text-muted)">Learning Path · TRN-008</div>
+                    </td>
+                    <td><span style="font-size:11.5px;background:#dcfce7;color:#166534;border-radius:10px;padding:2px 8px;font-weight:600">DEPARTMENT</span></td>
+                    <td style="font-size:12.5px;color:var(--text-muted)">Engineering</td>
+                    <td style="font-size:13px;font-weight:600">45</td>
+                    <td style="font-size:13px;color:var(--text-muted)">2</td>
+                    <td><span class="badge-lms badge-healthy" style="font-size:11px">Active</span></td>
+                    <td>
+                      <a href="admin-training.html" style="font-size:12px;color:var(--primary);text-decoration:none"><i class="bi bi-box-arrow-up-right me-1"></i>Open Training</a>
+                    </td>
+                  </tr>
+
+                  <tr data-rule-id="3" data-status="active">
+                    <td>
+                      <div style="font-weight:600;font-size:13px">New Employee Onboarding</div>
+                      <div style="font-size:11px;color:var(--text-muted)">Curriculum · TRN-003</div>
+                    </td>
+                    <td><span style="font-size:11.5px;background:#fef3c7;color:#92400e;border-radius:10px;padding:2px 8px;font-weight:600">EMPLOYMENT_PHASE</span></td>
+                    <td style="font-size:12.5px;color:var(--text-muted)">Probation · All designations</td>
+                    <td style="font-size:13px;font-weight:600">60</td>
+                    <td style="font-size:13px;color:var(--text-muted)">1</td>
+                    <td><span class="badge-lms badge-healthy" style="font-size:11px">Active</span></td>
+                    <td>
+                      <a href="admin-training.html" style="font-size:12px;color:var(--primary);text-decoration:none"><i class="bi bi-box-arrow-up-right me-1"></i>Open Training</a>
+                    </td>
+                  </tr>
+
+                  <tr data-rule-id="4" data-status="inactive" style="opacity:0.55">
+                    <td>
+                      <div style="font-weight:600;font-size:13px">Leadership Essentials</div>
+                      <div style="font-size:11px;color:var(--text-muted)">Learning Path · TRN-012</div>
+                    </td>
+                    <td><span style="font-size:11.5px;background:#ede9fe;color:#5b21b6;border-radius:10px;padding:2px 8px;font-weight:600">DESIGNATION</span></td>
+                    <td style="font-size:12.5px;color:var(--text-muted)">Senior Engineer</td>
+                    <td style="font-size:13px;font-weight:600">90</td>
+                    <td style="font-size:13px;color:var(--text-muted)">3</td>
+                    <td><span style="font-size:11px;background:#f1f5f9;color:#64748b;border-radius:10px;padding:2px 8px;font-weight:600">Inactive</span></td>
+                    <td>
+                      <a href="admin-training.html" style="font-size:12px;color:var(--primary);text-decoration:none"><i class="bi bi-box-arrow-up-right me-1"></i>Open Training</a>
+                    </td>
+                  </tr>
+
+                </tbody>
+              </table>
+
+            </div>
+          </div>
+
+          <!-- Certificates -->
+          <div class="card settings-section" id="section-certificates">
+            <div style="padding:20px 24px;border-bottom:1px solid var(--border)">
+              <div style="font-size:15px;font-weight:700">Certificate Settings</div>
+              <div style="font-size:12.5px;color:var(--text-muted)">Configure what appears on generated certificates</div>
+            </div>
+            <div style="padding:8px 24px 20px">
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Organisation Name on Certificate</div>
+                  <div class="setting-desc">Displayed in the certificate header</div>
+                </div>
+                <div class="setting-control" style="width:240px">
+                  <input type="text" class="form-control-lms" value="Azilen Technologies Pvt. Ltd.">
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Signatory Name</div>
+                  <div class="setting-desc">Name printed on the signature line of the certificate</div>
+                </div>
+                <div class="setting-control" style="width:240px">
+                  <input type="text" class="form-control-lms" value="Jayesh Sanavada">
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Signatory Title</div>
+                  <div class="setting-desc">Job title below the signatory name</div>
+                </div>
+                <div class="setting-control" style="width:240px">
+                  <input type="text" class="form-control-lms" value="Head of Learning & Development">
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Certificate Template</div>
+                  <div class="setting-desc">Phase 1 uses the fixed system template. Custom templates available in Phase 2.</div>
+                </div>
+                <div class="setting-control">
+                  <span class="badge-lms badge-pending" style="font-size:12px;padding:5px 10px">System Template (Phase 1)</span>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Show Validity Period on Certificate</div>
+                  <div class="setting-desc">Display the expiry date if the training has a validity period set</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+
+              <div style="padding-top:12px;display:flex;justify-content:flex-end">
+                <button class="btn-primary-lms" onclick="showToast('Certificate settings saved')">Save Changes</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Integrations (pointer) -->
+          <div class="card settings-section" id="section-integrations">
+            <div style="padding:20px 24px;border-bottom:1px solid var(--border)">
+              <div style="font-size:15px;font-weight:700">Integrations</div>
+              <div style="font-size:12.5px;color:var(--text-muted)">Configure external system connections</div>
+            </div>
+            <div style="padding:24px">
+              <div style="text-align:center;padding:32px 0">
+                <div style="font-size:40px;color:var(--primary);margin-bottom:12px"><i class="bi bi-plug"></i></div>
+                <div style="font-size:14px;font-weight:600;margin-bottom:6px">Manage Integrations</div>
+                <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:16px">View health status and configure Zoho HR, Employee DB, Microsoft Teams, OneDrive, and Keycloak connections</div>
+                <a href="admin-integrations.html" class="btn-primary-lms" style="display:inline-flex;gap:6px;text-decoration:none">
+                  <i class="bi bi-plug"></i> Open Integrations
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Audit & Retention -->
+          <div class="card settings-section" id="section-audit">
+            <div style="padding:20px 24px;border-bottom:1px solid var(--border)">
+              <div style="font-size:15px;font-weight:700">Audit & Retention</div>
+              <div style="font-size:12.5px;color:var(--text-muted)">Data retention and audit log configuration</div>
+            </div>
+            <div style="padding:8px 24px 20px">
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Audit Log Retention</div>
+                  <div class="setting-desc">How long audit event records are retained before archival</div>
+                </div>
+                <div class="setting-control" style="width:160px">
+                  <select class="form-control-lms">
+                    <option>6 months</option>
+                    <option selected>1 year</option>
+                    <option>3 years</option>
+                    <option>Indefinitely</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Completion History Retention</div>
+                  <div class="setting-desc">Training completion records — permanent per data policy</div>
+                </div>
+                <div class="setting-control">
+                  <span class="badge-lms" style="background:#f0fdf4;color:#166534;font-size:12px;padding:5px 10px">Permanent (Policy)</span>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Certificate Retention</div>
+                  <div class="setting-desc">Issued certificates are permanently stored and cannot be deleted</div>
+                </div>
+                <div class="setting-control">
+                  <span class="badge-lms" style="background:#f0fdf4;color:#166534;font-size:12px;padding:5px 10px">Permanent (Policy)</span>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Assessment Attempt Retention</div>
+                  <div class="setting-desc">All assessment attempts are permanently recorded and cannot be deleted</div>
+                </div>
+                <div class="setting-control">
+                  <span class="badge-lms" style="background:#f0fdf4;color:#166534;font-size:12px;padding:5px 10px">Permanent (Policy)</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div><!-- /page-body -->
+  </div><!-- /main-content -->
+</div><!-- /lms-wrapper -->
+
+<!-- Toast -->
+<div id="toast-container" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  function showSection(id, btn) {
+    document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
+    document.getElementById('section-' + id).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast-lms show';
+    t.innerHTML = '<i class="bi bi-check-circle-fill" style="color:var(--success)"></i> ' + msg;
+    document.getElementById('toast-container').appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+</script>
+</body>
+</html>

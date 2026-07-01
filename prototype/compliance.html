@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-LMS — Compliance</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .compliance-status-badge {
+      display:inline-flex;align-items:center;gap:5px;
+      font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:20px;
+    }
+    .status-compliant   { background:#f0fdf4;color:#166534; }
+    .status-noncompliant{ background:#fee2e2;color:#991b1b; }
+    .status-expiring    { background:#fffbeb;color:#92400e; }
+    .status-inprogress  { background:#eff6ff;color:#1e40af; }
+    .mandatory-cell {
+      text-align:center;
+    }
+    .mandatory-cell .bi-check-circle-fill { color:var(--success); }
+    .mandatory-cell .bi-x-circle-fill     { color:var(--danger); }
+    .mandatory-cell .bi-clock-fill        { color:var(--warning); }
+    .mandatory-cell .bi-hourglass-split   { color:var(--primary); }
+  </style>
+</head>
+<body>
+<script>
+  const _r = localStorage.getItem('lms_role');
+  if (!_r || (_r !== 'hr' && _r !== 'admin')) { localStorage.setItem('lms_role', 'hr'); }
+</script>
+<div class="lms-wrapper">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title">Compliance</div>
+      <div class="topbar-actions">
+        <div class="role-switcher" id="role-switcher"></div>
+        <button class="btn-outline-lms" style="font-size:12px;padding:6px 12px" onclick="showToast('Exporting compliance report...')">
+          <i class="bi bi-download"></i> Export
+        </button>
+        <div style="position:relative">
+          <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+            <i class="bi bi-bell"></i><span class="notif-badge">2</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown-header"><span>Notifications</span><a href="#">Mark all read</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- KPI Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-shield-check"></i></div>
+            <div class="stat-info"><div class="stat-value">189</div><div class="stat-label">Fully Compliant</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon red"><i class="bi bi-shield-x"></i></div>
+            <div class="stat-info"><div class="stat-value">31</div><div class="stat-label">Non-Compliant</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-info"><div class="stat-value">38</div><div class="stat-label">In Progress</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card" style="cursor:pointer" onclick="switchTab('probation',document.querySelector('.tab-item[data-tab=probation]'))">
+            <div class="stat-icon" style="background:#ede9fe"><i class="bi bi-hourglass-split" style="color:#7c3aed"></i></div>
+            <div class="stat-info"><div class="stat-value">14</div><div class="stat-label">Active Probationers</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card" style="cursor:pointer" onclick="switchTab('probation',document.querySelector('.tab-item[data-tab=probation]'))">
+            <div class="stat-icon red"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="stat-info"><div class="stat-value">2</div><div class="stat-label">Probation Overdue</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card" style="cursor:pointer" onclick="switchTab('probation',document.querySelector('.tab-item[data-tab=probation]'))">
+            <div class="stat-icon amber"><i class="bi bi-calendar-event"></i></div>
+            <div class="stat-info"><div class="stat-value">5</div><div class="stat-label">Probation Ends This Month</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs-lms">
+        <a class="tab-item active" data-tab="matrix" onclick="switchTab('matrix',this)">Compliance Matrix</a>
+        <a class="tab-item" data-tab="noncompliant" onclick="switchTab('noncompliant',this)">Non-Compliant <span class="tab-count">31</span></a>
+        <a class="tab-item" data-tab="bu-summary" onclick="switchTab('bu-summary',this)"><i class="bi bi-building me-1" style="color:#1d4ed8"></i>BU Summary</a>
+        <a class="tab-item" data-tab="probation" onclick="switchTab('probation',this)"><i class="bi bi-hourglass-split me-1" style="color:#7c3aed"></i>Probation Gate <span class="tab-count" style="background:#ede9fe;color:#7c3aed">14</span></a>
+      </div>
+
+      <!-- ===== MATRIX TAB ===== -->
+      <div id="tab-matrix">
+        <div class="card">
+          <div class="card-header-lms">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <div class="search-bar" style="width:200px"><i class="bi bi-search"></i><input type="text" placeholder="Search employee..."></div>
+              <select class="form-control-lms" style="width:150px;padding:6px 10px;font-size:12.5px">
+                <option>All Departments</option>
+                <option>Engineering</option>
+                <option>HR</option>
+                <option>Finance</option>
+                <option>Operations</option>
+                <option>Sales</option>
+                <option>Legal</option>
+              </select>
+              <select class="form-control-lms" style="width:160px;padding:6px 10px;font-size:12.5px" onchange="filterByStatus(this.value)">
+                <option>All Statuses</option>
+                <option>Compliant</option>
+                <option>Non-Compliant</option>
+                <option>In Progress</option>
+              </select>
+              <select class="form-control-lms" style="width:160px;padding:6px 10px;font-size:12.5px">
+                <option value="">All BU Heads</option>
+                <option>Ravi Patel</option>
+                <option>Suresh Kumar</option>
+                <option>Meena Shah</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="display:flex;align-items:center;gap:4px;font-size:11.5px"><i class="bi bi-check-circle-fill" style="color:var(--success)"></i> Complete</div>
+              <div style="display:flex;align-items:center;gap:4px;font-size:11.5px"><i class="bi bi-x-circle-fill" style="color:var(--danger)"></i> Missing</div>
+              <div style="display:flex;align-items:center;gap:4px;font-size:11.5px"><i class="bi bi-hourglass-split" style="color:var(--primary)"></i> In Progress</div>
+            </div>
+          </div>
+
+          <div style="overflow-x:auto">
+            <table class="lms-table" style="min-width:800px">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Department</th>
+                  <th style="text-align:center;font-size:11px">Safety<br>Compliance</th>
+                  <th style="text-align:center;font-size:11px">Data<br>Privacy</th>
+                  <th style="text-align:center;font-size:11px">Code of<br>Conduct</th>
+                  <th style="text-align:center;font-size:11px">Anti-<br>Harassment</th>
+                  <th>Overall Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+
+                <tr>
+                  <td><div style="font-weight:600;font-size:13px">Rahul Sharma</div><div style="font-size:11px;color:var(--text-muted)">EMP-001</div></td>
+                  <td style="font-size:12.5px">Engineering</td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill" title="Completed Apr 6, 2026"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill" title="Completed Mar 1, 2026"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill" title="Completed Feb 15, 2026"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill" title="Completed Jan 20, 2026"></i></td>
+                  <td><span class="compliance-status-badge status-compliant"><i class="bi bi-shield-check"></i> Compliant</span></td>
+                  <td><button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="openUserDetail('Rahul Sharma')">View</button></td>
+                </tr>
+
+                <tr>
+                  <td><div style="font-weight:600;font-size:13px">Anjali Kapoor</div><div style="font-size:11px;color:var(--text-muted)">EMP-002</div></td>
+                  <td style="font-size:12.5px">HR</td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-clock-fill" title="Expires in 12 days"></i></td>
+                  <td><span class="compliance-status-badge status-expiring"><i class="bi bi-clock"></i> Expiring Soon</span></td>
+                  <td><button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="openUserDetail('Anjali Kapoor')">View</button></td>
+                </tr>
+
+                <tr>
+                  <td><div style="font-weight:600;font-size:13px">Vikram Reddy</div><div style="font-size:11px;color:var(--text-muted)">EMP-003</div></td>
+                  <td style="font-size:12.5px">Finance</td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-x-circle-fill" title="Not completed — overdue since Apr 1"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-hourglass-split" title="In progress — 60% complete"></i></td>
+                  <td><span class="compliance-status-badge status-noncompliant"><i class="bi bi-shield-x"></i> Non-Compliant</span></td>
+                  <td><button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="openUserDetail('Vikram Reddy')">View</button></td>
+                </tr>
+
+                <tr>
+                  <td><div style="font-weight:600;font-size:13px">Priya Mehta</div><div style="font-size:11px;color:var(--text-muted)">EMP-004</div></td>
+                  <td style="font-size:12.5px">Engineering</td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill"></i></td>
+                  <td><span class="compliance-status-badge status-compliant"><i class="bi bi-shield-check"></i> Compliant</span></td>
+                  <td><button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="openUserDetail('Priya Mehta')">View</button></td>
+                </tr>
+
+                <tr>
+                  <td><div style="font-weight:600;font-size:13px">Arjun Nair</div><div style="font-size:11px;color:var(--text-muted)">EMP-005</div></td>
+                  <td style="font-size:12.5px">Sales</td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-x-circle-fill" title="Not started — assigned Apr 1"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-x-circle-fill" title="Not started"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-x-circle-fill" title="Not started"></i></td>
+                  <td><span class="compliance-status-badge status-noncompliant"><i class="bi bi-shield-x"></i> Non-Compliant</span></td>
+                  <td><button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="openUserDetail('Arjun Nair')">View</button></td>
+                </tr>
+
+                <tr>
+                  <td><div style="font-weight:600;font-size:13px">Meena Joshi</div><div style="font-size:11px;color:var(--text-muted)">EMP-006</div></td>
+                  <td style="font-size:12.5px">Operations</td>
+                  <td class="mandatory-cell"><i class="bi bi-hourglass-split" title="In progress — 45% complete"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill"></i></td>
+                  <td><span class="compliance-status-badge status-inprogress"><i class="bi bi-hourglass-split"></i> In Progress</span></td>
+                  <td><button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="openUserDetail('Meena Joshi')">View</button></td>
+                </tr>
+
+                <tr>
+                  <td><div style="font-weight:600;font-size:13px">Sana Patel</div><div style="font-size:11px;color:var(--text-muted)">EMP-007</div></td>
+                  <td style="font-size:12.5px">Operations</td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill"></i></td>
+                  <td class="mandatory-cell"><i class="bi bi-check-circle-fill"></i></td>
+                  <td><span class="compliance-status-badge status-compliant"><i class="bi bi-shield-check"></i> Compliant</span></td>
+                  <td><button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="openUserDetail('Sana Patel')">View</button></td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+          <div style="padding:12px 20px;font-size:12.5px;color:var(--text-muted);border-top:1px solid var(--border)">
+            Showing 7 of 247 employees
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== BU SUMMARY TAB ===== -->
+      <div id="tab-bu-summary" style="display:none">
+        <div class="card">
+          <div class="card-header-lms">
+            <div style="font-size:13.5px;font-weight:600"><i class="bi bi-building me-2" style="color:var(--primary)"></i>BU-wise Compliance Summary</div>
+            <button class="btn-ghost-lms" style="font-size:12px;padding:5px 10px" onclick="showToast('Exporting BU summary...')"><i class="bi bi-download"></i> Export</button>
+          </div>
+
+          <!-- BU Cards -->
+          <div style="padding:16px;display:flex;flex-direction:column;gap:16px">
+
+            <!-- BU 1: Ravi Patel -->
+            <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden">
+              <div style="padding:12px 16px;background:#f0f9ff;border-bottom:1px solid #bae6fd;display:flex;align-items:center;justify-content:space-between">
+                <div>
+                  <div style="font-size:14px;font-weight:700">Ravi Patel <span style="font-weight:400;font-size:12px;color:var(--text-muted)">— Digital Products</span></div>
+                  <div style="font-size:12px;color:var(--text-muted);margin-top:2px">89 employees · Engineering, Design</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:20px;font-weight:700;color:var(--success)">76%</div>
+                  <div style="font-size:11px;color:var(--text-muted)">Org compliance</div>
+                </div>
+              </div>
+              <div style="padding:12px 16px">
+                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+                  <div style="text-align:center;padding:8px 14px;background:#f0fdf4;border-radius:8px">
+                    <div style="font-size:16px;font-weight:700;color:var(--success)">51</div>
+                    <div style="font-size:11px;color:var(--text-muted)">Compliant</div>
+                  </div>
+                  <div style="text-align:center;padding:8px 14px;background:#fef9c3;border-radius:8px">
+                    <div style="font-size:16px;font-weight:700;color:var(--warning)">14</div>
+                    <div style="font-size:11px;color:var(--text-muted)">In Progress</div>
+                  </div>
+                  <div style="text-align:center;padding:8px 14px;background:#fee2e2;border-radius:8px">
+                    <div style="font-size:16px;font-weight:700;color:var(--danger)">12</div>
+                    <div style="font-size:11px;color:var(--text-muted)">Overdue</div>
+                  </div>
+                </div>
+                <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px">TOP MISSING TRAININGS</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <span style="font-size:12px;background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:12px">Anti-Harassment Policy <strong>· 8</strong></span>
+                  <span style="font-size:12px;background:#fef9c3;color:#854d0e;padding:2px 8px;border-radius:12px">Data Privacy Training <strong>· 5</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- BU 2: Suresh Kumar -->
+            <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden">
+              <div style="padding:12px 16px;background:#fefce8;border-bottom:1px solid #fde68a;display:flex;align-items:center;justify-content:space-between">
+                <div>
+                  <div style="font-size:14px;font-weight:700">Suresh Kumar <span style="font-weight:400;font-size:12px;color:var(--text-muted)">— Enterprise Solutions</span></div>
+                  <div style="font-size:12px;color:var(--text-muted);margin-top:2px">74 employees · Sales, Operations</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:20px;font-weight:700;color:var(--warning)">61%</div>
+                  <div style="font-size:11px;color:var(--text-muted)">Org compliance</div>
+                </div>
+              </div>
+              <div style="padding:12px 16px">
+                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+                  <div style="text-align:center;padding:8px 14px;background:#f0fdf4;border-radius:8px">
+                    <div style="font-size:16px;font-weight:700;color:var(--success)">39</div>
+                    <div style="font-size:11px;color:var(--text-muted)">Compliant</div>
+                  </div>
+                  <div style="text-align:center;padding:8px 14px;background:#fef9c3;border-radius:8px">
+                    <div style="font-size:16px;font-weight:700;color:var(--warning)">11</div>
+                    <div style="font-size:11px;color:var(--text-muted)">In Progress</div>
+                  </div>
+                  <div style="text-align:center;padding:8px 14px;background:#fee2e2;border-radius:8px">
+                    <div style="font-size:16px;font-weight:700;color:var(--danger)">18</div>
+                    <div style="font-size:11px;color:var(--text-muted)">Overdue</div>
+                  </div>
+                </div>
+                <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px">TOP MISSING TRAININGS</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <span style="font-size:12px;background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:12px">Safety Compliance 2026 <strong>· 11</strong></span>
+                  <span style="font-size:12px;background:#fef9c3;color:#854d0e;padding:2px 8px;border-radius:12px">Code of Conduct <strong>· 7</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- BU 3: Meena Shah -->
+            <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden">
+              <div style="padding:12px 16px;background:#fff1f2;border-bottom:1px solid #fecdd3;display:flex;align-items:center;justify-content:space-between">
+                <div>
+                  <div style="font-size:14px;font-weight:700">Meena Shah <span style="font-weight:400;font-size:12px;color:var(--text-muted)">— Platform Services</span></div>
+                  <div style="font-size:12px;color:var(--text-muted);margin-top:2px">84 employees · HR, Finance</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:20px;font-weight:700;color:var(--danger)">54%</div>
+                  <div style="font-size:11px;color:var(--text-muted)">Org compliance</div>
+                </div>
+              </div>
+              <div style="padding:12px 16px">
+                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+                  <div style="text-align:center;padding:8px 14px;background:#f0fdf4;border-radius:8px">
+                    <div style="font-size:16px;font-weight:700;color:var(--success)">40</div>
+                    <div style="font-size:11px;color:var(--text-muted)">Compliant</div>
+                  </div>
+                  <div style="text-align:center;padding:8px 14px;background:#fef9c3;border-radius:8px">
+                    <div style="font-size:16px;font-weight:700;color:var(--warning)">10</div>
+                    <div style="font-size:11px;color:var(--text-muted)">In Progress</div>
+                  </div>
+                  <div style="text-align:center;padding:8px 14px;background:#fee2e2;border-radius:8px">
+                    <div style="font-size:16px;font-weight:700;color:var(--danger)">22</div>
+                    <div style="font-size:11px;color:var(--text-muted)">Overdue</div>
+                  </div>
+                </div>
+                <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px">TOP MISSING TRAININGS</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <span style="font-size:12px;background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:12px">Anti-Harassment Policy <strong>· 13</strong></span>
+                  <span style="font-size:12px;background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:12px">Data Privacy Training <strong>· 9</strong></span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== NON-COMPLIANT TAB ===== -->
+      <div id="tab-noncompliant" style="display:none">
+        <div class="card">
+          <div class="card-header-lms">
+            <div style="font-size:13.5px;font-weight:600">Non-Compliant Employees</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-outline-lms" style="font-size:12px;padding:5px 12px" onclick="showToast('Sending reminders to 31 employees...')">
+                <i class="bi bi-envelope"></i> Send Reminders
+              </button>
+              <button class="btn-ghost-lms" style="font-size:12px;padding:5px 10px" onclick="showToast('Exporting...')"><i class="bi bi-download"></i></button>
+            </div>
+          </div>
+          <table class="lms-table">
+            <thead>
+              <tr><th>Employee</th><th>Department</th><th>Missing Trainings</th><th>Overdue Since</th><th>Manager</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div style="font-weight:600;font-size:13px">Vikram Reddy</div><div style="font-size:11px;color:var(--text-muted)">EMP-003</div></td>
+                <td style="font-size:12.5px">Finance</td>
+                <td>
+                  <div style="font-size:12px"><span class="badge-lms" style="background:#fee2e2;color:#991b1b;font-size:11px;margin-right:4px">Data Privacy Training</span></div>
+                </td>
+                <td style="font-size:12.5px;color:var(--danger)">Apr 1, 2026</td>
+                <td style="font-size:12.5px">Priya Mehta</td>
+                <td>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="showToast('Reminder sent to Vikram Reddy')">Remind</button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="openUserDetail('Vikram Reddy')">View</button>
+                </td>
+              </tr>
+              <tr>
+                <td><div style="font-weight:600;font-size:13px">Arjun Nair</div><div style="font-size:11px;color:var(--text-muted)">EMP-005</div></td>
+                <td style="font-size:12.5px">Sales</td>
+                <td>
+                  <div style="font-size:12px">
+                    <span class="badge-lms" style="background:#fee2e2;color:#991b1b;font-size:11px;margin-right:4px">Data Privacy Training</span>
+                    <span class="badge-lms" style="background:#fee2e2;color:#991b1b;font-size:11px;margin-right:4px">Code of Conduct</span>
+                    <span class="badge-lms" style="background:#fee2e2;color:#991b1b;font-size:11px">Anti-Harassment Policy</span>
+                  </div>
+                </td>
+                <td style="font-size:12.5px;color:var(--danger)">Mar 15, 2026</td>
+                <td style="font-size:12.5px">Rajesh Nair</td>
+                <td>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="showToast('Reminder sent to Arjun Nair')">Remind</button>
+                  <button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="openUserDetail('Arjun Nair')">View</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== PROBATION TAB ===== -->
+      <div id="tab-probation" style="display:none">
+        <div class="card" style="margin-bottom:14px;background:linear-gradient(135deg,#ede9fe 0%,#f5f3ff 100%);border:1px solid #c4b5fd">
+          <div style="padding:12px 20px;display:flex;align-items:center;gap:10px">
+            <div style="width:32px;height:32px;border-radius:8px;background:#7c3aed20;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <i class="bi bi-hourglass-split" style="color:#7c3aed;font-size:15px"></i>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#4c1d95">Probation Compliance Gate</div>
+              <div style="font-size:12px;color:#6d28d9">New joiners must complete all gate trainings before probation can be confirmed. Click <strong>View Detail</strong> on any row to see per-training status.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header-lms">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <div class="search-bar" style="width:200px"><i class="bi bi-search"></i><input type="text" placeholder="Search employee..." oninput="filterProbTab(this.value)"></div>
+              <select class="form-control-lms" style="width:150px;padding:6px 10px;font-size:12.5px" onchange="filterProbTabStatus(this.value)">
+                <option value="">All Statuses</option>
+                <option value="ON_TRACK">On Track</option>
+                <option value="AT_RISK">At Risk</option>
+                <option value="OVERDUE">Overdue</option>
+                <option value="EXTENDED">Extended</option>
+                <option value="CONFIRMABLE">Confirmable Now</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-outline-lms" style="font-size:12px;padding:5px 12px" onclick="showToast('Sending reminders to overdue probationers...')">
+                <i class="bi bi-envelope"></i> Remind Overdue
+              </button>
+              <button class="btn-ghost-lms" style="font-size:12px;padding:5px 10px" onclick="showToast('Exporting probation report...')"><i class="bi bi-download"></i></button>
+            </div>
+          </div>
+
+          <div style="overflow-x:auto">
+            <table class="lms-table" style="min-width:900px" id="probation-compliance-table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Designation / Dept</th>
+                  <th>Joined On</th>
+                  <th>Probation Ends</th>
+                  <th style="text-align:center">Gate Trainings</th>
+                  <th>Readiness</th>
+                  <th>Probation Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="prob-tab-tbody">
+
+                <tr data-status="AT_RISK">
+                  <td>
+                    <div style="font-weight:600;font-size:13px">Rohan Verma</div>
+                    <div style="font-size:11px;color:var(--text-muted)">EMP-018 · New Joiner</div>
+                  </td>
+                  <td style="font-size:12.5px">
+                    <div>Software Engineer</div>
+                    <div style="color:var(--text-muted);font-size:11.5px">Engineering</div>
+                  </td>
+                  <td style="font-size:12.5px">Jan 10, 2026</td>
+                  <td style="font-size:12.5px">Apr 10, 2026</td>
+                  <td style="text-align:center">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:6px">
+                      <div style="font-size:12.5px;font-weight:600">1 / 3</div>
+                      <div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden">
+                        <div style="width:33%;height:100%;background:#f59e0b;border-radius:3px"></div>
+                      </div>
+                    </div>
+                    <div style="font-size:10.5px;color:var(--text-muted);margin-top:3px">
+                      <span title="Completed" style="color:var(--success)"><i class="bi bi-check-circle-fill"></i></span>
+                      <span title="In Progress" style="color:#f59e0b;margin-left:3px"><i class="bi bi-hourglass-split"></i></span>
+                      <span title="Not Started" style="color:var(--danger);margin-left:3px"><i class="bi bi-x-circle-fill"></i></span>
+                    </div>
+                  </td>
+                  <td><span class="compliance-status-badge" style="background:#fffbeb;color:#92400e"><i class="bi bi-exclamation-circle"></i> At Risk</span></td>
+                  <td><span class="compliance-status-badge" style="background:#ede9fe;color:#5b21b6"><i class="bi bi-hourglass-split"></i> Active</span></td>
+                  <td>
+                    <button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="openProbDetail('Rohan Verma','EMP-018','Software Engineer','Engineering','Jan 10, 2026','Apr 10, 2026','AT_RISK',1,3,false,'ACTIVE')">View Detail</button>
+                  </td>
+                </tr>
+
+                <tr data-status="ON_TRACK">
+                  <td>
+                    <div style="font-weight:600;font-size:13px">Priya Kapoor</div>
+                    <div style="font-size:11px;color:var(--text-muted)">EMP-021 · New Joiner</div>
+                  </td>
+                  <td style="font-size:12.5px">
+                    <div>Business Analyst</div>
+                    <div style="color:var(--text-muted);font-size:11.5px">Operations</div>
+                  </td>
+                  <td style="font-size:12.5px">Feb 5, 2026</td>
+                  <td style="font-size:12.5px">May 5, 2026</td>
+                  <td style="text-align:center">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:6px">
+                      <div style="font-size:12.5px;font-weight:600">2 / 2</div>
+                      <div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden">
+                        <div style="width:100%;height:100%;background:var(--success);border-radius:3px"></div>
+                      </div>
+                    </div>
+                    <div style="font-size:10.5px;color:var(--text-muted);margin-top:3px">
+                      <span title="Completed" style="color:var(--success)"><i class="bi bi-check-circle-fill"></i></span>
+                      <span title="Completed" style="color:var(--success);margin-left:3px"><i class="bi bi-check-circle-fill"></i></span>
+                    </div>
+                  </td>
+                  <td><span class="compliance-status-badge status-compliant"><i class="bi bi-check-circle"></i> Confirmable</span></td>
+                  <td><span class="compliance-status-badge" style="background:#ede9fe;color:#5b21b6"><i class="bi bi-hourglass-split"></i> Active</span></td>
+                  <td>
+                    <button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="openProbDetail('Priya Kapoor','EMP-021','Business Analyst','Operations','Feb 5, 2026','May 5, 2026','CONFIRMABLE',2,2,true,'ACTIVE')">View Detail</button>
+                  </td>
+                </tr>
+
+                <tr data-status="OVERDUE">
+                  <td>
+                    <div style="font-weight:600;font-size:13px">Arjun Sharma</div>
+                    <div style="font-size:11px;color:var(--text-muted)">EMP-009 · New Joiner</div>
+                  </td>
+                  <td style="font-size:12.5px">
+                    <div>QA Engineer</div>
+                    <div style="color:var(--text-muted);font-size:11.5px">Engineering</div>
+                  </td>
+                  <td style="font-size:12.5px">Dec 15, 2025</td>
+                  <td style="font-size:12.5px;color:var(--danger);font-weight:600">Mar 15, 2026 <i class="bi bi-exclamation-triangle-fill" title="Overdue"></i></td>
+                  <td style="text-align:center">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:6px">
+                      <div style="font-size:12.5px;font-weight:600">1 / 4</div>
+                      <div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden">
+                        <div style="width:25%;height:100%;background:var(--danger);border-radius:3px"></div>
+                      </div>
+                    </div>
+                    <div style="font-size:10.5px;color:var(--text-muted);margin-top:3px">
+                      <span title="Completed" style="color:var(--success)"><i class="bi bi-check-circle-fill"></i></span>
+                      <span title="Not Started" style="color:var(--danger);margin-left:3px"><i class="bi bi-x-circle-fill"></i></span>
+                      <span title="Not Started" style="color:var(--danger);margin-left:3px"><i class="bi bi-x-circle-fill"></i></span>
+                      <span title="Not Started" style="color:var(--danger);margin-left:3px"><i class="bi bi-x-circle-fill"></i></span>
+                    </div>
+                  </td>
+                  <td><span class="compliance-status-badge status-noncompliant"><i class="bi bi-alarm"></i> Overdue</span></td>
+                  <td><span class="compliance-status-badge" style="background:#fee2e2;color:#991b1b"><i class="bi bi-exclamation-triangle"></i> Overdue</span></td>
+                  <td>
+                    <button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="openProbDetail('Arjun Sharma','EMP-009','QA Engineer','Engineering','Dec 15, 2025','Mar 15, 2026','OVERDUE',1,4,false,'OVERDUE')">View Detail</button>
+                  </td>
+                </tr>
+
+                <tr data-status="EXTENDED">
+                  <td>
+                    <div style="font-weight:600;font-size:13px">Neha Singh</div>
+                    <div style="font-size:11px;color:var(--text-muted)">EMP-025 · New Joiner</div>
+                  </td>
+                  <td style="font-size:12.5px">
+                    <div>Java Developer</div>
+                    <div style="color:var(--text-muted);font-size:11.5px">Engineering</div>
+                  </td>
+                  <td style="font-size:12.5px">Nov 20, 2025</td>
+                  <td style="font-size:12.5px;color:#f59e0b">Apr 30, 2026 <span style="font-size:10.5px;background:#fffbeb;color:#92400e;padding:1px 5px;border-radius:4px;margin-left:3px">Extended</span></td>
+                  <td style="text-align:center">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:6px">
+                      <div style="font-size:12.5px;font-weight:600">2 / 4</div>
+                      <div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden">
+                        <div style="width:50%;height:100%;background:#f59e0b;border-radius:3px"></div>
+                      </div>
+                    </div>
+                    <div style="font-size:10.5px;color:var(--text-muted);margin-top:3px">
+                      <span title="Completed" style="color:var(--success)"><i class="bi bi-check-circle-fill"></i></span>
+                      <span title="Completed" style="color:var(--success);margin-left:3px"><i class="bi bi-check-circle-fill"></i></span>
+                      <span title="In Progress" style="color:#f59e0b;margin-left:3px"><i class="bi bi-hourglass-split"></i></span>
+                      <span title="Not Started" style="color:var(--danger);margin-left:3px"><i class="bi bi-x-circle-fill"></i></span>
+                    </div>
+                  </td>
+                  <td><span class="compliance-status-badge status-expiring"><i class="bi bi-clock-history"></i> At Risk</span></td>
+                  <td><span class="compliance-status-badge" style="background:#fffbeb;color:#92400e"><i class="bi bi-clock-history"></i> Extended</span></td>
+                  <td>
+                    <button class="btn-ghost-lms" style="font-size:11px;padding:2px 7px" onclick="openProbDetail('Neha Singh','EMP-025','Java Developer','Engineering','Nov 20, 2025','Apr 30, 2026','AT_RISK',2,4,false,'EXTENDED')">View Detail</button>
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+
+          <div style="padding:12px 20px;font-size:12.5px;color:var(--text-muted);border-top:1px solid var(--border)">
+            Showing 4 of 14 active probationers
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Probation Detail Slide-over -->
+<div id="prob-detail-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:1050" onclick="closeProbDetail(event)">
+  <div id="prob-detail-panel" style="position:absolute;right:0;top:0;bottom:0;width:420px;max-width:100vw;background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,0.12);display:flex;flex-direction:column;overflow:hidden" onclick="event.stopPropagation()">
+    <!-- Header -->
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;background:#f9fafb">
+      <div>
+        <div style="font-size:15px;font-weight:700" id="pd-name">—</div>
+        <div style="font-size:12px;color:var(--text-muted)" id="pd-meta">—</div>
+      </div>
+      <button onclick="closeProbDetail()" style="background:none;border:none;font-size:18px;color:var(--text-muted);cursor:pointer;padding:0;line-height:1"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <!-- Summary row -->
+    <div style="padding:12px 20px;background:#f5f3ff;border-bottom:1px solid #ede9fe;display:flex;gap:20px;flex-wrap:wrap">
+      <div><div style="font-size:10.5px;color:#7c3aed;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Joined</div><div style="font-size:13px;font-weight:600" id="pd-joined">—</div></div>
+      <div><div style="font-size:10.5px;color:#7c3aed;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Probation Ends</div><div style="font-size:13px;font-weight:600" id="pd-ends">—</div></div>
+      <div><div style="font-size:10.5px;color:#7c3aed;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Probation Status</div><div id="pd-status-badge" style="margin-top:2px">—</div></div>
+      <div><div style="font-size:10.5px;color:#7c3aed;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Gate Progress</div><div style="font-size:13px;font-weight:600" id="pd-progress">—</div></div>
+    </div>
+    <!-- Gate training checklist -->
+    <div style="flex:1;overflow-y:auto;padding:16px 20px">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:10px">Gate Training Checklist</div>
+      <div id="pd-checklist"></div>
+    </div>
+    <!-- Footer actions -->
+    <div id="pd-footer" style="padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;background:#f9fafb"></div>
+  </div>
+</div>
+
+<!-- Extend Probation Mini-Modal -->
+<div class="modal-overlay" id="extend-modal" onclick="closeExtendModal(event)" style="display:none">
+  <div class="modal-box" style="max-width:420px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="extend-modal-title">Extend Probation</div>
+      <button class="modal-close" onclick="closeExtendModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label class="form-label-lms">New Probation End Date <span style="color:var(--danger)">*</span></label>
+        <input type="date" class="form-control-lms" id="ext-new-date">
+      </div>
+      <div>
+        <label class="form-label-lms">Reason for Extension <span style="color:var(--danger)">*</span></label>
+        <textarea class="form-control-lms" id="ext-reason" rows="3" placeholder="Describe why the probation period needs to be extended..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline-lms" onclick="closeExtendModal()">Cancel</button>
+      <button class="btn-primary-lms" style="background:#f59e0b;border-color:#f59e0b" onclick="confirmExtend()"><i class="bi bi-calendar-plus me-1"></i>Confirm Extension</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  function switchTab(id, el) {
+    ['matrix','noncompliant','bu-summary','probation'].forEach(t => {
+      const el2 = document.getElementById('tab-'+t);
+      if (el2) el2.style.display = 'none';
+    });
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    const target = document.getElementById('tab-'+id);
+    if (target) target.style.display = 'block';
+    if (el) el.classList.add('active');
+  }
+
+  function filterProbTab(q) {
+    const rows = document.querySelectorAll('#prob-tab-tbody tr');
+    rows.forEach(r => {
+      r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+    });
+  }
+
+  function filterProbTabStatus(v) {
+    const rows = document.querySelectorAll('#prob-tab-tbody tr');
+    rows.forEach(r => {
+      r.style.display = (!v || r.dataset.status === v || (v === 'CONFIRMABLE' && r.dataset.status === 'ON_TRACK')) ? '' : 'none';
+    });
+  }
+
+  function filterByStatus(v) {
+    showToast('Filter: ' + (v || 'All'));
+  }
+
+  /* ---- Probation Detail Slide-over ---- */
+  const PROB_GATE_DATA = {
+    'EMP-018': [
+      { title: 'New Employee Orientation',      status: 'DONE',        date: 'Completed Mar 5, 2026' },
+      { title: 'Data Privacy & Security Basics',status: 'IN_PROGRESS', date: 'Due Apr 10, 2026' },
+      { title: 'Code of Conduct & Ethics',      status: 'PENDING',     date: 'Due Apr 10, 2026' }
+    ],
+    'EMP-021': [
+      { title: 'Business Process Fundamentals', status: 'DONE', date: 'Completed Mar 12, 2026' },
+      { title: 'Data Privacy & Security Basics',status: 'DONE', date: 'Completed Mar 28, 2026' }
+    ],
+    'EMP-009': [
+      { title: 'New Employee Orientation',      status: 'DONE',    date: 'Completed Jan 8, 2026' },
+      { title: 'QA Fundamentals',               status: 'PENDING', date: 'Due Mar 15, 2026 (Overdue)' },
+      { title: 'Code of Conduct & Ethics',      status: 'PENDING', date: 'Due Mar 15, 2026 (Overdue)' },
+      { title: 'Data Privacy & Security Basics',status: 'PENDING', date: 'Due Mar 15, 2026 (Overdue)' }
+    ],
+    'EMP-025': [
+      { title: 'New Employee Orientation',      status: 'DONE',        date: 'Completed Dec 25, 2025' },
+      { title: 'Java Backend Standards',        status: 'DONE',        date: 'Completed Jan 18, 2026' },
+      { title: 'Code of Conduct & Ethics',      status: 'IN_PROGRESS', date: 'Due Apr 30, 2026' },
+      { title: 'Data Privacy & Security Basics',status: 'PENDING',     date: 'Due Apr 30, 2026' }
+    ]
+  };
+
+  const STATUS_ICON = {
+    DONE:        '<i class="bi bi-check-circle-fill" style="color:var(--success);font-size:15px;flex-shrink:0"></i>',
+    IN_PROGRESS: '<i class="bi bi-hourglass-split" style="color:#f59e0b;font-size:15px;flex-shrink:0"></i>',
+    PENDING:     '<i class="bi bi-circle" style="color:#d1d5db;font-size:15px;flex-shrink:0"></i>'
+  };
+
+  const PROB_STATUS_BADGE = {
+    ACTIVE:   '<span class="compliance-status-badge" style="background:#ede9fe;color:#5b21b6"><i class="bi bi-hourglass-split"></i> Active</span>',
+    OVERDUE:  '<span class="compliance-status-badge" style="background:#fee2e2;color:#991b1b"><i class="bi bi-exclamation-triangle"></i> Overdue</span>',
+    EXTENDED: '<span class="compliance-status-badge" style="background:#fffbeb;color:#92400e"><i class="bi bi-clock-history"></i> Extended</span>',
+    CONFIRMED:'<span class="compliance-status-badge" style="background:#f0fdf4;color:#166534"><i class="bi bi-shield-check"></i> Confirmed</span>'
+  };
+
+  function openProbDetail(name, empId, desig, dept, joined, ends, readiness, done, total, canConfirm, probStatus) {
+    document.getElementById('pd-name').textContent = name;
+    document.getElementById('pd-meta').textContent = empId + ' · ' + desig + ' · ' + dept;
+    document.getElementById('pd-joined').textContent = joined;
+    document.getElementById('pd-ends').textContent = ends;
+    document.getElementById('pd-progress').textContent = done + ' / ' + total + ' complete';
+    document.getElementById('pd-status-badge').innerHTML = PROB_STATUS_BADGE[probStatus] || probStatus;
+
+    // progress bar colour
+    const pct = total > 0 ? Math.round(done / total * 100) : 0;
+    const barColor = pct === 100 ? 'var(--success)' : (probStatus === 'OVERDUE' ? 'var(--danger)' : '#f59e0b');
+
+    // checklist
+    const items = PROB_GATE_DATA[empId] || [];
+    document.getElementById('pd-checklist').innerHTML = items.map(it => `
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:#fff">
+        ${STATUS_ICON[it.status] || ''}
+        <div>
+          <div style="font-size:13px;font-weight:500;${it.status === 'PENDING' ? 'color:var(--text-muted)' : ''}">${it.title}</div>
+          <div style="font-size:11.5px;color:${it.status === 'DONE' ? 'var(--success)' : it.status === 'IN_PROGRESS' ? '#f59e0b' : 'var(--text-muted)'}">${it.date}</div>
+        </div>
+      </div>`).join('') || '<div style="font-size:12.5px;color:var(--text-muted)">No gate trainings configured for this employee.</div>';
+
+    // footer — view only, no actions
+    document.getElementById('pd-footer').innerHTML =
+      `<button class="btn-ghost-lms" style="font-size:12px" onclick="closeProbDetail()">Close</button>`;
+
+    document.getElementById('prob-detail-overlay').style.display = 'block';
+  }
+
+  function closeProbDetail(e) {
+    if (!e || e.target === document.getElementById('prob-detail-overlay')) {
+      document.getElementById('prob-detail-overlay').style.display = 'none';
+    }
+  }
+
+  function openExtendPanel(name) {
+    closeProbDetail();
+    document.getElementById('extend-modal-title').textContent = 'Extend Probation — ' + name;
+    document.getElementById('extend-modal').style.cssText = 'display:flex;align-items:center;justify-content:center';
+  }
+
+  function closeExtendModal(e) {
+    if (!e || e.target === document.getElementById('extend-modal')) {
+      document.getElementById('extend-modal').style.display = 'none';
+    }
+  }
+
+  function confirmExtend() {
+    const d = document.getElementById('ext-new-date').value;
+    const r = document.getElementById('ext-reason').value.trim();
+    if (!d || !r) { showToast('Please fill in both fields.'); return; }
+    closeExtendModal();
+    showToast('Probation deadline extended to ' + d);
+  }
+
+  function openUserDetail(name) {
+    window.location.href = 'user-detail.html';
+  }
+
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast-lms show';
+    t.innerHTML = '<i class="bi bi-check-circle-fill" style="color:var(--success)"></i> ' + msg;
+    document.getElementById('toast-container').appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+</script>
+</body>
+</html>

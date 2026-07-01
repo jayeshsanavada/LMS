@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module Dependency Map — AZ-LMS</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{--bg:#0d1117;--card:#161b22;--border:#30363d;--accent:#58a6ff;--text:#c9d1d9;--muted:#8b949e}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif}
+  header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between}
+  .hl .label{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase}
+  .hl .title{font-size:18px;font-weight:600;margin-top:3px}
+  .hl .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  nav{background:var(--card);border-bottom:1px solid var(--border);padding:8px 28px;display:flex;gap:6px;flex-wrap:wrap}
+  nav a{font-size:11px;padding:4px 10px;border-radius:5px;color:var(--muted);text-decoration:none;border:1px solid var(--border);white-space:nowrap;transition:all .15s}
+  nav a:hover{color:var(--text);border-color:var(--muted)}
+  nav a.active{background:var(--accent);color:#0d1117;border-color:var(--accent);font-weight:600}
+  .wrap{padding:24px 28px 20px;overflow:auto}
+  .dcard{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:28px 32px;display:inline-block;min-width:100%}
+  .mermaid svg{display:block;max-width:none !important;height:auto}
+  #diagram .edgeLabel rect{fill:#1e2530 !important;opacity:1 !important}
+  #diagram .edgeLabel text,#diagram .edgeLabel tspan{fill:#c9d1d9 !important}
+  .info{max-width:1100px;margin:0 auto 0;padding:0 28px}
+  .info h3{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:24px 0 10px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:var(--card);color:var(--muted);font-weight:600;padding:8px 12px;text-align:left;border:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  td{padding:8px 12px;border:1px solid var(--border);color:var(--text);vertical-align:top}
+  tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+  .desc{max-width:1100px;margin:24px auto 40px;padding:12px 20px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;color:var(--muted)}
+  .desc strong{color:var(--text)}
+  .controls{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:100}
+  .cb{background:var(--card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:7px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .cb:hover{background:var(--accent);border-color:var(--accent);color:#0d1117}
+  #zoom-label{background:var(--card);border:1px solid var(--border);border-radius:7px;font-size:11px;color:var(--muted);text-align:center;padding:4px 0;min-width:36px}
+</style>
+</head>
+<body>
+<header>
+  <div class="hl">
+    <div class="label">AZ-LMS · Architecture Diagrams</div>
+    <div class="title">Diagram 02 — Module Dependency Map</div>
+    <div class="sub">3-layer architecture — 16 modules. Arrow A → B means A calls / uses B.</div>
+  </div>
+  <div style="font-size:11px;color:var(--muted)">Last updated: 2026-04-14</div>
+</header>
+<nav>
+  <a href="index.html">Index</a>
+  <a href="01_system_architecture.html">1. System</a>
+  <a href="02_module_dependency.html" class="active">2. Modules</a>
+  <a href="03_database_er_diagram.html">3. ER Diagram</a>
+  <a href="04_auth_flow.html">4. Auth Flow</a>
+  <a href="05_integration_data_flow.html">5. Integrations</a>
+  <a href="06_background_jobs.html">6. Background Jobs</a>
+  <a href="07_apisix_route_map.html">7. APISIX Routes</a>
+  <a href="08_deployment_architecture.html">8. Deployment</a>
+  <a href="09_assignment_state_machine.html">9. Assignment</a>
+  <a href="10_compliance_state_machine.html">10. Compliance</a>
+  <a href="11_session_state_machine.html">11. Session</a>
+</nav>
+<div class="wrap">
+  <div class="dcard">
+    <div class="mermaid" id="diagram">
+flowchart TB
+    classDef core fill:#1565c0,color:#fff,stroke:#0d47a1
+    classDef support fill:#e65100,color:#fff,stroke:#bf360c
+    classDef platform fill:#1b5e20,color:#fff,stroke:#003300
+    classDef entry fill:#5d4037,color:#fff,stroke:#3e2723
+    classDef deferred fill:#424242,color:#bbb,stroke:#212121,stroke-dasharray:5 3
+
+    APIL["M15: API Layer\nAll external HTTP requests enter here\nRoutes to all modules"]:::entry
+
+    subgraph CORE["CORE MODULES — Primary Business Value"]
+        direction LR
+        UM["M1\nUser Management"]:::core
+        TM["M2\nTraining Management"]:::core
+        AE["M3\nAssignment Engine\n(compliance logic lives here)"]:::core
+        SM["M4\nSessions"]:::core
+    end
+
+    subgraph SUPPORT["SUPPORTING MODULES — Enable Core Flows"]
+        direction LR
+        NOTIF["M5\nNotifications\nalways async"]:::support
+        RPT["M6\nReporting\nread-only"]:::support
+        AUDIT["M7\nAudit\nalways async"]:::support
+        INTEG["M8\nIntegrations\nexternal syncs"]:::support
+    end
+
+    subgraph PLATFORM["PLATFORM MODULES — Reusable Capabilities"]
+        direction LR
+        AUTHN["M10\nAuthentication"]:::platform
+        AUTHZ["M11\nAuthorization"]:::platform
+        SEARCH["M12\nSearch"]:::platform
+        FM["M13\nFile Management"]:::platform
+        ADMCFG["M14\nAdmin Config"]:::platform
+        BGJOBS["M16\nBackground Jobs\nasync task runner"]:::platform
+    end
+
+    MIGR["M9: Migration\nPhase 2 — Deferred"]:::deferred
+
+    %% API Layer routes requests
+    APIL -->|"routes requests"| CORE
+    APIL -->|"routes requests"| SUPPORT
+    APIL -->|"routes requests"| SEARCH
+
+    %% Core uses platform
+    UM --> AUTHN
+    UM --> AUTHZ
+    TM --> FM
+    AE --> AUTHZ
+    AE --> ADMCFG
+
+    %% Core triggers support
+    AE -->|"triggers events"| NOTIF
+    SM -->|"triggers events"| NOTIF
+
+    %% Support modules all dispatch async work via Background Jobs
+    NOTIF -->|"dispatched via"| BGJOBS
+    AUDIT -->|"written via"| BGJOBS
+    INTEG -->|"syncs via"| BGJOBS
+    RPT -->|"exports via"| BGJOBS
+    </div>
+  </div>
+</div>
+
+<div class="info">
+  <h3>How to Read This Diagram</h3>
+  <table>
+    <tr><th>Layer</th><th>Color</th><th>Role</th><th>Modules</th></tr>
+    <tr>
+      <td><strong>API Layer</strong></td>
+      <td style="background:rgba(93,64,55,.4)">Brown</td>
+      <td>Entry point. Every external HTTP request enters through M15 and is routed to the appropriate business module.</td>
+      <td>M15 API Layer</td>
+    </tr>
+    <tr>
+      <td><strong>Core</strong></td>
+      <td style="background:rgba(21,101,192,.3)">Blue</td>
+      <td>Primary business value. These modules contain the features users directly interact with.</td>
+      <td>M1 User Mgmt, M2 Training, M3 Assignment Engine, M4 Sessions</td>
+    </tr>
+    <tr>
+      <td><strong>Support</strong></td>
+      <td style="background:rgba(230,81,0,.3)">Orange</td>
+      <td>Enable core flows. These modules run in the background or provide data views — they don't own the primary business objects.</td>
+      <td>M5 Notifications, M6 Reporting, M7 Audit, M8 Integrations</td>
+    </tr>
+    <tr>
+      <td><strong>Platform</strong></td>
+      <td style="background:rgba(27,94,32,.3)">Green</td>
+      <td>Reusable foundation. Cross-cutting capabilities used by both Core and Support modules.</td>
+      <td>M10 Auth, M11 AuthZ, M12 Search, M13 File Mgmt, M14 Admin Config, M16 BG Jobs</td>
+    </tr>
+    <tr>
+      <td><strong>Deferred</strong></td>
+      <td style="background:rgba(66,66,66,.3)">Grey (dashed)</td>
+      <td>Phase 2 only — not built or tested in Phase 1.</td>
+      <td>M9 Migration</td>
+    </tr>
+  </table>
+
+  <h3>Key Architectural Rules</h3>
+  <table>
+    <tr><th>Rule</th><th>What It Means</th></tr>
+    <tr><td>All async work runs through M16 Background Jobs</td><td>Notifications (M5), Audit writes (M7), Integration syncs (M8), and Report exports (M6) are NEVER done inline in an API response. They are always dispatched to the Worker via M16.</td></tr>
+    <tr><td>Compliance logic lives only in M3 Assignment Engine</td><td>No other module evaluates compliance or applies probation gates. Even reporting reads pre-computed compliance_status — it does not re-evaluate.</td></tr>
+    <tr><td>M6 Reporting is read-only</td><td>Reporting reads data from Core modules' tables. It has zero write operations — no inserts, no updates.</td></tr>
+    <tr><td>No cross-table writes</td><td>Each module owns its DB tables. A module may read another module's tables but may never write to them directly.</td></tr>
+    <tr><td>M9 Migration is Phase 2</td><td>Not built in Phase 1. Depends on M1, M2, M3, M4, M7 — all four core modules plus Audit.</td></tr>
+  </table>
+
+  <h3>Module Quick Reference</h3>
+  <table>
+    <tr><th>Module</th><th>Calls / Uses</th><th>Triggered By</th></tr>
+    <tr><td>M1 User Management</td><td>M10 Authentication, M11 Authorization, M8 Integrations (sync)</td><td>API Layer, M2, M3</td></tr>
+    <tr><td>M2 Training Management</td><td>M13 File Management (OneDrive uploads)</td><td>API Layer, M3, M4</td></tr>
+    <tr><td>M3 Assignment Engine</td><td>M1 User Mgmt, M2 Training, M11 Authorization, M14 Admin Config, M5 Notifications</td><td>API Layer, M16 BG Jobs (nightly compliance eval)</td></tr>
+    <tr><td>M4 Sessions</td><td>M2 Training, M8 Integrations (Teams), M11 Authorization, M5 Notifications</td><td>API Layer</td></tr>
+    <tr><td>M5 Notifications</td><td>M16 Background Jobs (dispatch queue)</td><td>M3 Assignment Engine, M4 Sessions, M16 BG Jobs (reminders)</td></tr>
+    <tr><td>M6 Reporting</td><td>Reads M1, M2, M3, M4 tables. M16 BG Jobs (export generation)</td><td>API Layer</td></tr>
+    <tr><td>M7 Audit</td><td>M16 Background Jobs (async write)</td><td>Every state-changing operation in any module</td></tr>
+    <tr><td>M8 Integrations</td><td>M16 Background Jobs (sync jobs)</td><td>M16 BG Jobs (scheduled pulls from Zoho, Employee DB)</td></tr>
+    <tr><td>M15 API Layer</td><td>All 15 modules — routes every request</td><td>Every incoming HTTP request from Browser or PES</td></tr>
+    <tr><td>M16 Background Jobs</td><td>M5, M6, M7, M8 (drives their async work)</td><td>APScheduler (time-based) + FastAPI background tasks (event-based)</td></tr>
+  </table>
+</div>
+
+<div class="desc" style="margin-left:28px;margin-right:28px">
+  <strong>Source:</strong> docs/requirements/04_architecture/03_modules.md — Sections 3–8 &nbsp;|&nbsp;
+  <strong>Type:</strong> Flowchart TB — 3-layer dependency view &nbsp;|&nbsp;
+  Shows only the <strong>key architectural relationships</strong> between 16 modules. Arrow A → B means A calls or uses B.
+  M9 Migration is Phase 2 (deferred). Full compile-time dependency details are in the source document.
+</div>
+
+<div class="controls">
+  <button class="cb" onclick="zi()" title="Zoom in">+</button>
+  <div id="zoom-label">100%</div>
+  <button class="cb" onclick="zo()" title="Zoom out">−</button>
+  <button class="cb" onclick="zr()" title="Reset (fit to screen)" style="font-size:13px">↺</button>
+</div>
+<script>
+  mermaid.initialize({startOnLoad:true,theme:'dark',securityLevel:'loose',
+    themeVariables:{edgeLabelBackground:'#1e2530'},
+    flowchart:{useMaxWidth:false,htmlLabels:false,curve:'basis',padding:28}});
+
+  let scale=1,origW=null,origH=null;
+  function getSvg(){return document.querySelector('.mermaid svg');}
+
+  function fixEdgeLabels(){
+    const svg=getSvg();if(!svg)return;
+    svg.querySelectorAll('.edgeLabel rect').forEach(r=>{
+      r.setAttribute('fill','#1e2530');r.setAttribute('rx','3');r.setAttribute('ry','3');
+      r.style.fill='#1e2530';r.style.opacity='1';
+      r.style.stroke='#444c56';r.style.strokeWidth='0.5px';
+    });
+    svg.querySelectorAll('.edgeLabel text,.edgeLabel tspan').forEach(t=>{t.style.fill='#c9d1d9';});
+  }
+
+  function moveSubgraphLabelsToBottom(){
+    const svg=getSvg();if(!svg)return;
+    svg.querySelectorAll('g.cluster').forEach(cluster=>{
+      const rectEl=cluster.querySelector('rect');
+      const labelEl=cluster.querySelector('.cluster-label');
+      if(!rectEl||!labelEl)return;
+      let rBox,lBox;
+      try{rBox=rectEl.getBBox();lBox=labelEl.getBBox();}catch(e){return;}
+      const targetY=rBox.y+rBox.height-lBox.height-6;
+      const dy=targetY-lBox.y;
+      const t=labelEl.getAttribute('transform')||'';
+      const m=t.match(/translate\(\s*([-\d.]+)[,\s]+([-\d.]+)\s*\)/);
+      const tx=m?parseFloat(m[1]):0;
+      const ty=m?parseFloat(m[2]):0;
+      labelEl.setAttribute('transform',`translate(${tx},${ty+dy})`);
+    });
+  }
+
+  function captureOriginal(){
+    const svg=getSvg();if(!svg)return false;
+    const vb=svg.viewBox&&svg.viewBox.baseVal;
+    if(vb&&vb.width>0){origW=vb.width;origH=vb.height;}
+    else{origW=svg.getBoundingClientRect().width||1000;origH=svg.getBoundingClientRect().height||700;}
+    svg.setAttribute('width',origW);svg.setAttribute('height',origH);
+    svg.style.maxWidth='none';return true;
+  }
+
+  function fitToScreen(){
+    const svg=getSvg();if(!svg||!origW)return;
+    const headerH=(document.querySelector('header')||{}).offsetHeight||60;
+    const navH=(document.querySelector('nav')||{}).offsetHeight||40;
+    const availW=document.querySelector('.wrap').clientWidth-80;
+    const availH=window.innerHeight-headerH-navH-80;
+    scale=Math.min(availW/origW,availH/origH);
+    scale=Math.max(scale,0.1);
+    svg.setAttribute('width',origW*scale);svg.setAttribute('height',origH*scale);
+    document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%';
+  }
+
+  function applyScale(){
+    const svg=getSvg();if(!svg)return;
+    if(!origW&&!captureOriginal())return;
+    svg.setAttribute('width',origW*scale);svg.setAttribute('height',origH*scale);
+    document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%';
+  }
+
+  function zi(){scale=Math.min(scale*1.25,8);applyScale();}
+  function zo(){scale=Math.max(scale*0.8,0.1);applyScale();}
+  function zr(){fitToScreen();}
+
+  window.addEventListener('load',()=>{
+    setTimeout(()=>{
+      if(captureOriginal()){fixEdgeLabels();moveSubgraphLabelsToBottom();fitToScreen();}
+    },500);
+  });
+</script>
+</body>
+</html>

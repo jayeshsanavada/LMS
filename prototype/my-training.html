@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-LMS — My Training</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="lms-wrapper">
+
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title">My Training</div>
+      <div class="topbar-actions">
+        <div class="role-switcher" id="role-switcher"></div>
+        <a href="catalog.html" class="btn-primary-lms" style="font-size:12px;padding:6px 12px">
+          <i class="bi bi-grid"></i> Browse Catalog
+        </a>
+        <div style="position:relative">
+          <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+            <i class="bi bi-bell"></i><span class="notif-badge">3</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown-header"><span>Notifications</span><a href="#">Mark all read</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- Overdue Alert -->
+      <div class="alert-lms danger mb-3">
+        <i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0"></i>
+        <div><strong>1 training is overdue.</strong> Data Privacy Training was due on Apr 1, 2026. Complete it now to avoid further escalation.</div>
+      </div>
+
+      <!-- Summary Stats -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-journal-bookmark"></i></div>
+            <div class="stat-info"><div class="stat-value">7</div><div class="stat-label">Total Assigned</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon amber"><i class="bi bi-arrow-repeat"></i></div>
+            <div class="stat-info"><div class="stat-value">3</div><div class="stat-label">In Progress</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-info"><div class="stat-value">4</div><div class="stat-label">Completed</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon red"><i class="bi bi-clock-history"></i></div>
+            <div class="stat-info"><div class="stat-value">1</div><div class="stat-label">Overdue</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs-lms">
+        <a class="tab-item active" onclick="switchTab('all',this)">
+          All <span class="tab-count">7</span>
+        </a>
+        <a class="tab-item" onclick="switchTab('inprogress',this)">
+          In Progress <span class="tab-count">3</span>
+        </a>
+        <a class="tab-item" onclick="switchTab('overdue',this)">
+          Overdue <span class="tab-count" style="background:#fee2e2;color:#991b1b">1</span>
+        </a>
+        <a class="tab-item" onclick="switchTab('completed',this)">
+          Completed <span class="tab-count">4</span>
+        </a>
+        <a class="tab-item" onclick="switchTab('pending',this)">
+          Pending Approval <span class="tab-count">1</span>
+        </a>
+        <a class="tab-item" onclick="switchTab('cancelled',this)">
+          Cancelled <span class="tab-count">0</span>
+        </a>
+      </div>
+
+      <!-- Training Table -->
+      <div class="card">
+        <div class="card-header-lms">
+          <h6 id="tab-title">All Trainings</h6>
+          <div style="display:flex;gap:8px">
+            <div class="search-bar" style="width:220px">
+              <i class="bi bi-search"></i>
+              <input type="text" placeholder="Search..." oninput="filterTable(this.value)">
+            </div>
+          </div>
+        </div>
+        <table class="lms-table" id="training-table">
+          <thead>
+            <tr>
+              <th>Training</th>
+              <th>Type</th>
+              <th>Progress</th>
+              <th>Due Date</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="training-tbody">
+            <tr data-status="overdue">
+              <td>
+                <div style="font-weight:600;font-size:13px">Data Privacy Training</div>
+                <div style="font-size:11px;color:var(--text-muted)">TRN-003 · Mandatory</div>
+              </td>
+              <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">Course</span></td>
+              <td style="min-width:140px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div class="progress-lms" style="flex:1"><div class="bar red" style="width:40%"></div></div>
+                  <span style="font-size:12px;color:var(--danger)">40%</span>
+                </div>
+              </td>
+              <td><span style="color:var(--danger);font-size:12px;font-weight:600">Apr 1, 2026 <br><small>3 days overdue</small></span></td>
+              <td><span class="badge-lms badge-overdue">Overdue</span></td>
+              <td><a href="course-detail.html" class="btn-primary-lms" style="font-size:11px;padding:4px 10px;background:var(--danger)">Resume</a></td>
+            </tr>
+            <tr data-status="inprogress">
+              <td>
+                <div style="font-weight:600;font-size:13px">Safety Compliance 2026</div>
+                <div style="font-size:11px;color:var(--text-muted)">TRN-001 · Mandatory</div>
+              </td>
+              <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">Course</span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div class="progress-lms" style="flex:1"><div class="bar" style="width:70%"></div></div>
+                  <span style="font-size:12px;color:var(--text-muted)">70%</span>
+                </div>
+              </td>
+              <td><span style="font-size:12px">Apr 30, 2026</span></td>
+              <td><span class="badge-lms badge-inprogress">In Progress</span></td>
+              <td><a href="course-detail.html" class="btn-outline-lms" style="font-size:11px;padding:4px 10px">Resume</a></td>
+            </tr>
+            <tr data-status="inprogress">
+              <td>
+                <div style="font-weight:600;font-size:13px">React Advanced Patterns</div>
+                <div style="font-size:11px;color:var(--text-muted)">TRN-007 · Optional</div>
+              </td>
+              <td><span class="badge-lms badge-draft" style="background:#dbeafe;color:#1e40af">Learning Path</span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div class="progress-lms" style="flex:1"><div class="bar" style="width:20%"></div></div>
+                  <span style="font-size:12px;color:var(--text-muted)">20%</span>
+                </div>
+              </td>
+              <td><span style="font-size:12px">May 15, 2026</span></td>
+              <td><span class="badge-lms badge-inprogress">In Progress</span></td>
+              <td><a href="course-detail.html" class="btn-outline-lms" style="font-size:11px;padding:4px 10px">Resume</a></td>
+            </tr>
+            <tr data-status="inprogress">
+              <td>
+                <div style="font-weight:600;font-size:13px">Anti-Harassment Policy</div>
+                <div style="font-size:11px;color:var(--text-muted)">TRN-005 · Mandatory</div>
+              </td>
+              <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">Course</span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div class="progress-lms" style="flex:1"><div class="bar" style="width:0%"></div></div>
+                  <span style="font-size:12px;color:var(--text-muted)">0%</span>
+                </div>
+              </td>
+              <td><span style="font-size:12px">May 30, 2026</span></td>
+              <td><span class="badge-lms badge-pending">Not Started</span></td>
+              <td><a href="course-detail.html" class="btn-outline-lms" style="font-size:11px;padding:4px 10px">Start</a></td>
+            </tr>
+            <tr data-status="completed">
+              <td>
+                <div style="font-weight:600;font-size:13px">Leadership Essentials</div>
+                <div style="font-size:11px;color:var(--text-muted)">TRN-006 · Optional</div>
+              </td>
+              <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">Course</span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div class="progress-lms" style="flex:1"><div class="bar green" style="width:100%"></div></div>
+                  <span style="font-size:12px;color:var(--success)">100%</span>
+                </div>
+              </td>
+              <td><span style="font-size:12px">Mar 20, 2026</span></td>
+              <td><span class="badge-lms badge-completed">Completed</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <a href="course-detail.html" class="btn-ghost-lms" style="font-size:11px;padding:4px 8px">View</a>
+                  <a href="certificate.html" class="btn-outline-lms" style="font-size:11px;padding:4px 8px"><i class="bi bi-award"></i></a>
+                </div>
+              </td>
+            </tr>
+            <tr data-status="completed">
+              <td>
+                <div style="font-weight:600;font-size:13px">Code of Conduct</div>
+                <div style="font-size:11px;color:var(--text-muted)">TRN-002 · Mandatory</div>
+              </td>
+              <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">Course</span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div class="progress-lms" style="flex:1"><div class="bar green" style="width:100%"></div></div>
+                  <span style="font-size:12px;color:var(--success)">100%</span>
+                </div>
+              </td>
+              <td><span style="font-size:12px">Feb 28, 2026</span></td>
+              <td><span class="badge-lms badge-completed">Completed</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <a href="course-detail.html" class="btn-ghost-lms" style="font-size:11px;padding:4px 8px">View</a>
+                  <a href="certificate.html" class="btn-outline-lms" style="font-size:11px;padding:4px 8px"><i class="bi bi-award"></i></a>
+                </div>
+              </td>
+            </tr>
+            <tr data-status="pending">
+              <td>
+                <div style="font-weight:600;font-size:13px">Communication Skills</div>
+                <div style="font-size:11px;color:var(--text-muted)">TRN-010 · Optional · Approval Required</div>
+              </td>
+              <td><span class="badge-lms badge-draft" style="background:#f3f4f6;color:#374151">Course</span></td>
+              <td>
+                <div style="font-size:12px;color:var(--text-muted)">Awaiting approval</div>
+              </td>
+              <td><span style="font-size:12px;color:var(--text-muted)">—</span></td>
+              <td><span class="badge-lms badge-pending">Pending Approval</span></td>
+              <td>
+                <button class="btn-ghost-lms" style="font-size:11px;padding:4px 8px;color:var(--danger);border-color:var(--danger)"
+                  onclick="showToast('Approval request withdrawn.')">
+                  Withdraw
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:24px;right:24px;background:#1e2a3b;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:none;z-index:9999;align-items:center;gap:8px">
+  <i class="bi bi-check-circle-fill" style="color:var(--success)"></i>
+  <span id="toast-msg"></span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  const tabLabels = {
+    all: 'All Trainings', inprogress: 'In Progress', overdue: 'Overdue',
+    completed: 'Completed', pending: 'Pending Approval', cancelled: 'Cancelled'
+  };
+
+  function switchTab(status, el) {
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('tab-title').textContent = tabLabels[status];
+    document.querySelectorAll('#training-tbody tr').forEach(row => {
+      row.style.display = (status === 'all' || row.dataset.status === status) ? '' : 'none';
+    });
+  }
+
+  function filterTable(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('#training-tbody tr').forEach(row => {
+      const text = row.querySelector('td:first-child').textContent.toLowerCase();
+      row.style.display = text.includes(q) ? '' : 'none';
+    });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.style.display = 'flex';
+    setTimeout(() => t.style.display = 'none', 3000);
+  }
+</script>
+</body>
+</html>

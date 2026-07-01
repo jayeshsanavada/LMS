@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Database ER Diagram — AZ-LMS</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{--bg:#0d1117;--card:#161b22;--border:#30363d;--accent:#58a6ff;--text:#c9d1d9;--muted:#8b949e}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif}
+  header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between}
+  .hl .label{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase}
+  .hl .title{font-size:18px;font-weight:600;margin-top:3px}
+  .hl .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  nav{background:var(--card);border-bottom:1px solid var(--border);padding:8px 28px;display:flex;gap:6px;flex-wrap:wrap}
+  nav a{font-size:11px;padding:4px 10px;border-radius:5px;color:var(--muted);text-decoration:none;border:1px solid var(--border);white-space:nowrap;transition:all .15s}
+  nav a:hover{color:var(--text);border-color:var(--muted)}
+  nav a.active{background:var(--accent);color:#0d1117;border-color:var(--accent);font-weight:600}
+  .tabs{padding:18px 28px 0;display:flex;gap:2px}
+  .tab{padding:8px 18px;background:var(--card);border:1px solid var(--border);border-radius:6px 6px 0 0;cursor:pointer;font-size:13px;color:var(--muted);border-bottom:none;transition:all .15s}
+  .tab.active{background:#1f2937;color:var(--text);border-color:var(--accent);border-bottom:1px solid #1f2937}
+  .section{display:none;padding:0 28px 40px}
+  .section.active{display:block}
+  .section-header{margin:16px 0;padding:10px 16px;background:#1f2937;border:1px solid var(--accent);border-radius:8px;font-size:13px;color:var(--accent);font-weight:600}
+  .wrap{overflow:auto;padding:0}
+  .dcard{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:28px 32px;display:inline-block;min-width:100%}
+  .mermaid svg{display:block;max-width:none !important;height:auto}
+  .info{margin:16px 0 0}
+  .info h3{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:20px 0 8px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:var(--card);color:var(--muted);font-weight:600;padding:8px 12px;text-align:left;border:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  td{padding:8px 12px;border:1px solid var(--border);color:var(--text);vertical-align:top}
+  tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+  .desc{max-width:none;margin:24px 28px 40px;padding:12px 20px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;color:var(--muted)}
+  .desc strong{color:var(--text)}
+  .controls{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:100}
+  .cb{background:var(--card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:7px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .cb:hover{background:var(--accent);border-color:var(--accent);color:#0d1117}
+  #zoom-label{background:var(--card);border:1px solid var(--border);border-radius:7px;font-size:11px;color:var(--muted);text-align:center;padding:4px 0;min-width:36px}
+</style>
+</head>
+<body>
+<header>
+  <div class="hl">
+    <div class="label">AZ-LMS · Architecture Diagrams</div>
+    <div class="title">Diagram 03 — Database ER Diagram</div>
+    <div class="sub">51 tables across 13 modules — split into 3 focused sections for readability</div>
+  </div>
+  <div style="font-size:11px;color:var(--muted)">Last updated: 2026-04-14</div>
+</header>
+<nav>
+  <a href="index.html">Index</a>
+  <a href="01_system_architecture.html">1. System</a>
+  <a href="02_module_dependency.html">2. Modules</a>
+  <a href="03_database_er_diagram.html" class="active">3. ER Diagram</a>
+  <a href="04_auth_flow.html">4. Auth Flow</a>
+  <a href="05_integration_data_flow.html">5. Integrations</a>
+  <a href="06_background_jobs.html">6. Background Jobs</a>
+  <a href="07_apisix_route_map.html">7. APISIX Routes</a>
+  <a href="08_deployment_architecture.html">8. Deployment</a>
+  <a href="09_assignment_state_machine.html">9. Assignment</a>
+  <a href="10_compliance_state_machine.html">10. Compliance</a>
+  <a href="11_session_state_machine.html">11. Session</a>
+</nav>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab(0)">Section 1 — Core Business</div>
+  <div class="tab" onclick="showTab(1)">Section 2 — Platform &amp; Support</div>
+  <div class="tab" onclick="showTab(2)">Section 3 — Integrations &amp; Assessment</div>
+</div>
+
+<!-- SECTION 1 -->
+<div class="section active" id="sec0">
+  <div class="section-header">Section 1 — Users · Training · Assignments · Sessions</div>
+  <div class="wrap">
+    <div class="dcard">
+      <div class="mermaid">
+erDiagram
+    USERS {
+        uuid id PK
+        varchar employee_id
+        varchar keycloak_user_id FK
+        varchar email
+        varchar full_name
+        varchar department
+        varchar designation
+        varchar employment_status
+        varchar global_role
+        boolean is_active
+    }
+    USER_HIERARCHY {
+        uuid id PK
+        uuid user_id FK
+        uuid manager_user_id FK
+        date effective_from
+        boolean is_current
+    }
+    USER_PROJECT_ALLOCATIONS {
+        uuid id PK
+        uuid user_id FK
+        varchar project_name
+        decimal allocation_percent
+        boolean is_current
+    }
+    USER_PROBATION {
+        uuid id PK
+        uuid user_id FK
+        varchar probation_status
+        date probation_start_date
+        date probation_end_date
+        uuid confirmed_by FK
+    }
+    TRAINING_ITEMS {
+        uuid id PK
+        varchar training_code
+        varchar training_type
+        varchar title
+        varchar lifecycle_state
+        boolean is_mandatory
+        boolean is_probation_gateway
+        int validity_period_days
+    }
+    TRAINING_VERSIONS {
+        uuid id PK
+        uuid training_item_id FK
+        int version_no
+        timestamp published_at
+    }
+    TRAINING_RESOURCES {
+        uuid id PK
+        uuid training_item_id FK
+        varchar resource_type
+        varchar title
+        int sequence_no
+        boolean is_required
+    }
+    RESOURCE_FILES {
+        uuid id PK
+        uuid resource_id FK
+        varchar external_file_id
+        varchar reference_url
+        varchar file_name
+        varchar access_mode
+    }
+    ASSIGNMENTS {
+        uuid id PK
+        uuid user_id FK
+        uuid training_item_id FK
+        uuid version_id FK
+        varchar assignment_status
+        date due_date
+        boolean is_probation_gate
+    }
+    ASSIGNMENT_HISTORY {
+        uuid id PK
+        uuid assignment_id FK
+        varchar old_status
+        varchar new_status
+        uuid changed_by FK
+    }
+    MANDATORY_ASSIGNMENT_RULES {
+        uuid id PK
+        uuid training_item_id FK
+        varchar rule_scope
+        varchar designation_filter
+        boolean is_probation_gate
+        boolean is_active
+    }
+    ASSIGNMENT_REQUESTS {
+        uuid id PK
+        uuid assignment_id FK
+        uuid requester_user_id FK
+        uuid approver_user_id FK
+        varchar status
+        timestamp expires_at
+    }
+    COMPLIANCE_STATUS {
+        uuid id PK
+        uuid user_id FK
+        uuid training_item_id FK
+        uuid assignment_id FK
+        varchar compliance_state
+        timestamp evaluated_at
+    }
+    SESSIONS {
+        uuid id PK
+        varchar session_code
+        uuid training_item_id FK
+        uuid facilitator_id FK
+        uuid venue_id FK
+        timestamp start_time
+        timestamp end_time
+        varchar status
+        varchar teams_link_status
+    }
+    SESSION_PARTICIPANTS {
+        uuid id PK
+        uuid session_id FK
+        uuid user_id FK
+        varchar participant_status
+    }
+    SESSION_ATTENDANCE {
+        uuid id PK
+        uuid session_id FK
+        uuid user_id FK
+        varchar attendance_status
+        varchar attendance_source
+    }
+    SESSION_FACILITATORS {
+        uuid id PK
+        varchar name
+        uuid user_id FK
+        boolean is_active
+    }
+    SESSION_VENUES {
+        uuid id PK
+        varchar name
+        int capacity
+        boolean is_active
+    }
+    TRAINING_COMPLETIONS {
+        uuid id PK
+        uuid user_id FK
+        uuid training_item_id FK
+        uuid assignment_id FK
+        timestamp completed_at
+        timestamp expires_at
+    }
+    CERTIFICATES {
+        uuid id PK
+        uuid user_id FK
+        uuid training_item_id FK
+        uuid assignment_id FK
+        varchar certificate_no
+        varchar status
+    }
+
+    USERS ||--o{ USER_HIERARCHY : "has hierarchy"
+    USER_HIERARCHY }o--|| USERS : "manager is"
+    USERS ||--o{ USER_PROJECT_ALLOCATIONS : "has allocations"
+    USERS ||--o| USER_PROBATION : "has probation"
+    USERS ||--o{ ASSIGNMENTS : "has assignments"
+    TRAINING_ITEMS ||--o{ TRAINING_VERSIONS : "has versions"
+    TRAINING_ITEMS ||--o{ TRAINING_RESOURCES : "has resources"
+    TRAINING_RESOURCES ||--o{ RESOURCE_FILES : "has files"
+    TRAINING_ITEMS ||--o{ ASSIGNMENTS : "assigned via"
+    TRAINING_ITEMS ||--o{ MANDATORY_ASSIGNMENT_RULES : "rules for"
+    ASSIGNMENTS ||--o{ ASSIGNMENT_HISTORY : "has history"
+    ASSIGNMENTS ||--o| ASSIGNMENT_REQUESTS : "has approval"
+    ASSIGNMENTS ||--o{ COMPLIANCE_STATUS : "drives compliance"
+    TRAINING_ITEMS ||--o{ SESSIONS : "has sessions"
+    SESSIONS ||--o{ SESSION_PARTICIPANTS : "has participants"
+    SESSIONS ||--o{ SESSION_ATTENDANCE : "has attendance"
+    SESSION_FACILITATORS ||--o{ SESSIONS : "facilitates"
+    SESSION_VENUES ||--o{ SESSIONS : "hosts"
+    USERS ||--o{ TRAINING_COMPLETIONS : "has completions"
+    USERS ||--o{ CERTIFICATES : "earns"
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 2 -->
+<div class="section" id="sec1">
+  <div class="section-header">Section 2 — Auth · Notifications · Reporting · Admin · Audit</div>
+  <div class="wrap">
+    <div class="dcard">
+      <div class="mermaid">
+erDiagram
+    USERS {
+        uuid id PK
+        varchar email
+        varchar global_role
+    }
+    ROLE_MAPPINGS {
+        uuid id PK
+        uuid user_id FK
+        varchar global_role
+        boolean is_active
+    }
+    AUTHORIZATION_POLICIES {
+        uuid id PK
+        varchar policy_code
+        varchar module_name
+        varchar action_name
+        varchar requires_role
+        boolean requires_hierarchy
+    }
+    ACCESS_DENIED_LOGS {
+        uuid id PK
+        uuid user_id FK
+        varchar endpoint
+        varchar denial_reason
+        varchar correlation_id
+    }
+    NOTIFICATIONS {
+        uuid id PK
+        uuid user_id FK
+        varchar event_code
+        varchar channel
+        varchar status
+        varchar idempotency_key
+        boolean is_read
+    }
+    NOTIFICATION_DELIVERY_LOG {
+        uuid id PK
+        uuid notification_id FK
+        varchar attempt_status
+        int retry_count
+        text error_message
+    }
+    NOTIFICATION_PREFERENCES {
+        uuid id PK
+        uuid user_id FK
+        varchar event_code
+        varchar channel
+        boolean opted_in
+    }
+    REPORT_EXPORTS {
+        uuid id PK
+        uuid requested_by FK
+        varchar report_type
+        varchar status
+        timestamp expires_at
+    }
+    REPORTING_SNAPSHOTS {
+        uuid id PK
+        varchar snapshot_type
+        varchar scope
+        timestamp generated_at
+        timestamp expires_at
+    }
+    ADMIN_SETTINGS {
+        uuid id PK
+        varchar setting_key
+        text setting_value
+        varchar data_type
+    }
+    ADMIN_SETTINGS_HISTORY {
+        uuid id PK
+        varchar setting_key
+        text old_value
+        text new_value
+        uuid changed_by FK
+    }
+    AUDIT_LOGS {
+        uuid id PK
+        varchar event_code
+        uuid actor_user_id FK
+        varchar entity_type
+        uuid entity_id
+        varchar correlation_id
+        boolean legal_hold
+    }
+    AUDIT_WRITE_FAILURES {
+        uuid id PK
+        json event_payload
+        text error_message
+        int retry_count
+    }
+    AUDIT_EXPORT_JOBS {
+        uuid id PK
+        uuid requested_by FK
+        varchar status
+        timestamp expires_at
+    }
+
+    USERS ||--o{ ROLE_MAPPINGS : "has roles"
+    USERS ||--o{ ACCESS_DENIED_LOGS : "has denials"
+    USERS ||--o{ NOTIFICATIONS : "receives"
+    NOTIFICATIONS ||--o{ NOTIFICATION_DELIVERY_LOG : "delivery log"
+    USERS ||--o{ NOTIFICATION_PREFERENCES : "has preferences"
+    USERS ||--o{ REPORT_EXPORTS : "requests"
+    USERS ||--o{ AUDIT_LOGS : "actor"
+    USERS ||--o{ AUDIT_EXPORT_JOBS : "requests export"
+    ADMIN_SETTINGS ||--o{ ADMIN_SETTINGS_HISTORY : "has history"
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 3 -->
+<div class="section" id="sec2">
+  <div class="section-header">Section 3 — Integrations · Assessments · Progress</div>
+  <div class="wrap">
+    <div class="dcard">
+      <div class="mermaid">
+erDiagram
+    INTEGRATION_JOBS {
+        uuid id PK
+        varchar integration_type
+        varchar status
+        int records_processed
+        int error_count
+        timestamp started_at
+        timestamp completed_at
+    }
+    INTEGRATION_JOB_LOGS {
+        uuid id PK
+        uuid job_id FK
+        varchar log_level
+        text message
+    }
+    INTEGRATION_HEALTH_STATUS {
+        uuid id PK
+        varchar integration_name
+        varchar health_state
+        timestamp last_checked_at
+        text last_error
+    }
+    USER_ATTRIBUTES_SYNC_LOG {
+        uuid id PK
+        uuid user_id FK
+        uuid sync_job_id FK
+        varchar source_system
+        json changed_fields_json
+        varchar sync_status
+    }
+    USER_SOURCE_REFERENCES {
+        uuid id PK
+        uuid user_id FK
+        varchar source_system
+        varchar source_record_id
+    }
+    USER_CAPABILITIES {
+        uuid id PK
+        uuid user_id FK
+        varchar capability_name
+        varchar source
+        boolean is_active
+    }
+    USERS {
+        uuid id PK
+        varchar email
+    }
+    RESOURCE_ASSESSMENTS {
+        uuid id PK
+        uuid resource_id FK
+        int pass_percent
+        int max_attempts
+        int time_limit_minutes
+    }
+    ASSESSMENT_QUESTIONS {
+        uuid id PK
+        uuid assessment_id FK
+        varchar question_type
+        text question_text
+        int marks
+    }
+    ASSESSMENT_OPTIONS {
+        uuid id PK
+        uuid question_id FK
+        text option_text
+        boolean is_correct
+    }
+    ASSESSMENT_ATTEMPTS {
+        uuid id PK
+        uuid resource_id FK
+        uuid user_id FK
+        uuid assignment_id FK
+        int attempt_no
+        int score_percent
+        varchar attempt_status
+    }
+    ASSESSMENT_RESPONSES {
+        uuid id PK
+        uuid attempt_id FK
+        uuid question_id FK
+        uuid selected_option_id FK
+        boolean is_correct
+    }
+    RESOURCE_PROGRESS {
+        uuid id PK
+        uuid user_id FK
+        uuid resource_id FK
+        uuid assignment_id FK
+        varchar progress_status
+        int progress_percent
+    }
+
+    INTEGRATION_JOBS ||--o{ INTEGRATION_JOB_LOGS : "has logs"
+    INTEGRATION_JOBS ||--o{ USER_ATTRIBUTES_SYNC_LOG : "produces"
+    USERS ||--o{ USER_ATTRIBUTES_SYNC_LOG : "updated by"
+    USERS ||--o{ USER_SOURCE_REFERENCES : "has refs"
+    USERS ||--o{ USER_CAPABILITIES : "has capabilities"
+    RESOURCE_ASSESSMENTS ||--o{ ASSESSMENT_QUESTIONS : "has questions"
+    ASSESSMENT_QUESTIONS ||--o{ ASSESSMENT_OPTIONS : "has options"
+    USERS ||--o{ ASSESSMENT_ATTEMPTS : "attempts"
+    ASSESSMENT_ATTEMPTS ||--o{ ASSESSMENT_RESPONSES : "has responses"
+    USERS ||--o{ RESOURCE_PROGRESS : "has progress"
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section active" id="info-sec0" style="padding:0 28px">
+  <div class="info">
+    <h3>Section 1 Key Relationships</h3>
+    <table>
+      <tr><th>Relationship</th><th>Detail</th></tr>
+      <tr><td>users → user_hierarchy</td><td>Self-referencing via manager_user_id. Only depth = 1 (direct reports) is used for hierarchy-scoped access. is_current = true marks the active row.</td></tr>
+      <tr><td>assignments → compliance_status</td><td>Each assignment drives one compliance_state record per user+training combination. Updated nightly by the Compliance Eval scheduled job.</td></tr>
+      <tr><td>training_items → sessions</td><td>ILT-type trainings have sessions. SELF_PACED trainings do not. A training_item can have multiple sessions across time.</td></tr>
+      <tr><td>assignments → assignment_requests</td><td>Optional — only present when an approval workflow is required. Controlled by mandatory_assignment_rules.requires_approval.</td></tr>
+      <tr><td>resource_files</td><td>Stores OneDrive file references only (external_file_id, reference_url). Never stores file bytes. Actual files live in OneDrive.</td></tr>
+    </table>
+  </div>
+</div>
+<div class="section" id="info-sec1" style="padding:0 28px">
+  <div class="info">
+    <h3>Section 2 Key Relationships</h3>
+    <table>
+      <tr><th>Relationship</th><th>Detail</th></tr>
+      <tr><td>notifications → notification_delivery_log</td><td>Each delivery attempt is logged. Failed attempts accumulate here for retry by the hourly dead-letter retry job.</td></tr>
+      <tr><td>audit_logs</td><td>INSERT-only table — no UPDATE or DELETE operations ever. legal_hold = true records survive the weekly retention purge.</td></tr>
+      <tr><td>audit_write_failures</td><td>Dead-letter for failed async audit writes. Retried hourly. Surfaced in Admin Dashboard.</td></tr>
+      <tr><td>report_exports</td><td>Row created when export is requested. expires_at = 24h. Cleaned up by daily Export File Cleanup job.</td></tr>
+      <tr><td>admin_settings</td><td>Key-value config store. Audit-trailed via admin_settings_history. Used by Notifications and Assignment Engine for configurable behavior.</td></tr>
+    </table>
+  </div>
+</div>
+<div class="section" id="info-sec2" style="padding:0 28px">
+  <div class="info">
+    <h3>Section 3 Key Relationships</h3>
+    <table>
+      <tr><th>Relationship</th><th>Detail</th></tr>
+      <tr><td>integration_jobs → integration_job_logs</td><td>Each sync job run creates a job record and appends logs. Failed runs stay in integration_jobs with status FAILED for Admin visibility.</td></tr>
+      <tr><td>integration_health_status</td><td>Updated every 15 minutes by the Integration Health Check job. One row per integration_name. Admin Dashboard reads this table.</td></tr>
+      <tr><td>resource_assessments → assessment_attempts</td><td>Assessment config (pass_percent, max_attempts) lives in resource_assessments. Each attempt is a separate row. Score and status are immutable after completion.</td></tr>
+      <tr><td>resource_progress</td><td>Tracks per-resource completion progress (0–100%). Updated as user consumes content. Drives overall training_completions.</td></tr>
+      <tr><td>user_capabilities</td><td>Synced from Employee DB. Used by mandatory_assignment_rules to scope assignments to users with specific capability tags.</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="section active" id="owner-table" style="padding:0 28px">
+  <div class="info">
+    <h3>Module Ownership</h3>
+    <table>
+      <tr><th>Module</th><th>Owned Tables</th></tr>
+      <tr><td>User Management</td><td>users, user_hierarchy, user_project_allocations, user_field_overrides, user_source_references, user_capabilities, user_attributes_sync_log, user_probation</td></tr>
+      <tr><td>Auth / Authorization</td><td>role_mappings, authorization_policies, access_denied_logs</td></tr>
+      <tr><td>Training Management</td><td>training_items, training_versions, training_tags, training_item_tags, training_structure_links, training_prerequisites, training_resources, training_completion_rules</td></tr>
+      <tr><td>File Management</td><td>resource_files</td></tr>
+      <tr><td>Assessment</td><td>resource_assessments, assessment_questions, assessment_options, assessment_attempts, assessment_responses</td></tr>
+      <tr><td>Progress &amp; Completion</td><td>resource_progress, training_completions, certificates</td></tr>
+      <tr><td>Assignment Engine</td><td>assignments, assignment_history, mandatory_assignment_rules, assignment_requests, compliance_status</td></tr>
+      <tr><td>Sessions</td><td>sessions, session_participants, session_attendance, session_facilitators, session_venues</td></tr>
+      <tr><td>Notifications</td><td>notifications, notification_delivery_log, notification_preferences</td></tr>
+      <tr><td>Reporting</td><td>report_exports, reporting_snapshots</td></tr>
+      <tr><td>Admin</td><td>admin_settings, admin_settings_history</td></tr>
+      <tr><td>Audit</td><td>audit_logs, audit_write_failures, audit_export_jobs</td></tr>
+      <tr><td>Integrations</td><td>integration_jobs, integration_job_logs, integration_health_status</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="desc">
+  <strong>Source:</strong> docs/requirements/05_engineering/er_diagram.md &nbsp;|&nbsp;
+  <strong>Type:</strong> erDiagram — 3 sections &nbsp;|&nbsp;
+  All 51 PostgreSQL tables with FK relationships. Split for readability: <strong>Section 1</strong> — core business tables; <strong>Section 2</strong> — platform/support tables; <strong>Section 3</strong> — integrations &amp; assessment tables.
+  All PKs are UUID. Audit logs are INSERT-only (no UPDATE/DELETE).
+</div>
+
+<div class="controls">
+  <button class="cb" onclick="zi()" title="Zoom in">+</button>
+  <div id="zoom-label">100%</div>
+  <button class="cb" onclick="zo()" title="Zoom out">−</button>
+  <button class="cb" onclick="zr()" title="Reset (fit to screen)" style="font-size:13px">↺</button>
+</div>
+<script>
+  mermaid.initialize({startOnLoad:false,theme:'dark',securityLevel:'loose',
+    er:{useMaxWidth:false}});
+
+  let scale=1,origW=null,origH=null;
+  function getSvg(){return document.querySelector('.section.active .wrap .mermaid svg');}
+
+  function captureOriginal(){
+    const svg=getSvg();if(!svg)return false;
+    const vb=svg.viewBox&&svg.viewBox.baseVal;
+    if(vb&&vb.width>0){origW=vb.width;origH=vb.height;}
+    else{origW=svg.getBoundingClientRect().width||900;origH=svg.getBoundingClientRect().height||600;}
+    svg.setAttribute('width',origW);svg.setAttribute('height',origH);
+    svg.style.maxWidth='none';return true;
+  }
+
+  function fitToScreen(){
+    const svg=getSvg();if(!svg||!origW)return;
+    const headerH=(document.querySelector('header')||{}).offsetHeight||60;
+    const navH=(document.querySelector('nav')||{}).offsetHeight||40;
+    const tabsH=(document.querySelector('.tabs')||{}).offsetHeight||40;
+    const wrap=document.querySelector('.section.active .wrap');
+    const availW=(wrap?wrap.clientWidth:window.innerWidth)-80;
+    const availH=window.innerHeight-headerH-navH-tabsH-80;
+    scale=Math.min(availW/origW,availH/origH);
+    scale=Math.max(scale,0.1);
+    svg.setAttribute('width',origW*scale);svg.setAttribute('height',origH*scale);
+    document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%';
+  }
+
+  function applyScale(){
+    const svg=getSvg();if(!svg)return;
+    if(!origW&&!captureOriginal())return;
+    svg.setAttribute('width',origW*scale);svg.setAttribute('height',origH*scale);
+    document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%';
+  }
+
+  function zi(){scale=Math.min(scale*1.25,8);applyScale();}
+  function zo(){scale=Math.max(scale*0.8,0.1);applyScale();}
+  function zr(){fitToScreen();}
+
+  function showTab(idx){
+    scale=1;origW=null;origH=null;
+    document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===idx));
+    // toggle diagram sections (sec0, sec1, sec2)
+    document.querySelectorAll('[id^="sec"]').forEach(s=>{
+      if(/^sec\d$/.test(s.id))s.classList.toggle('active',s.id==='sec'+idx);
+    });
+    // toggle info sections
+    document.querySelectorAll('[id^="info-sec"]').forEach(s=>{
+      s.classList.toggle('active',s.id==='info-sec'+idx);
+    });
+    // owner table always visible — remove it from active toggling
+    document.getElementById('zoom-label').textContent='100%';
+    setTimeout(()=>{if(captureOriginal())fitToScreen();},100);
+  }
+
+  window.addEventListener('load',()=>{
+    // Show all diagram sections off-screen so Mermaid renders every diagram with proper dimensions
+    const secs=document.querySelectorAll('[id^="sec"]');
+    const diagSecs=[...secs].filter(s=>/^sec\d$/.test(s.id));
+    diagSecs.forEach(s=>{s.style.cssText+='display:block!important;visibility:hidden!important;position:absolute!important;pointer-events:none!important;';});
+    mermaid.run({querySelector:'.mermaid'}).then(()=>{
+      diagSecs.forEach(s=>{s.style.cssText=s.style.cssText.replace(/display:[^;]+!important;|visibility:[^;]+!important;|position:[^;]+!important;|pointer-events:[^;]+!important;/g,'');});
+      setTimeout(()=>{if(captureOriginal())fitToScreen();},200);
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-LMS — Sessions</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .session-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0;
+      overflow: hidden;
+      transition: box-shadow 0.15s;
+    }
+    .session-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.09); }
+    .session-card-header {
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .session-date-box {
+      flex-shrink: 0;
+      width: 52px;
+      height: 56px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+    .session-date-box .month {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .session-date-box .day {
+      font-size: 22px;
+      line-height: 1.1;
+    }
+    .session-card-body {
+      padding: 12px 16px 14px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .session-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .session-card-footer {
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: #fafafa;
+    }
+    .seats-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+<div class="lms-wrapper">
+
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title">Sessions</div>
+      <div class="topbar-actions">
+        <div class="role-switcher" id="role-switcher"></div>
+        <div style="position:relative">
+          <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+            <i class="bi bi-bell"></i><span class="notif-badge">3</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown-header"><span>Notifications</span><a href="#">Mark all read</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- Stat Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-camera-video"></i></div>
+            <div class="stat-info"><div class="stat-value">3</div><div class="stat-label">Upcoming</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon amber"><i class="bi bi-person-check"></i></div>
+            <div class="stat-info"><div class="stat-value">2</div><div class="stat-label">Enrolled</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-info"><div class="stat-value">5</div><div class="stat-label">Attended</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon amber"><i class="bi bi-person-raised-hand"></i></div>
+            <div class="stat-info"><div class="stat-value">1</div><div class="stat-label">Nominated</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+        <div class="search-bar" style="width:240px">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Search sessions..." oninput="filterSessions(this.value)">
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="filter-pill active" onclick="filterByTab('all',this)">All</button>
+          <button class="filter-pill" onclick="filterByTab('upcoming',this)">Upcoming</button>
+          <button class="filter-pill" onclick="filterByTab('enrolled',this)">Enrolled</button>
+          <button class="filter-pill" onclick="filterByTab('nominated',this)">Nominated</button>
+          <button class="filter-pill" onclick="filterByTab('completed',this)">Attended</button>
+          <button class="filter-pill" onclick="filterByTab('missed',this)">Missed</button>
+        </div>
+      </div>
+
+      <!-- Session Cards -->
+      <div id="session-list">
+
+        <!-- Session 1 — Enrolled / Upcoming -->
+        <div class="session-card mb-3 session-item" data-tab="upcoming enrolled" data-title="safety compliance workshop">
+          <div class="session-card-header">
+            <div class="session-date-box" style="background:#dbeafe;color:#1e40af">
+              <span class="month">APR</span>
+              <span class="day">8</span>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+                <span class="badge-lms badge-inprogress">Upcoming</span>
+                <span class="badge-lms badge-mandatory">Mandatory</span>
+                <span class="badge-lms badge-draft" style="background:#dbeafe;color:#1e40af">
+                  <i class="bi bi-microsoft-teams me-1"></i>Hybrid
+                </span>
+              </div>
+              <div style="font-weight:700;font-size:14px;color:#1e2a3b">Safety Compliance Workshop</div>
+              <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">SES-2026-042 · Safety Compliance 2026</div>
+            </div>
+          </div>
+          <div class="session-card-body">
+            <div class="session-meta-item"><i class="bi bi-clock"></i> Apr 8, 2026 · 2:00–4:00 PM</div>
+            <div class="session-meta-item"><i class="bi bi-geo-alt"></i> Conference Hall B</div>
+            <div class="session-meta-item"><i class="bi bi-microsoft-teams" style="color:#5558af"></i> Microsoft Teams</div>
+            <div class="session-meta-item"><i class="bi bi-person"></i> Facilitator: Rohan Gupta</div>
+          </div>
+          <div class="session-card-footer">
+            <div class="seats-bar">
+              <span>Seats: 30 / 30</span>
+              <div class="progress-lms" style="width:80px"><div class="bar green" style="width:100%"></div></div>
+              <span class="badge-lms badge-completed" style="font-size:10px">Full</span>
+            </div>
+            <div style="display:flex;gap:6px">
+              <a href="session-detail.html" class="btn-ghost-lms" style="font-size:11px;padding:5px 10px">
+                <i class="bi bi-info-circle"></i> Details
+              </a>
+              <button class="btn-primary-lms" style="font-size:11px;padding:5px 12px"
+                onclick="showToast('Opening Teams meeting link...')">
+                <i class="bi bi-microsoft-teams"></i> Join Teams
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Session 2 — Nominated / Upcoming -->
+        <div class="session-card mb-3 session-item" data-tab="upcoming nominated" data-title="react advanced patterns">
+          <div class="session-card-header">
+            <div class="session-date-box" style="background:#ede9fe;color:#5b21b6">
+              <span class="month">APR</span>
+              <span class="day">14</span>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+                <span class="badge-lms badge-inprogress">Upcoming</span>
+                <span class="badge-lms badge-draft" style="background:#ede9fe;color:#5b21b6">Optional</span>
+                <span class="badge-lms" style="background:#f3e8ff;color:#7c3aed;font-size:11px">
+                  <i class="bi bi-person-raised-hand me-1"></i>Nominated
+                </span>
+              </div>
+              <div style="font-weight:700;font-size:14px;color:#1e2a3b">React Advanced Patterns</div>
+              <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">SES-2026-041 · <span style="background:#ede9fe;color:#5b21b6;border-radius:10px;padding:1px 6px;font-size:10px">Learning Path</span> React Mastery LP</div>
+            </div>
+          </div>
+          <div class="session-card-body">
+            <div class="session-meta-item"><i class="bi bi-clock"></i> Apr 14, 2026 · 10:00 AM–12:00 PM</div>
+            <div class="session-meta-item"><i class="bi bi-geo-alt"></i> Training Room A</div>
+            <div class="session-meta-item"><i class="bi bi-microsoft-teams" style="color:#5558af"></i> Microsoft Teams</div>
+            <div class="session-meta-item"><i class="bi bi-person"></i> Facilitator: Anita Kapoor</div>
+          </div>
+          <div class="session-card-footer">
+            <div style="font-size:12px;color:#7c3aed">
+              <i class="bi bi-info-circle me-1"></i>Your nomination is <strong>pending Admin review</strong>
+            </div>
+            <div style="display:flex;gap:6px">
+              <a href="session-detail.html" class="btn-ghost-lms" style="font-size:11px;padding:5px 10px">
+                <i class="bi bi-info-circle"></i> Details
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Session 3 — Upcoming / Open seats -->
+        <div class="session-card mb-3 session-item" data-tab="upcoming" data-title="leadership masterclass">
+          <div class="session-card-header">
+            <div class="session-date-box" style="background:#fef3c7;color:#92400e">
+              <span class="month">APR</span>
+              <span class="day">20</span>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+                <span class="badge-lms badge-inprogress">Upcoming</span>
+                <span class="badge-lms badge-draft" style="background:#ede9fe;color:#5b21b6">Optional</span>
+                <span class="badge-lms badge-draft" style="background:#dbeafe;color:#1e40af">
+                  <i class="bi bi-microsoft-teams me-1"></i>Hybrid
+                </span>
+              </div>
+              <div style="font-weight:700;font-size:14px;color:#1e2a3b">Leadership Masterclass</div>
+              <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">SES-2026-043 · Leadership Essentials</div>
+            </div>
+          </div>
+          <div class="session-card-body">
+            <div class="session-meta-item"><i class="bi bi-clock"></i> Apr 20, 2026 · 9:00–11:00 AM</div>
+            <div class="session-meta-item"><i class="bi bi-geo-alt"></i> Board Room</div>
+            <div class="session-meta-item"><i class="bi bi-microsoft-teams" style="color:#5558af"></i> Microsoft Teams</div>
+            <div class="session-meta-item"><i class="bi bi-person"></i> Facilitator: Vikram Nair</div>
+          </div>
+          <div class="session-card-footer">
+            <div class="seats-bar">
+              <span>Seats: 8 / 15</span>
+              <div class="progress-lms" style="width:80px"><div class="bar amber" style="width:53%"></div></div>
+              <span style="font-size:12px;color:var(--text-muted)">7 left</span>
+            </div>
+            <div style="display:flex;gap:6px">
+              <a href="session-detail.html" class="btn-ghost-lms" style="font-size:11px;padding:5px 10px">
+                <i class="bi bi-info-circle"></i> Details
+              </a>
+              <button class="btn-outline-lms" style="font-size:11px;padding:5px 12px"
+                onclick="enrollSession(this)">
+                <i class="bi bi-person-plus"></i> Enroll
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Session 4 — Completed / Attended -->
+        <div class="session-card mb-3 session-item" data-tab="completed" data-title="onboarding orientation">
+          <div class="session-card-header">
+            <div class="session-date-box" style="background:#d1fae5;color:#065f46">
+              <span class="month">MAR</span>
+              <span class="day">15</span>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+                <span class="badge-lms badge-completed">Attended</span>
+                <span class="badge-lms badge-mandatory">Mandatory</span>
+                <span class="badge-lms badge-draft" style="background:#dbeafe;color:#1e40af">
+                  <i class="bi bi-microsoft-teams me-1"></i>Hybrid
+                </span>
+              </div>
+              <div style="font-weight:700;font-size:14px;color:#1e2a3b">Onboarding Orientation</div>
+              <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">SES-2026-028 · Onboarding Essentials</div>
+            </div>
+          </div>
+          <div class="session-card-body">
+            <div class="session-meta-item"><i class="bi bi-clock"></i> Mar 15, 2026 · 10:00 AM–12:00 PM</div>
+            <div class="session-meta-item"><i class="bi bi-geo-alt"></i> Training Room B</div>
+            <div class="session-meta-item"><i class="bi bi-microsoft-teams" style="color:#5558af"></i> Microsoft Teams</div>
+            <div class="session-meta-item"><i class="bi bi-person-check" style="color:var(--success)"></i> Attendance confirmed</div>
+          </div>
+          <div class="session-card-footer">
+            <div style="font-size:12px;color:var(--text-muted)">Duration: 2h · 24 participants attended</div>
+            <div style="display:flex;gap:6px">
+              <a href="session-detail.html" class="btn-ghost-lms" style="font-size:11px;padding:5px 10px">
+                <i class="bi bi-info-circle"></i> Details
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Session 5 — Missed -->
+        <div class="session-card mb-3 session-item" data-tab="missed" data-title="data privacy awareness">
+          <div class="session-card-header">
+            <div class="session-date-box" style="background:#fee2e2;color:#991b1b">
+              <span class="month">MAR</span>
+              <span class="day">5</span>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+                <span class="badge-lms badge-overdue">Missed</span>
+                <span class="badge-lms badge-mandatory">Mandatory</span>
+                <span class="badge-lms badge-draft" style="background:#dbeafe;color:#1e40af">
+                  <i class="bi bi-microsoft-teams me-1"></i>Hybrid
+                </span>
+              </div>
+              <div style="font-weight:700;font-size:14px;color:#1e2a3b">Data Privacy Awareness Session</div>
+              <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">SES-2026-019 · Data Privacy Training</div>
+            </div>
+          </div>
+          <div class="session-card-body">
+            <div class="session-meta-item"><i class="bi bi-clock"></i> Mar 5, 2026 · 3:00–5:00 PM</div>
+            <div class="session-meta-item"><i class="bi bi-geo-alt"></i> Conference Hall A</div>
+            <div class="session-meta-item" style="color:var(--danger)"><i class="bi bi-x-circle"></i> Attendance not recorded</div>
+          </div>
+          <div class="session-card-footer">
+            <div style="font-size:12px;color:var(--danger)">
+              <i class="bi bi-exclamation-triangle me-1"></i>You did not attend this session
+            </div>
+            <div style="display:flex;gap:6px">
+              <a href="session-detail.html" class="btn-ghost-lms" style="font-size:11px;padding:5px 10px">
+                <i class="bi bi-info-circle"></i> Details
+              </a>
+              <a href="catalog.html" class="btn-outline-lms" style="font-size:11px;padding:5px 12px;color:var(--primary);border-color:var(--primary)">
+                <i class="bi bi-arrow-repeat"></i> Find Next Session
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State (hidden by default) -->
+        <div id="empty-state" style="display:none;text-align:center;padding:60px 20px;color:var(--text-muted)">
+          <div style="font-size:48px;margin-bottom:12px">📅</div>
+          <div style="font-size:15px;font-weight:600;color:#374151">No sessions found</div>
+          <div style="font-size:13px;margin-top:4px">Try a different filter or search term</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:24px;right:24px;background:#1e2a3b;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:none;z-index:9999;align-items:center;gap:8px">
+  <i class="bi bi-check-circle-fill" style="color:var(--success)"></i>
+  <span id="toast-msg"></span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  function filterSessions(q) {
+    q = q.toLowerCase();
+    let visible = 0;
+    document.querySelectorAll('.session-item').forEach(item => {
+      const match = item.dataset.title.includes(q);
+      item.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    document.getElementById('empty-state').style.display = visible === 0 ? 'block' : 'none';
+  }
+
+  function filterByTab(tab, btn) {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    let visible = 0;
+    document.querySelectorAll('.session-item').forEach(item => {
+      const match = tab === 'all' || item.dataset.tab.includes(tab);
+      item.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    document.getElementById('empty-state').style.display = visible === 0 ? 'block' : 'none';
+  }
+
+  function enrollSession(btn) {
+    btn.innerHTML = '<i class="bi bi-check-lg"></i> Enrolled';
+    btn.classList.remove('btn-outline-lms');
+    btn.classList.add('btn-primary-lms');
+    btn.disabled = true;
+    showToast('Successfully enrolled in Leadership Masterclass!');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.style.display = 'flex';
+    setTimeout(() => t.style.display = 'none', 3000);
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-LMS — Training Catalog</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .thumb-blue   { background: linear-gradient(135deg,#dbeafe,#bfdbfe); }
+    .thumb-green  { background: linear-gradient(135deg,#d1fae5,#a7f3d0); }
+    .thumb-purple { background: linear-gradient(135deg,#ede9fe,#ddd6fe); }
+    .thumb-amber  { background: linear-gradient(135deg,#fef3c7,#fde68a); }
+    .thumb-red    { background: linear-gradient(135deg,#fee2e2,#fecaca); }
+    .thumb-teal   { background: linear-gradient(135deg,#ccfbf1,#99f6e4); }
+  </style>
+</head>
+<body>
+<div class="lms-wrapper">
+
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title">Training Catalog</div>
+      <div class="topbar-actions">
+        <div class="role-switcher" id="role-switcher"></div>
+        <div style="position:relative">
+          <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+            <i class="bi bi-bell"></i>
+            <span class="notif-badge">3</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown-header"><span>Notifications</span><a href="#">Mark all read</a></div>
+            <div class="notif-item unread">
+              <div class="notif-item-icon" style="background:#fee2e2;color:#991b1b"><i class="bi bi-exclamation-circle"></i></div>
+              <div class="notif-item-text"><div class="notif-item-title">Data Privacy Training is overdue</div><div class="notif-item-time">2 hours ago</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- Search + Filters -->
+      <div class="card mb-4" style="padding:20px">
+        <div class="row g-3 align-items-center">
+          <div class="col-lg-5">
+            <div class="search-bar">
+              <i class="bi bi-search"></i>
+              <input type="text" id="search-input" placeholder="Search courses, learning paths, curricula..." oninput="filterCards()">
+            </div>
+          </div>
+          <div class="col-lg-7">
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <a class="filter-pill active" onclick="setFilter('all',this)">All</a>
+              <a class="filter-pill" onclick="setFilter('mandatory',this)">🔒 Mandatory</a>
+              <a class="filter-pill" onclick="setFilter('course',this)">Course</a>
+              <a class="filter-pill" onclick="setFilter('learning-path',this)">Learning Path</a>
+              <a class="filter-pill" onclick="setFilter('curriculum',this)">Curriculum</a>
+              <a class="filter-pill" onclick="setFilter('inprogress',this)">In Progress</a>
+              <a class="filter-pill" onclick="setFilter('notstarted',this)">Not Started</a>
+              <a class="filter-pill" onclick="setFilter('completed',this)">Completed</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results count -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-size:13px;color:var(--text-muted)">
+          Showing <strong id="result-count">12</strong> trainings
+        </div>
+        <select style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg)">
+          <option>Sort: Mandatory first</option>
+          <option>Sort: A–Z</option>
+          <option>Sort: Newest</option>
+        </select>
+      </div>
+
+      <!-- Training Grid -->
+      <div class="row g-3" id="catalog-grid">
+
+        <!-- Card 1 -->
+        <div class="col-sm-6 col-lg-4 catalog-item" data-type="course" data-status="inprogress" data-mandatory="true" data-title="Safety Compliance 2026">
+          <a href="course-detail.html" class="training-card">
+            <div class="training-card-thumb thumb-red">🦺</div>
+            <div class="training-card-body">
+              <div style="display:flex;gap:6px;margin-bottom:6px">
+                <span class="badge-lms badge-mandatory">Mandatory</span>
+                <span class="badge-lms badge-draft" style="background:#f3f4f6;color:#6b7280">Course</span>
+              </div>
+              <div class="training-card-title">Safety Compliance 2026</div>
+              <div class="training-card-meta">
+                <i class="bi bi-collection me-1"></i>5 resources &nbsp;·&nbsp;
+                <i class="bi bi-clock me-1"></i>2h 30m
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="progress-lms" style="flex:1"><div class="bar" style="width:70%"></div></div>
+                <span style="font-size:11px;color:var(--text-muted)">70%</span>
+              </div>
+            </div>
+            <div class="training-card-footer">
+              <span class="badge-lms badge-inprogress">In Progress</span>
+              <span style="font-size:11px;color:var(--danger);font-weight:600">Due Apr 30</span>
+            </div>
+          </a>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="col-sm-6 col-lg-4 catalog-item" data-type="course" data-status="overdue" data-mandatory="true" data-title="Data Privacy Training">
+          <a href="course-detail.html" class="training-card">
+            <div class="training-card-thumb thumb-amber">🔐</div>
+            <div class="training-card-body">
+              <div style="display:flex;gap:6px;margin-bottom:6px">
+                <span class="badge-lms badge-mandatory">Mandatory</span>
+                <span class="badge-lms badge-draft" style="background:#f3f4f6;color:#6b7280">Course</span>
+              </div>
+              <div class="training-card-title">Data Privacy Training</div>
+              <div class="training-card-meta">
+                <i class="bi bi-collection me-1"></i>4 resources &nbsp;·&nbsp;
+                <i class="bi bi-clock me-1"></i>1h 45m
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="progress-lms" style="flex:1"><div class="bar red" style="width:40%"></div></div>
+                <span style="font-size:11px;color:var(--danger)">40%</span>
+              </div>
+            </div>
+            <div class="training-card-footer">
+              <span class="badge-lms badge-overdue">Overdue</span>
+              <span style="font-size:11px;color:var(--danger);font-weight:600">Was Apr 1</span>
+            </div>
+          </a>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="col-sm-6 col-lg-4 catalog-item" data-type="course" data-status="completed" data-mandatory="false" data-title="Leadership Essentials">
+          <a href="course-detail.html" class="training-card">
+            <div class="training-card-thumb thumb-purple">👑</div>
+            <div class="training-card-body">
+              <div style="display:flex;gap:6px;margin-bottom:6px">
+                <span class="badge-lms badge-optional">Optional</span>
+                <span class="badge-lms badge-draft" style="background:#f3f4f6;color:#6b7280">Course</span>
+              </div>
+              <div class="training-card-title">Leadership Essentials</div>
+              <div class="training-card-meta">
+                <i class="bi bi-collection me-1"></i>6 resources &nbsp;·&nbsp;
+                <i class="bi bi-clock me-1"></i>3h 00m
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="progress-lms" style="flex:1"><div class="bar green" style="width:100%"></div></div>
+                <span style="font-size:11px;color:var(--success)">100%</span>
+              </div>
+            </div>
+            <div class="training-card-footer">
+              <span class="badge-lms badge-completed">Completed</span>
+              <span style="font-size:11px;color:var(--text-muted)">Mar 20, 2026</span>
+            </div>
+          </a>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="col-sm-6 col-lg-4 catalog-item" data-type="learning-path" data-status="inprogress" data-mandatory="false" data-title="React Advanced Patterns">
+          <a href="course-detail.html" class="training-card">
+            <div class="training-card-thumb thumb-blue">⚛️</div>
+            <div class="training-card-body">
+              <div style="display:flex;gap:6px;margin-bottom:6px">
+                <span class="badge-lms badge-optional">Optional</span>
+                <span class="badge-lms badge-draft" style="background:#dbeafe;color:#1e40af">Learning Path</span>
+              </div>
+              <div class="training-card-title">React Advanced Patterns</div>
+              <div class="training-card-meta">
+                <i class="bi bi-collection me-1"></i>3 courses &nbsp;·&nbsp;
+                <i class="bi bi-clock me-1"></i>6h 00m
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="progress-lms" style="flex:1"><div class="bar" style="width:20%"></div></div>
+                <span style="font-size:11px;color:var(--text-muted)">20%</span>
+              </div>
+            </div>
+            <div class="training-card-footer">
+              <span class="badge-lms badge-inprogress">In Progress</span>
+              <span style="font-size:11px;color:var(--text-muted)">Due May 15</span>
+            </div>
+          </a>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="col-sm-6 col-lg-4 catalog-item" data-type="course" data-status="notstarted" data-mandatory="true" data-title="Anti-Harassment Policy">
+          <a href="course-detail.html" class="training-card">
+            <div class="training-card-thumb thumb-teal">🤝</div>
+            <div class="training-card-body">
+              <div style="display:flex;gap:6px;margin-bottom:6px">
+                <span class="badge-lms badge-mandatory">Mandatory</span>
+                <span class="badge-lms badge-draft" style="background:#f3f4f6;color:#6b7280">Course</span>
+              </div>
+              <div class="training-card-title">Anti-Harassment Policy</div>
+              <div class="training-card-meta">
+                <i class="bi bi-collection me-1"></i>3 resources &nbsp;·&nbsp;
+                <i class="bi bi-clock me-1"></i>1h 00m
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="progress-lms" style="flex:1"><div class="bar" style="width:0%"></div></div>
+                <span style="font-size:11px;color:var(--text-muted)">0%</span>
+              </div>
+            </div>
+            <div class="training-card-footer">
+              <span class="badge-lms badge-pending">Not Started</span>
+              <span style="font-size:11px;color:var(--text-muted)">Due May 30</span>
+            </div>
+          </a>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="col-sm-6 col-lg-4 catalog-item" data-type="curriculum" data-status="notstarted" data-mandatory="false" data-title="Full Stack Developer Track">
+          <a href="course-detail.html" class="training-card">
+            <div class="training-card-thumb thumb-green">💻</div>
+            <div class="training-card-body">
+              <div style="display:flex;gap:6px;margin-bottom:6px">
+                <span class="badge-lms badge-optional">Optional</span>
+                <span class="badge-lms badge-draft" style="background:#d1fae5;color:#065f46">Curriculum</span>
+              </div>
+              <div class="training-card-title">Full Stack Developer Track</div>
+              <div class="training-card-meta">
+                <i class="bi bi-collection me-1"></i>4 learning paths &nbsp;·&nbsp;
+                <i class="bi bi-clock me-1"></i>24h 00m
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="progress-lms" style="flex:1"><div class="bar" style="width:0%"></div></div>
+                <span style="font-size:11px;color:var(--text-muted)">0%</span>
+              </div>
+            </div>
+            <div class="training-card-footer">
+              <span class="badge-lms badge-pending">Not Started</span>
+              <button onclick="event.preventDefault();showEnrollModal()" class="btn-primary-lms" style="font-size:11px;padding:3px 10px">Enroll</button>
+            </div>
+          </a>
+        </div>
+
+        <!-- Card 7 -->
+        <div class="col-sm-6 col-lg-4 catalog-item" data-type="course" data-status="notstarted" data-mandatory="false" data-title="Project Management Fundamentals">
+          <a href="course-detail.html" class="training-card">
+            <div class="training-card-thumb thumb-amber">📋</div>
+            <div class="training-card-body">
+              <div style="display:flex;gap:6px;margin-bottom:6px">
+                <span class="badge-lms badge-optional">Optional</span>
+                <span class="badge-lms badge-draft" style="background:#f3f4f6;color:#6b7280">Course</span>
+              </div>
+              <div class="training-card-title">Project Management Fundamentals</div>
+              <div class="training-card-meta">
+                <i class="bi bi-collection me-1"></i>8 resources &nbsp;·&nbsp;
+                <i class="bi bi-clock me-1"></i>4h 30m
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="progress-lms" style="flex:1"><div class="bar" style="width:0%"></div></div>
+                <span style="font-size:11px;color:var(--text-muted)">0%</span>
+              </div>
+            </div>
+            <div class="training-card-footer">
+              <span class="badge-lms badge-pending">Not Started</span>
+              <button onclick="event.preventDefault();showEnrollModal()" class="btn-primary-lms" style="font-size:11px;padding:3px 10px">Enroll</button>
+            </div>
+          </a>
+        </div>
+
+        <!-- Card 8 -->
+        <div class="col-sm-6 col-lg-4 catalog-item" data-type="course" data-status="notstarted" data-mandatory="false" data-title="Communication Skills">
+          <a href="course-detail.html" class="training-card">
+            <div class="training-card-thumb thumb-purple">💬</div>
+            <div class="training-card-body">
+              <div style="display:flex;gap:6px;margin-bottom:6px">
+                <span class="badge-lms badge-optional">Optional</span>
+                <span class="badge-lms badge-draft" style="background:#f3f4f6;color:#6b7280">Course</span>
+              </div>
+              <div class="training-card-title">Communication Skills</div>
+              <div class="training-card-meta">
+                <i class="bi bi-collection me-1"></i>5 resources &nbsp;·&nbsp;
+                <i class="bi bi-clock me-1"></i>2h 00m
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="progress-lms" style="flex:1"><div class="bar" style="width:0%"></div></div>
+                <span style="font-size:11px;color:var(--text-muted)">0%</span>
+              </div>
+            </div>
+            <div class="training-card-footer">
+              <span class="badge-lms badge-pending">Not Started</span>
+              <button onclick="event.preventDefault();showApprovalModal()" class="btn-outline-lms" style="font-size:11px;padding:3px 10px">Request</button>
+            </div>
+          </a>
+        </div>
+
+        <!-- Card 9 -->
+        <div class="col-sm-6 col-lg-4 catalog-item" data-type="learning-path" data-status="notstarted" data-mandatory="false" data-title="Cloud Architecture Fundamentals">
+          <a href="course-detail.html" class="training-card">
+            <div class="training-card-thumb thumb-blue">☁️</div>
+            <div class="training-card-body">
+              <div style="display:flex;gap:6px;margin-bottom:6px">
+                <span class="badge-lms badge-optional">Optional</span>
+                <span class="badge-lms badge-draft" style="background:#dbeafe;color:#1e40af">Learning Path</span>
+              </div>
+              <div class="training-card-title">Cloud Architecture Fundamentals</div>
+              <div class="training-card-meta">
+                <i class="bi bi-collection me-1"></i>2 courses &nbsp;·&nbsp;
+                <i class="bi bi-clock me-1"></i>5h 00m
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="progress-lms" style="flex:1"><div class="bar" style="width:0%"></div></div>
+                <span style="font-size:11px;color:var(--text-muted)">0%</span>
+              </div>
+            </div>
+            <div class="training-card-footer">
+              <span class="badge-lms badge-pending">Not Started</span>
+              <button onclick="event.preventDefault();showEnrollModal()" class="btn-primary-lms" style="font-size:11px;padding:3px 10px">Enroll</button>
+            </div>
+          </a>
+        </div>
+
+      </div><!-- /catalog-grid -->
+
+      <!-- Empty State (hidden by default) -->
+      <div id="empty-state" class="empty-state" style="display:none">
+        <i class="bi bi-search"></i>
+        <p>No trainings found matching your search.</p>
+      </div>
+
+    </div><!-- /page-body -->
+  </div>
+
+</div>
+
+<!-- Enroll Modal -->
+<div class="modal fade" id="enrollModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-journal-plus me-2" style="color:var(--primary)"></i>Confirm Enrollment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p style="margin:0;font-size:14px">You are enrolling in <strong>Full Stack Developer Track</strong>.</p>
+        <p style="margin:8px 0 0;font-size:13px;color:var(--text-muted)">This training does not require manager approval. You can start immediately after enrolling.</p>
+        <div class="form-row mt-3">
+          <label class="form-label-lms">Target Completion Date (optional)</label>
+          <input type="date" class="form-control-lms" value="2026-06-30">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost-lms" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn-primary-lms" data-bs-dismiss="modal"
+          onclick="setTimeout(()=>showToast('Enrolled successfully! Training added to My Training.'),300)">
+          <i class="bi bi-check2"></i> Confirm Enroll
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Approval Request Modal -->
+<div class="modal fade" id="approvalModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-send me-2" style="color:var(--primary)"></i>Request Manager Approval</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p style="margin:0;font-size:14px">Requesting enrollment in <strong>Communication Skills</strong>.</p>
+        <p style="margin:8px 0 0;font-size:13px;color:var(--text-muted)">This training requires manager approval. Your request will be sent to <strong>Priya Mehta</strong> (your manager).</p>
+        <div class="form-row mt-3">
+          <label class="form-label-lms">Note to manager (optional)</label>
+          <textarea class="form-control-lms" rows="3" placeholder="Explain why this training is relevant to your role..."></textarea>
+        </div>
+        <div class="alert-lms info mt-3" style="margin-bottom:0">
+          <i class="bi bi-info-circle"></i>
+          Request expires automatically if not responded to within 30 days.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost-lms" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn-primary-lms" data-bs-dismiss="modal"
+          onclick="setTimeout(()=>showToast('Approval request sent to Priya Mehta.'),300)">
+          <i class="bi bi-send"></i> Send Request
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:24px;right:24px;background:#1e2a3b;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:none;z-index:9999;align-items:center;gap:8px">
+  <i class="bi bi-check-circle-fill" style="color:var(--success)"></i>
+  <span id="toast-msg"></span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  let activeFilter = 'all';
+
+  function setFilter(filter, el) {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    activeFilter = filter;
+    filterCards();
+  }
+
+  function filterCards() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    const items = document.querySelectorAll('.catalog-item');
+    let count = 0;
+    items.forEach(item => {
+      const title     = item.dataset.title.toLowerCase();
+      const type      = item.dataset.type;
+      const status    = item.dataset.status;
+      const mandatory = item.dataset.mandatory === 'true';
+
+      const matchSearch = !q || title.includes(q);
+      let matchFilter = true;
+      if (activeFilter === 'mandatory')    matchFilter = mandatory;
+      else if (activeFilter === 'course')  matchFilter = type === 'course';
+      else if (activeFilter === 'learning-path') matchFilter = type === 'learning-path';
+      else if (activeFilter === 'curriculum')    matchFilter = type === 'curriculum';
+      else if (activeFilter === 'inprogress')    matchFilter = status === 'inprogress';
+      else if (activeFilter === 'notstarted')    matchFilter = status === 'notstarted';
+      else if (activeFilter === 'completed')     matchFilter = status === 'completed';
+
+      const show = matchSearch && matchFilter;
+      item.style.display = show ? '' : 'none';
+      if (show) count++;
+    });
+    document.getElementById('result-count').textContent = count;
+    document.getElementById('empty-state').style.display = count === 0 ? 'block' : 'none';
+  }
+
+  function showEnrollModal()  { new bootstrap.Modal(document.getElementById('enrollModal')).show(); }
+  function showApprovalModal(){ new bootstrap.Modal(document.getElementById('approvalModal')).show(); }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.style.display = 'flex';
+    setTimeout(() => t.style.display = 'none', 3000);
+  }
+</script>
+</body>
+</html>

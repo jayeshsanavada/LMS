@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Background Jobs &amp; Worker Architecture — AZ-LMS</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{--bg:#0d1117;--card:#161b22;--border:#30363d;--accent:#58a6ff;--text:#c9d1d9;--muted:#8b949e}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif}
+  header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between}
+  .hl .label{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase}
+  .hl .title{font-size:18px;font-weight:600;margin-top:3px}
+  .hl .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  nav{background:var(--card);border-bottom:1px solid var(--border);padding:8px 28px;display:flex;gap:6px;flex-wrap:wrap}
+  nav a{font-size:11px;padding:4px 10px;border-radius:5px;color:var(--muted);text-decoration:none;border:1px solid var(--border);white-space:nowrap;transition:all .15s}
+  nav a:hover{color:var(--text);border-color:var(--muted)}
+  nav a.active{background:var(--accent);color:#0d1117;border-color:var(--accent);font-weight:600}
+  .wrap{padding:24px 28px 20px;overflow:auto}
+  .dcard{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:28px 32px;display:inline-block;min-width:100%}
+  .mermaid svg{display:block;max-width:none !important;height:auto}
+  #diagram .edgeLabel rect{fill:#1e2530 !important;opacity:1 !important}
+  #diagram .edgeLabel text,#diagram .edgeLabel tspan{fill:#c9d1d9 !important}
+  .info{max-width:1100px;margin:0 auto 0;padding:0 28px}
+  .info h3{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:24px 0 10px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:var(--card);color:var(--muted);font-weight:600;padding:8px 12px;text-align:left;border:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  td{padding:8px 12px;border:1px solid var(--border);color:var(--text);vertical-align:top}
+  tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+  .desc{max-width:1100px;margin:24px auto 40px;padding:12px 20px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;color:var(--muted)}
+  .desc strong{color:var(--text)}
+  .controls{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:100}
+  .cb{background:var(--card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:7px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .cb:hover{background:var(--accent);border-color:var(--accent);color:#0d1117}
+  #zoom-label{background:var(--card);border:1px solid var(--border);border-radius:7px;font-size:11px;color:var(--muted);text-align:center;padding:4px 0;min-width:36px}
+</style>
+</head>
+<body>
+<header>
+  <div class="hl">
+    <div class="label">AZ-LMS · Architecture Diagrams</div>
+    <div class="title">Diagram 06 — Background Jobs &amp; Worker Architecture</div>
+    <div class="sub">13 scheduled jobs (APScheduler) + 9 event-driven jobs (FastAPI background tasks)</div>
+  </div>
+  <div style="font-size:11px;color:var(--muted)">Last updated: 2026-04-14</div>
+</header>
+<nav>
+  <a href="index.html">Index</a>
+  <a href="01_system_architecture.html">1. System</a>
+  <a href="02_module_dependency.html">2. Modules</a>
+  <a href="03_database_er_diagram.html">3. ER Diagram</a>
+  <a href="04_auth_flow.html">4. Auth Flow</a>
+  <a href="05_integration_data_flow.html">5. Integrations</a>
+  <a href="06_background_jobs.html" class="active">6. Background Jobs</a>
+  <a href="07_apisix_route_map.html">7. APISIX Routes</a>
+  <a href="08_deployment_architecture.html">8. Deployment</a>
+  <a href="09_assignment_state_machine.html">9. Assignment</a>
+  <a href="10_compliance_state_machine.html">10. Compliance</a>
+  <a href="11_session_state_machine.html">11. Session</a>
+</nav>
+<div class="wrap">
+  <div class="dcard">
+    <div class="mermaid" id="diagram">
+flowchart TD
+    classDef worker fill:#4a148c,color:#fff,stroke:#2a004a
+    classDef integ fill:#1565c0,color:#fff,stroke:#0d47a1
+    classDef ae fill:#1b5e20,color:#fff,stroke:#003300
+    classDef notif fill:#e65100,color:#fff,stroke:#bf360c
+    classDef system fill:#37474f,color:#fff,stroke:#1c313a
+    classDef event fill:#6d1a1a,color:#fff,stroke:#4a0000
+    classDef dead fill:#b71c1c,color:#fff,stroke:#7f0000
+    classDef admin fill:#0d3349,color:#fff,stroke:#031a29
+
+    WORKER["Worker Service\nSeparate process from API server\nAPScheduler + FastAPI Background Tasks"]:::worker
+
+    subgraph SCHED["Section A — Scheduled Jobs  (APScheduler)"]
+        subgraph INTEG_J["Integrations"]
+            J1["Zoho HR Sync\nDaily 02:00"]:::integ
+            J2["Employee DB Sync\nDaily 02:30"]:::integ
+            J3["Integration Health Check\nEvery 15 min"]:::integ
+        end
+        subgraph AE_J["Assignment Engine"]
+            J4["Compliance Eval\nNightly 03:00"]:::ae
+            J5["Overdue Detection + Escalation\nDaily"]:::ae
+            J6["Approval Expiry Check\nDaily"]:::ae
+        end
+        subgraph NOTIF_J["Notifications"]
+            J7["Reminder Dispatch\nDaily + Hourly"]:::notif
+            J8["Notification Purge\nDaily"]:::notif
+            J9["Dead-Letter Retry\nHourly"]:::notif
+        end
+        subgraph SYS_J["System"]
+            J10["Export File Cleanup\nDaily"]:::system
+            J11["Audit Retention Purge\nWeekly"]:::system
+            J12["Audit Dead-Letter Retry\nHourly"]:::system
+        end
+    end
+
+    subgraph EVENTS["Section B — Event-Driven Jobs  (FastAPI Background Tasks)"]
+        EV1["Assignment created\nNotify employee"]:::event
+        EV2["Session created\nCreate Teams meeting"]:::event
+        EV3["Session rescheduled\nUpdate Teams + re-notify"]:::event
+        EV4["Session cancelled\nCancel Teams + notify all"]:::event
+        EV5["Session ended\nPull Teams attendance report"]:::event
+        EV6["Approval expired\nUpdate status + notify"]:::event
+        EV7["Completion expired\nCreate recertification assignment"]:::event
+        EV8["NON_COMPLIANT state\nEscalation notifications"]:::event
+        EV9["Any state-changing op\nWrite audit_logs async"]:::event
+    end
+
+    subgraph FAIL["Failure Handling — Dead-Letter Tables"]
+        DL_NOTIF["notification_delivery_log\nFailed delivery records"]:::dead
+        DL_AUDIT["audit_write_failures\nNEVER blocks originating operation"]:::dead
+        DL_INTEG["integration_jobs\nFailed sync records"]:::dead
+        ADMIN_DASH["Admin Dashboard\nAudit failures / Notif failures / Integration errors"]:::admin
+    end
+
+    WORKER --> SCHED
+    WORKER --> EVENTS
+
+    J9 -->|"retries hourly"| DL_NOTIF
+    J12 -->|"retries hourly"| DL_AUDIT
+    J1 -->|"on failure"| DL_INTEG
+    J2 -->|"on failure"| DL_INTEG
+    J3 -->|"DEGRADED or DOWN"| DL_INTEG
+
+    EV9 -->|"write failure"| DL_AUDIT
+    EV1 -->|"dispatch failure"| DL_NOTIF
+    EV3 -->|"notify failure"| DL_NOTIF
+    EV4 -->|"notify failure"| DL_NOTIF
+    EV6 -->|"notify failure"| DL_NOTIF
+    EV8 -->|"notify failure"| DL_NOTIF
+
+    DL_NOTIF --> ADMIN_DASH
+    DL_AUDIT --> ADMIN_DASH
+    DL_INTEG --> ADMIN_DASH
+    </div>
+  </div>
+</div>
+
+<div class="info">
+  <h3>Scheduled Jobs — Run on Fixed Schedule (APScheduler)</h3>
+  <table>
+    <tr><th>Job</th><th>Schedule</th><th>Owning Module</th><th>What it does</th></tr>
+    <tr><td>Zoho HR Sync</td><td>Daily 02:00</td><td>Integrations</td><td>Pulls HR data from Zoho (name, dept, status, joining_date). Updates users table. 3 retries on failure.</td></tr>
+    <tr><td>Employee DB Sync</td><td>Daily 02:30</td><td>Integrations</td><td>Pulls org hierarchy and project allocations. Replaces user_hierarchy and user_project_allocations for changed records.</td></tr>
+    <tr><td>Integration Health Check</td><td>Every 15 min</td><td>Integrations</td><td>Pings all 6 external systems. Updates integration_health_status. Sets DEGRADED / DOWN states visible in Admin UI.</td></tr>
+    <tr><td>Compliance / Mandatory Rule Evaluation</td><td>Nightly 03:00</td><td>Assignment Engine</td><td>Re-evaluates all mandatory rules. Creates new assignments for newly-in-scope users. Updates compliance_status for all users.</td></tr>
+    <tr><td>Overdue Detection + Escalation</td><td>Daily</td><td>Assignment Engine</td><td>Flags assignments past due_date as OVERDUE. Sends escalation notifications to managers for direct reports.</td></tr>
+    <tr><td>Approval Expiry Check</td><td>Daily</td><td>Assignment Engine</td><td>Cancels assignment_requests past expires_at. Updates status to EXPIRED. Notifies requester.</td></tr>
+    <tr><td>Due-Date Reminder Dispatch</td><td>Daily</td><td>Notifications</td><td>Sends upcoming due-date reminders to employees. Configurable lead time in admin_settings.</td></tr>
+    <tr><td>Session Reminder Dispatch</td><td>Hourly</td><td>Notifications</td><td>Sends session start reminders to enrolled participants. Fires N hours before session start_time.</td></tr>
+    <tr><td>Notification Record Purge</td><td>Daily</td><td>Notifications</td><td>Deletes notifications older than 90 days retention window from the notifications table.</td></tr>
+    <tr><td>Notification Dead-Letter Retry</td><td>Hourly</td><td>Notifications</td><td>Re-attempts delivery of records in notification_delivery_log with status FAILED. Max 3 retries total.</td></tr>
+    <tr><td>Export File Cleanup</td><td>Daily</td><td>Reporting</td><td>Deletes report_exports files past expires_at (24h retention). Removes from OneDrive if stored there.</td></tr>
+    <tr><td>Audit Log Retention Purge</td><td>Weekly</td><td>Audit</td><td>Archives audit_logs older than 5-year retention. Skips records with legal_hold = true.</td></tr>
+    <tr><td>Audit Dead-Letter Retry</td><td>Hourly</td><td>Audit</td><td>Re-attempts writing events from audit_write_failures. Failures here are surfaced in Admin Dashboard.</td></tr>
+  </table>
+
+  <h3>Event-Driven Jobs — Triggered by Business Events (FastAPI Background Tasks)</h3>
+  <table>
+    <tr><th>Trigger Event</th><th>Background Task</th><th>Failure Handling</th></tr>
+    <tr><td>Assignment created (any source)</td><td>Dispatch notification to assigned employee. Write audit event.</td><td>Dispatch failure → notification_delivery_log</td></tr>
+    <tr><td>Session created</td><td>Call Teams Graph API to create meeting. Store teams_meeting_id in sessions.</td><td>teams_link_status = PENDING_MANUAL. Admin provides manual link.</td></tr>
+    <tr><td>Session rescheduled</td><td>Update Teams meeting via Graph API. Re-notify all enrolled participants.</td><td>Notify failure → notification_delivery_log. Teams failure → PENDING_MANUAL.</td></tr>
+    <tr><td>Session cancelled</td><td>Cancel Teams meeting. Notify all enrolled participants.</td><td>Notify failure → notification_delivery_log</td></tr>
+    <tr><td>Session ended</td><td>Pull attendance report from Teams Graph API. Populate session_attendance records.</td><td>Attendance entries empty. Admin enters manually.</td></tr>
+    <tr><td>Approval request expired</td><td>Update assignment_request.status to EXPIRED. Notify requester.</td><td>Notify failure → notification_delivery_log</td></tr>
+    <tr><td>Training completion expired</td><td>Auto-create a new recertification assignment for the employee.</td><td>Compliance state updated to NON_COMPLIANT if recertification not started.</td></tr>
+    <tr><td>User enters NON_COMPLIANT state</td><td>Send escalation notification to employee and their manager.</td><td>Notify failure → notification_delivery_log</td></tr>
+    <tr><td>Any state-changing operation</td><td>Write structured event to audit_logs asynchronously.</td><td>Write failure → audit_write_failures. NEVER blocks the originating API call.</td></tr>
+  </table>
+
+  <h3>Key Architecture Rules</h3>
+  <table>
+    <tr><th>Rule</th><th>Detail</th></tr>
+    <tr><td>Worker process is SEPARATE</td><td>Runs as a separate OS process — cannot share in-memory state with the FastAPI API server</td></tr>
+    <tr><td>Audit writes never block</td><td>Audit failures go to audit_write_failures dead-letter — the originating API operation is never blocked or rolled back</td></tr>
+    <tr><td>Notifications always async</td><td>Notification dispatch is never inline in an API response — always dispatched via Worker queue</td></tr>
+    <tr><td>All jobs are idempotent</td><td>Re-running any scheduled or event-driven job produces the same result without duplication</td></tr>
+    <tr><td>Dead-letter visibility</td><td>notification_delivery_log, audit_write_failures, integration_jobs — all surfaced in Admin UI</td></tr>
+  </table>
+
+  <h3>Retry Policy</h3>
+  <table>
+    <tr><th>Job Type</th><th>Retries</th><th>Backoff</th></tr>
+    <tr><td>Integration API calls (Zoho, Teams, OneDrive)</td><td>Up to 3</td><td>Fixed 5-minute intervals</td></tr>
+    <tr><td>Notification delivery</td><td>Up to 3</td><td>Exponential: 1 min → 5 min → 15 min</td></tr>
+    <tr><td>Audit dead-letter retry</td><td>Hourly batch pass</td><td>None</td></tr>
+    <tr><td>Notification dead-letter retry</td><td>Hourly batch pass</td><td>None</td></tr>
+  </table>
+</div>
+
+<div class="desc" style="margin-left:28px;margin-right:28px">
+  <strong>Source:</strong> docs/requirements/04_architecture/01_architecture.md Section 8 + 03_modules.md Module 16 &nbsp;|&nbsp;
+  <strong>Type:</strong> Flowchart TD — Section A (scheduled) + Section B (event-driven) + failure paths &nbsp;|&nbsp;
+  Worker process runs <strong>separately</strong> from the API server. Audit write failures <strong>never block</strong> the originating operation. All jobs are <strong>idempotent</strong>.
+</div>
+
+<div class="controls">
+  <button class="cb" onclick="zi()" title="Zoom in">+</button>
+  <div id="zoom-label">100%</div>
+  <button class="cb" onclick="zo()" title="Zoom out">−</button>
+  <button class="cb" onclick="zr()" title="Reset (fit to screen)" style="font-size:13px">↺</button>
+</div>
+<script>
+  mermaid.initialize({startOnLoad:true,theme:'dark',securityLevel:'loose',
+    themeVariables:{edgeLabelBackground:'#1e2530'},
+    flowchart:{useMaxWidth:false,htmlLabels:false,curve:'basis',padding:24}});
+
+  let scale=1,origW=null,origH=null;
+  function getSvg(){return document.querySelector('.mermaid svg');}
+
+  function fixEdgeLabels(){
+    const svg=getSvg();if(!svg)return;
+    svg.querySelectorAll('.edgeLabel rect').forEach(r=>{
+      r.setAttribute('fill','#1e2530');r.setAttribute('rx','3');r.setAttribute('ry','3');
+      r.style.fill='#1e2530';r.style.opacity='1';
+      r.style.stroke='#444c56';r.style.strokeWidth='0.5px';
+    });
+    svg.querySelectorAll('.edgeLabel text,.edgeLabel tspan').forEach(t=>{t.style.fill='#c9d1d9';});
+  }
+
+  function moveSubgraphLabelsToBottom(){
+    const svg=getSvg();if(!svg)return;
+    svg.querySelectorAll('g.cluster').forEach(cluster=>{
+      const rectEl=cluster.querySelector('rect');
+      const labelEl=cluster.querySelector('.cluster-label');
+      if(!rectEl||!labelEl)return;
+      let rBox,lBox;
+      try{rBox=rectEl.getBBox();lBox=labelEl.getBBox();}catch(e){return;}
+      const targetY=rBox.y+rBox.height-lBox.height-6;
+      const dy=targetY-lBox.y;
+      const t=labelEl.getAttribute('transform')||'';
+      const m=t.match(/translate\(\s*([-\d.]+)[,\s]+([-\d.]+)\s*\)/);
+      const tx=m?parseFloat(m[1]):0;
+      const ty=m?parseFloat(m[2]):0;
+      labelEl.setAttribute('transform',`translate(${tx},${ty+dy})`);
+    });
+  }
+
+  function captureOriginal(){
+    const svg=getSvg();if(!svg)return false;
+    const vb=svg.viewBox&&svg.viewBox.baseVal;
+    if(vb&&vb.width>0){origW=vb.width;origH=vb.height;}
+    else{origW=svg.getBoundingClientRect().width||1000;origH=svg.getBoundingClientRect().height||700;}
+    svg.setAttribute('width',origW);svg.setAttribute('height',origH);
+    svg.style.maxWidth='none';return true;
+  }
+
+  function fitToScreen(){
+    const svg=getSvg();if(!svg||!origW)return;
+    const headerH=(document.querySelector('header')||{}).offsetHeight||60;
+    const navH=(document.querySelector('nav')||{}).offsetHeight||40;
+    const availW=document.querySelector('.wrap').clientWidth-80;
+    const availH=window.innerHeight-headerH-navH-80;
+    scale=Math.min(availW/origW,availH/origH);
+    scale=Math.max(scale,0.1);
+    svg.setAttribute('width',origW*scale);svg.setAttribute('height',origH*scale);
+    document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%';
+  }
+
+  function applyScale(){
+    const svg=getSvg();if(!svg)return;
+    if(!origW&&!captureOriginal())return;
+    svg.setAttribute('width',origW*scale);svg.setAttribute('height',origH*scale);
+    document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%';
+  }
+
+  function zi(){scale=Math.min(scale*1.25,8);applyScale();}
+  function zo(){scale=Math.max(scale*0.8,0.1);applyScale();}
+  function zr(){fitToScreen();}
+
+  window.addEventListener('load',()=>{
+    setTimeout(()=>{
+      if(captureOriginal()){fixEdgeLabels();moveSubgraphLabelsToBottom();fitToScreen();}
+    },500);
+  });
+</script>
+</body>
+</html>

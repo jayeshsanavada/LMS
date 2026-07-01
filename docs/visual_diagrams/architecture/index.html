@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AZ-LMS Architecture Diagrams</title>
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --border: #30363d;
+    --accent: #58a6ff; --text: #c9d1d9; --muted: #8b949e;
+    --green: #3fb950; --orange: #d29922; --red: #f85149; --purple: #bc8cff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+  header { background: var(--card); border-bottom: 1px solid var(--border); padding: 28px 40px; }
+  .header-tag { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; }
+  .header-title { font-size: 28px; font-weight: 700; }
+  .header-sub { font-size: 14px; color: var(--muted); margin-top: 6px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; padding: 32px 40px; max-width: 1400px; margin: 0 auto; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 24px; text-decoration: none; color: var(--text); display: flex; flex-direction: column; gap: 10px; transition: border-color 0.15s, transform 0.15s; }
+  .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .card-num { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+  .card-title { font-size: 17px; font-weight: 600; }
+  .card-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .card-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+  .tag-blue { background: rgba(88,166,255,0.12); color: var(--accent); }
+  .tag-green { background: rgba(63,185,80,0.12); color: var(--green); }
+  .tag-orange { background: rgba(210,153,34,0.12); color: var(--orange); }
+  .tag-purple { background: rgba(188,140,255,0.12); color: var(--purple); }
+  .tag-red { background: rgba(248,81,73,0.12); color: var(--red); }
+  footer { text-align: center; padding: 24px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--border); margin-top: 16px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-tag">AZ-LMS · Architecture Diagrams</div>
+  <div class="header-title">System Architecture Index</div>
+  <div class="header-sub">11 diagrams covering system layers, module dependencies, data model, auth flows, integrations, background jobs, API gateway, deployment topology, and state machines.</div>
+</header>
+<div class="grid">
+
+  <a class="card" href="01_system_architecture.html">
+    <div class="card-num">Diagram 01</div>
+    <div class="card-title">System Architecture Overview</div>
+    <div class="card-desc">Full C4-style layered view: Presentation → APISIX → FastAPI → 16 Modules → PostgreSQL. Shows all external system connections and the Worker process.</div>
+    <div class="card-meta">
+      <span class="tag tag-blue">Flowchart TD</span>
+      <span class="tag tag-orange">8 layers</span>
+      <span class="tag tag-green">6 external systems</span>
+    </div>
+  </a>
+
+  <a class="card" href="02_module_dependency.html">
+    <div class="card-num">Diagram 02</div>
+    <div class="card-title">Module Dependency Map</div>
+    <div class="card-desc">All 16 DDD modules grouped into Core, Supporting, and Platform layers with directional dependency arrows. Enforced architecture rules annotated.</div>
+    <div class="card-meta">
+      <span class="tag tag-blue">Flowchart LR</span>
+      <span class="tag tag-orange">16 modules</span>
+      <span class="tag tag-purple">3 groups</span>
+    </div>
+  </a>
+
+  <a class="card" href="03_database_er_diagram.html">
+    <div class="card-num">Diagram 03</div>
+    <div class="card-title">Database ER Diagram</div>
+    <div class="card-desc">All 51 tables across 13 modules with foreign-key relationships. Split into three focused sections: Core, Platform/Support, and Integrations/Assessment.</div>
+    <div class="card-meta">
+      <span class="tag tag-blue">erDiagram</span>
+      <span class="tag tag-orange">51 tables</span>
+      <span class="tag tag-green">3 sections</span>
+    </div>
+  </a>
+
+  <a class="card" href="04_auth_flow.html">
+    <div class="card-num">Diagram 04</div>
+    <div class="card-title">Authentication &amp; Authorization Flow</div>
+    <div class="card-desc">4 sequences: PKCE login, API request with dual JWT validation, silent token refresh, and PES M2M client-credentials flow.</div>
+    <div class="card-meta">
+      <span class="tag tag-purple">Sequence Diagram</span>
+      <span class="tag tag-orange">4 sequences</span>
+      <span class="tag tag-red">Security rules</span>
+    </div>
+  </a>
+
+  <a class="card" href="05_integration_data_flow.html">
+    <div class="card-num">Diagram 05</div>
+    <div class="card-title">Integration Data Flow</div>
+    <div class="card-desc">6 external integrations: Zoho HR, Employee DB, Keycloak/Azure AD, PES (M2M), Microsoft Teams, OneDrive. Direction, mechanism, trigger, and failure behavior.</div>
+    <div class="card-meta">
+      <span class="tag tag-blue">Flowchart LR</span>
+      <span class="tag tag-green">6 integrations</span>
+      <span class="tag tag-orange">Failure table</span>
+    </div>
+  </a>
+
+  <a class="card" href="06_background_jobs.html">
+    <div class="card-num">Diagram 06</div>
+    <div class="card-title">Background Jobs &amp; Worker Architecture</div>
+    <div class="card-desc">13 scheduled APScheduler jobs + 10 event-driven FastAPI background tasks. Dead-letter queues and admin visibility paths shown.</div>
+    <div class="card-meta">
+      <span class="tag tag-blue">Flowchart TD</span>
+      <span class="tag tag-orange">13 scheduled jobs</span>
+      <span class="tag tag-purple">10 event jobs</span>
+    </div>
+  </a>
+
+  <a class="card" href="07_apisix_route_map.html">
+    <div class="card-num">Diagram 07</div>
+    <div class="card-title">API Gateway Route Map (APISIX)</div>
+    <div class="card-desc">APISIX as central router: 134 standard JWT routes, 2 PES M2M routes, 2 internal loopback routes. JWT validation, rate limiting, and role-check delegation shown.</div>
+    <div class="card-meta">
+      <span class="tag tag-blue">Flowchart TD</span>
+      <span class="tag tag-green">136 routes</span>
+      <span class="tag tag-red">2 route groups</span>
+    </div>
+  </a>
+
+  <a class="card" href="08_deployment_architecture.html">
+    <div class="card-num">Diagram 08</div>
+    <div class="card-title">Deployment &amp; Physical Architecture</div>
+    <div class="card-desc">On-premise deployment topology: APISIX :443, FastAPI :8000, Worker process, PostgreSQL. External cloud services and NFR targets annotated.</div>
+    <div class="card-meta">
+      <span class="tag tag-blue">Flowchart TD</span>
+      <span class="tag tag-orange">On-premise</span>
+      <span class="tag tag-green">NFR targets</span>
+    </div>
+  </a>
+
+
+  <a class="card" href="09_assignment_state_machine.html">
+    <div class="card-num">Diagram 09</div>
+    <div class="card-title">Assignment State Machine</div>
+    <div class="card-desc">Two tabs: Tab 1 — assignment_status (5 states: ASSIGNED → IN_PROGRESS → COMPLETED/OVERDUE/CANCELLED). Tab 2 — approval request flow (4 states: PENDING → APPROVED/REJECTED/EXPIRED).</div>
+    <div class="card-meta">
+      <span class="tag tag-blue">stateDiagram-v2</span>
+      <span class="tag tag-orange">5 + 4 states</span>
+      <span class="tag tag-purple">2 tabs</span>
+    </div>
+  </a>
+
+  <a class="card" href="10_compliance_state_machine.html">
+    <div class="card-num">Diagram 10</div>
+    <div class="card-title">Compliance State Machine</div>
+    <div class="card-desc">compliance_status.compliance_state — 3 states (PENDING, COMPLIANT, NON_COMPLIANT). Recertification cycle, probation gate, and PES integration rules documented.</div>
+    <div class="card-meta">
+      <span class="tag tag-blue">stateDiagram-v2</span>
+      <span class="tag tag-orange">3 states</span>
+      <span class="tag tag-red">Probation gate</span>
+    </div>
+  </a>
+
+  <a class="card" href="11_session_state_machine.html">
+    <div class="card-num">Diagram 11</div>
+    <div class="card-title">Session State Machine</div>
+    <div class="card-desc">Two tabs: Tab 1 — session_status (SCHEDULED/COMPLETED/CANCELLED) + teams_link_status sub-states. Tab 2 — participant enrollment (INVITED/NOMINATED/CONFIRMED/REJECTED) + attendance states (ATTENDED/NOT_ATTENDED).</div>
+    <div class="card-meta">
+      <span class="tag tag-blue">stateDiagram-v2</span>
+      <span class="tag tag-orange">3 + 4 + 2 states</span>
+      <span class="tag tag-purple">2 tabs</span>
+    </div>
+  </a>
+
+</div>
+<footer>AZ-LMS Architecture Diagrams &nbsp;·&nbsp; Last updated: 2026-04-15 &nbsp;·&nbsp; Generated from docs/prompts/01_architecture_prompts.md</footer>
+</body>
+</html>

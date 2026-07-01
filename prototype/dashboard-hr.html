@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-LMS — HR Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="lms-wrapper">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <!-- Main -->
+  <div class="main-content">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-title">HR Dashboard <small>Organisation Overview</small></div>
+      <div class="topbar-actions">
+        <div class="role-switcher" id="role-switcher"></div>
+        <a href="#" class="btn-outline-lms" style="font-size:12px;padding:6px 12px">
+          <i class="bi bi-download"></i> Export Report
+        </a>
+        <div style="position:relative">
+          <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+            <i class="bi bi-bell"></i>
+            <span class="notif-badge">2</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown-header">
+              <span>Notifications</span>
+              <a href="#">Mark all read</a>
+            </div>
+            <div class="notif-item unread">
+              <div class="notif-item-icon" style="background:#fee2e2;color:#991b1b"><i class="bi bi-exclamation-circle"></i></div>
+              <div class="notif-item-text">
+                <div class="notif-item-title">12 employees are 30+ days overdue — escalation triggered</div>
+                <div class="notif-item-time">Today, 9:00 AM</div>
+              </div>
+            </div>
+            <div class="notif-item unread">
+              <div class="notif-item-icon" style="background:#dbeafe;color:#1e40af"><i class="bi bi-arrow-repeat"></i></div>
+              <div class="notif-item-text">
+                <div class="notif-item-title">Zoho HR sync completed — 3 new employees added</div>
+                <div class="notif-item-time">Today, 6:00 AM</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page Body -->
+    <div class="page-body">
+
+      <!-- Escalation Alert -->
+      <div class="alert-lms danger mb-3">
+        <i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;margin-top:1px"></i>
+        <div>
+          <strong>12 employees are 30+ days overdue</strong> on mandatory training. Escalation notifications sent to HR and Admin.
+          <a href="#dept-table" style="color:inherit;font-weight:600;margin-left:6px">View details →</a>
+        </div>
+      </div>
+
+      <!-- Stat Row -->
+      <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-people"></i></div>
+            <div class="stat-info">
+              <div class="stat-value">247</div>
+              <div class="stat-label">Total Employees</div>
+              <div class="stat-change up"><i class="bi bi-arrow-up"></i> 3 new this week</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-shield-check"></i></div>
+            <div class="stat-info">
+              <div class="stat-value">68%</div>
+              <div class="stat-label">Org Compliance Rate</div>
+              <div class="stat-change up"><i class="bi bi-arrow-up"></i> 3% vs last month</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon red"><i class="bi bi-clock-history"></i></div>
+            <div class="stat-info">
+              <div class="stat-value">34</div>
+              <div class="stat-label">Overdue (Org)</div>
+              <div class="stat-change down"><span style="color:var(--danger)">12 escalated (30+ days)</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card">
+            <div class="stat-icon amber"><i class="bi bi-mortarboard"></i></div>
+            <div class="stat-info">
+              <div class="stat-value">412</div>
+              <div class="stat-label">Active Assignments</div>
+              <div class="stat-change neutral">Across all departments</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+
+        <!-- Department Compliance Table -->
+        <div class="col-lg-7">
+          <div class="card" id="dept-table">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-building me-2" style="color:var(--primary)"></i>Compliance by Department</h6>
+              <a href="#" class="btn-outline-lms" style="font-size:12px;padding:5px 10px">
+                <i class="bi bi-download"></i> Export
+              </a>
+            </div>
+            <table class="lms-table">
+              <thead>
+                <tr>
+                  <th>Department</th>
+                  <th>Employees</th>
+                  <th>Compliant</th>
+                  <th>Overdue</th>
+                  <th>Compliance</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="cursor:pointer" onclick="openDeptDrilldown('Engineering')" title="View department compliance details">
+                  <td><div style="font-weight:600;font-size:13px">Engineering</div></td>
+                  <td>68</td>
+                  <td><span style="color:var(--success);font-weight:600">61</span></td>
+                  <td><span style="color:var(--danger);font-weight:600">7</span></td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div class="progress-lms" style="width:100px"><div class="bar green" style="width:90%"></div></div>
+                      <span style="font-size:12px">90%</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr style="cursor:pointer" onclick="openDeptDrilldown('Sales')" title="View department compliance details">
+                  <td><div style="font-weight:600;font-size:13px">Sales</div></td>
+                  <td>42</td>
+                  <td><span style="color:var(--success);font-weight:600">24</span></td>
+                  <td><span style="color:var(--danger);font-weight:600">18</span></td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div class="progress-lms" style="width:100px"><div class="bar amber" style="width:57%"></div></div>
+                      <span style="font-size:12px;color:var(--warning)">57%</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr style="cursor:pointer" onclick="openDeptDrilldown('Operations')" title="View department compliance details">
+                  <td><div style="font-weight:600;font-size:13px">Operations</div></td>
+                  <td>55</td>
+                  <td><span style="color:var(--success);font-weight:600">50</span></td>
+                  <td><span style="color:var(--danger);font-weight:600">5</span></td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div class="progress-lms" style="width:100px"><div class="bar green" style="width:91%"></div></div>
+                      <span style="font-size:12px">91%</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr style="cursor:pointer" onclick="openDeptDrilldown('Finance')" title="View department compliance details">
+                  <td><div style="font-weight:600;font-size:13px">Finance</div></td>
+                  <td>30</td>
+                  <td><span style="color:var(--success);font-weight:600">18</span></td>
+                  <td><span style="color:var(--danger);font-weight:600">12</span></td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div class="progress-lms" style="width:100px"><div class="bar red" style="width:60%"></div></div>
+                      <span style="font-size:12px;color:var(--danger)">60%</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr style="cursor:pointer" onclick="openDeptDrilldown('HR')" title="View department compliance details">
+                  <td><div style="font-weight:600;font-size:13px">HR</div></td>
+                  <td>18</td>
+                  <td><span style="color:var(--success);font-weight:600">17</span></td>
+                  <td><span style="color:var(--danger);font-weight:600">1</span></td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div class="progress-lms" style="width:100px"><div class="bar green" style="width:94%"></div></div>
+                      <span style="font-size:12px">94%</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr style="cursor:pointer" onclick="openDeptDrilldown('Design')" title="View department compliance details">
+                  <td><div style="font-weight:600;font-size:13px">Design</div></td>
+                  <td>22</td>
+                  <td><span style="color:var(--success);font-weight:600">14</span></td>
+                  <td><span style="color:var(--danger);font-weight:600">8</span></td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div class="progress-lms" style="width:100px"><div class="bar amber" style="width:64%"></div></div>
+                      <span style="font-size:12px;color:var(--warning)">64%</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-5">
+
+          <!-- Mandatory Training Completion -->
+          <div class="card mb-3">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-shield-check me-2" style="color:var(--primary)"></i>Mandatory Training Completion</h6>
+            </div>
+            <div style="padding:0">
+              <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                  <div style="font-size:13px;font-weight:600">Safety Compliance 2026</div>
+                  <span style="font-size:12px;font-weight:600;color:var(--success)">84%</span>
+                </div>
+                <div class="progress-lms"><div class="bar green" style="width:84%"></div></div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px">208 / 247 employees completed</div>
+              </div>
+              <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                  <div style="font-size:13px;font-weight:600">Data Privacy Training</div>
+                  <span style="font-size:12px;font-weight:600;color:var(--warning)">61%</span>
+                </div>
+                <div class="progress-lms"><div class="bar amber" style="width:61%"></div></div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px">151 / 247 employees completed</div>
+              </div>
+              <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                  <div style="font-size:13px;font-weight:600">Anti-Harassment Policy</div>
+                  <span style="font-size:12px;font-weight:600;color:var(--danger)">45%</span>
+                </div>
+                <div class="progress-lms"><div class="bar red" style="width:45%"></div></div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px">111 / 247 employees completed</div>
+              </div>
+              <div style="padding:12px 16px">
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                  <div style="font-size:13px;font-weight:600">Code of Conduct</div>
+                  <span style="font-size:12px;font-weight:600;color:var(--success)">92%</span>
+                </div>
+                <div class="progress-lms"><div class="bar green" style="width:92%"></div></div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px">227 / 247 employees completed</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="card">
+            <div class="card-header-lms">
+              <h6><i class="bi bi-activity me-2" style="color:var(--primary)"></i>Recent Activity</h6>
+            </div>
+            <div class="card-body-lms" style="padding:12px 16px">
+              <ul class="activity-list">
+                <li class="activity-item">
+                  <div class="activity-dot green"></div>
+                  <div>
+                    <div class="activity-text">3 new employees onboarded — mandatory training auto-assigned</div>
+                    <div class="activity-time">Today, 6:00 AM</div>
+                  </div>
+                </li>
+                <li class="activity-item">
+                  <div class="activity-dot red"></div>
+                  <div>
+                    <div class="activity-text">Escalation sent to HR + Admin for 12 employees (30+ days overdue)</div>
+                    <div class="activity-time">Today, 9:00 AM</div>
+                  </div>
+                </li>
+                <li class="activity-item">
+                  <div class="activity-dot blue"></div>
+                  <div>
+                    <div class="activity-text">PES compliance data pulled — 247 records synced</div>
+                    <div class="activity-time">Yesterday</div>
+                  </div>
+                </li>
+                <li class="activity-item">
+                  <div class="activity-dot amber"></div>
+                  <div>
+                    <div class="activity-text">Anti-Harassment Policy — due date extended to May 30</div>
+                    <div class="activity-time">2 days ago</div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div><!-- /page-body -->
+  </div><!-- /main-content -->
+</div>
+
+<div class="modal-overlay" id="dept-modal" onclick="closeDeptDrilldown(event)" style="display:none">
+  <div class="modal-box" style="max-width:680px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="dept-modal-title">Department Compliance Details</div>
+      <button class="modal-close" onclick="closeDeptDrilldown()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:10px">
+        Per-employee compliance sample for selected department.
+      </div>
+      <table class="lms-table" style="margin-bottom:0">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Mandatory Trainings</th>
+            <th>Overdue</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="dept-modal-body"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline-lms" onclick="closeDeptDrilldown()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  const deptSampleData = {
+    Engineering: [
+      { name: 'Arjun Kumar', mandatory: '4/4', overdue: 0, status: 'Compliant' },
+      { name: 'Divya Pillai', mandatory: '3/4', overdue: 0, status: 'In Progress' },
+      { name: 'Karan Shah', mandatory: '2/4', overdue: 1, status: 'Overdue' }
+    ],
+    Sales: [
+      { name: 'Rahul Mehta', mandatory: '2/4', overdue: 1, status: 'Overdue' },
+      { name: 'Neha Rao', mandatory: '3/4', overdue: 0, status: 'In Progress' },
+      { name: 'Nitin Patel', mandatory: '1/4', overdue: 2, status: 'Overdue' }
+    ],
+    Operations: [
+      { name: 'Riya Das', mandatory: '4/4', overdue: 0, status: 'Compliant' },
+      { name: 'Sonal Jain', mandatory: '3/4', overdue: 0, status: 'In Progress' },
+      { name: 'Vikram Rai', mandatory: '4/4', overdue: 0, status: 'Compliant' }
+    ],
+    Finance: [
+      { name: 'Pooja Shah', mandatory: '2/4', overdue: 1, status: 'Overdue' },
+      { name: 'Amit Gupta', mandatory: '3/4', overdue: 0, status: 'In Progress' },
+      { name: 'Nina Paul', mandatory: '1/4', overdue: 2, status: 'Overdue' }
+    ],
+    HR: [
+      { name: 'Sneha Iyer', mandatory: '4/4', overdue: 0, status: 'Compliant' },
+      { name: 'Asha Nair', mandatory: '4/4', overdue: 0, status: 'Compliant' },
+      { name: 'Ravi Menon', mandatory: '3/4', overdue: 0, status: 'In Progress' }
+    ],
+    Design: [
+      { name: 'Meera Joshi', mandatory: '2/4', overdue: 1, status: 'Overdue' },
+      { name: 'Rohan Verma', mandatory: '3/4', overdue: 0, status: 'In Progress' },
+      { name: 'Kritika Sen', mandatory: '3/4', overdue: 0, status: 'In Progress' }
+    ]
+  };
+
+  function openDeptDrilldown(deptName) {
+    const modal = document.getElementById('dept-modal');
+    const title = document.getElementById('dept-modal-title');
+    const body = document.getElementById('dept-modal-body');
+    const rows = deptSampleData[deptName] || [];
+
+    title.textContent = deptName + ' - Compliance Details';
+    body.innerHTML = rows.map(function (row) {
+      return '<tr>' +
+        '<td>' + row.name + '</td>' +
+        '<td>' + row.mandatory + '</td>' +
+        '<td>' + row.overdue + '</td>' +
+        '<td>' + row.status + '</td>' +
+      '</tr>';
+    }).join('');
+
+    modal.style.cssText = 'display:flex;align-items:center;justify-content:center';
+  }
+
+  function closeDeptDrilldown(event) {
+    if (!event || event.target === document.getElementById('dept-modal')) {
+      document.getElementById('dept-modal').style.display = 'none';
+    }
+  }
+</script>
+</body>
+</html>
